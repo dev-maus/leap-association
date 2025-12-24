@@ -1,8 +1,10 @@
 import { Target, Calendar, ArrowRight } from 'lucide-react';
 
+const base = import.meta.env.BASE_URL;
+
 export function DiscoverButton({ className = "" }: { className?: string }) {
   return (
-    <a href="/practice">
+    <a href={`${base}practice`}>
       <button
         className={`bg-white hover:bg-primary text-primary hover:text-white border-2 border-primary px-8 py-6 text-base font-semibold rounded-xl shadow-lg shadow-primary/25 transition-colors group ${className}`}
       >
@@ -16,7 +18,7 @@ export function DiscoverButton({ className = "" }: { className?: string }) {
 
 export function ScheduleButton({ className = "" }: { className?: string }) {
   return (
-    <a href="/schedule">
+    <a href={`${base}schedule`}>
       <button
         className={`bg-white/10 backdrop-blur-sm border-2 border-white/30 text-white hover:bg-white/20 px-8 py-6 text-base font-semibold rounded-xl ${className}`}
       >

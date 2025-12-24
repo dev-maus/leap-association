@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 
+const base = import.meta.env.BASE_URL;
+
 export default function SplashScreen() {
   const [isVisible, setIsVisible] = useState(true);
 
@@ -23,7 +25,7 @@ export default function SplashScreen() {
       <div className="text-center">
         <div className="mb-6">
           <img
-            src="/logo.png"
+            src={`${base}logo.png`}
             alt="LEAP Association"
             className="h-24 w-auto mx-auto animate-pulse"
           />

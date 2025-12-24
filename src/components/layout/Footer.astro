@@ -1,5 +1,7 @@
 ---
 import { createPageUrl } from '../../lib/utils';
+
+const base = import.meta.env.BASE_URL;
 ---
 
 <footer class="bg-primary text-white">
@@ -8,7 +10,7 @@ import { createPageUrl } from '../../lib/utils';
       <div class="md:col-span-2">
         <div class="flex items-center gap-3 mb-6">
           <img
-            src="/logo.png"
+            src={`${base}logo.png`}
             alt="LEAP Association Logo"
             class="h-12 w-auto"
           />

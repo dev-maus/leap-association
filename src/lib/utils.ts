@@ -1,3 +1,5 @@
+const base = import.meta.env.BASE_URL;
+
 export function createPageUrl(pageName: string): string {
   const pageMap: Record<string, string> = {
     'Home': '/',
@@ -12,6 +14,14 @@ export function createPageUrl(pageName: string): string {
     'ScheduleCall': '/schedule',
     'Search': '/search',
   };
-  return pageMap[pageName] || `/${pageName.toLowerCase()}`;
+  const path = pageMap[pageName] || `/${pageName.toLowerCase()}`;
+  // Ensure base path is included (remove trailing slash from base, add path)
+  return `${base.replace(/\/$/, '')}${path}`;
+}
+
+export function getAssetUrl(path: string): string {
+  // Remove leading slash if present, then add base path
+  const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+  return `${base}${cleanPath}`;
 }
 
