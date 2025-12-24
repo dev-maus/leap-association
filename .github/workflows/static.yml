@@ -36,6 +36,7 @@ jobs:
         run: npm run build
         env: 
           SANITY_PROJECT_ID: ${{ vars.SANITY_PROJECT_ID }}
+          PUBLIC_SUPABASE_URL: ${{ vars.PUBLIC_SUPABASE_URL }}
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
