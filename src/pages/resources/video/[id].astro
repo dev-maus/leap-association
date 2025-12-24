@@ -6,6 +6,16 @@ import Footer from '../../../components/layout/Footer.astro';
 import { sanity } from '../../../lib/sanity';
 import { createPageUrl } from '../../../lib/utils';
 
+export async function getStaticPaths() {
+  const videos = await sanity.fetch(`*[_type == "video" && status == "published"]{
+    _id
+  }`).catch(() => []);
+
+  return videos.map((video: { _id: string }) => ({
+    params: { id: video._id },
+  }));
+}
+
 const { id } = Astro.params;
 const video = await sanity.fetch(`*[_type == "video" && _id == $id][0]`, { id }).catch(() => null);
 

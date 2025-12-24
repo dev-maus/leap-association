@@ -7,8 +7,18 @@ import { sanity } from '../../../lib/sanity';
 import { createPageUrl } from '../../../lib/utils';
 import { marked } from 'marked';
 
+export async function getStaticPaths() {
+  const posts = await sanity.fetch(`*[_type == "blogPost" && defined(slug.current) && status == "published"]{
+    "slug": slug.current
+  }`).catch(() => []);
+
+  return posts.map((post: { slug: string }) => ({
+    params: { slug: post.slug },
+  }));
+}
+
 const { slug } = Astro.params;
-const post = await sanity.fetch(`*[_type == "blogPost" && slug == $slug][0]`, { slug }).catch(() => null);
+const post = await sanity.fetch(`*[_type == "blogPost" && slug.current == $slug][0]`, { slug }).catch(() => null);
 
 if (!post) {
   return Astro.redirect('/resources');
