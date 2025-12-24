@@ -13,7 +13,7 @@ import signatureEvent from './signatureEvent';
 import teamMember from './teamMember';
 import caseStudy from './caseStudy';
 
-export default [
+export const schemaTypes = [
   siteSettings,
   siteContent,
   hero,
@@ -29,4 +29,3 @@ export default [
   teamMember,
   caseStudy,
 ];
-
