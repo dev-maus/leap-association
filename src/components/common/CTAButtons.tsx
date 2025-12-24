@@ -27,3 +27,12 @@ export function ScheduleButton({ className = "" }: { className?: string }) {
   );
 }
 
+export default function CTAButtons({ className = "" }: { className?: string }) {
+  return (
+    <>
+      <DiscoverButton className={className} />
+      <ScheduleButton className={className} />
+    </>
+  );
+}
+
