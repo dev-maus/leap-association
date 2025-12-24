@@ -6,7 +6,8 @@ import compress from 'astro-compress';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://dev-maus.github.io/leap-association/',
+  site: 'https://dev-maus.github.io',
+  base: '/leap-association/', // Remove this for custom domain
   integrations: [
     tailwind({ configFile: './tailwind.config.mjs' }),
     sitemap(),
