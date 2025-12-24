@@ -1,0 +1,165 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Head from '../components/layout/Head.astro';
+import Header from '../components/layout/Header.astro';
+import Footer from '../components/layout/Footer.astro';
+import Breadcrumbs from '../components/common/Breadcrumbs.astro';
+import Button from '../components/ui/Button.astro';
+import Card from '../components/ui/Card.astro';
+import { sanity } from '../lib/sanity';
+import { createPageUrl } from '../lib/utils';
+
+const services = await sanity.fetch(`*[_type == "service"] | order(_createdAt asc)`).catch(() => []);
+
+const defaultServices = [
+  {
+    slug: 'consulting',
+    title: 'Consulting Services',
+    subtitle: 'Strategic Organizational Transformation',
+    description: 'From power utility operations to leadership culture, we help organizations build practices that create measurable, sustainable results.',
+    link: '/services/consulting',
+  },
+  {
+    slug: 'training',
+    title: 'Leadership Training & Development',
+    subtitle: 'Build Leaders at Every Level',
+    description: 'Comprehensive leadership development tracks, from leading yourself to leading organizational change. Build practices that create excellence.',
+    link: '/services/training',
+  },
+  {
+    slug: 'coaching',
+    title: 'Coaching',
+    subtitle: 'Personalized Leadership Development',
+    description: 'One-on-one coaching for executives, leaders, teens, and couples. Discover what you\'re practicing and build patterns that create the results you want.',
+    link: '/services/coaching',
+  },
+  {
+    slug: 'keynotes',
+    title: 'Keynotes & Speaking',
+    subtitle: 'Inspire Your Audience',
+    description: 'High-impact keynotes that challenge thinking, inspire action, and provide practical tools. From "Always LEAP Higher" to industry-specific talks.',
+    link: '/services/keynotes',
+  },
+  {
+    slug: 'certification',
+    title: 'LEAP Certification Program',
+    subtitle: 'Become a Certified LEAP Practitioner',
+    description: 'Join a growing network of certified practitioners bringing the LEAP Framework to organizations worldwide. Multiple certification levels available.',
+    link: '/services/certification',
+  },
+];
+
+const displayServices = services.length > 0 ? services : defaultServices;
+---
+
+<Layout>
+  <Head slot="head" title="LEAP Solutions" description="Comprehensive solutions for transforming your organization through intentional practice." />
+  <Header />
+  <main id="main-content" class="min-h-screen bg-gradient-to-br from-slate-50 to-white">
+    <!-- Hero Section -->
+    <section class="relative pt-32 pb-20 overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5" />
+      <div class="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
+        <Breadcrumbs items={[{ label: 'Solutions' }]} />
+
+        <div class="text-center max-w-4xl mx-auto">
+          <span class="text-primary font-semibold text-sm tracking-wider uppercase mb-4 block">
+            LEAP Solutions
+          </span>
+          <h1 class="text-5xl lg:text-6xl font-bold text-primary mb-6">
+            Transform Your Organization Through <span class="gradient-text">Practice</span>
+          </h1>
+          <p class="text-xl text-slate-600 leading-relaxed mb-8">
+            From strategic consulting to leadership development, we provide comprehensive solutions
+            that help organizations build repeatable, reliable, scalable practices that create excellence.
+          </p>
+          <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button href={createPageUrl('ScheduleCall')} size="lg">
+              Schedule a Consultation
+            </Button>
+            <Button href={createPageUrl('Practice')} variant="outline" size="lg">
+              Take the Assessment
+            </Button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Solutions Grid -->
+    <section class="py-20">
+      <div class="max-w-7xl mx-auto px-6 lg:px-8">
+        <div class="text-center mb-16">
+          <h2 class="text-4xl font-bold text-primary mb-4">
+            Comprehensive Solutions for Every Need
+          </h2>
+          <p class="text-xl text-slate-600 max-w-3xl mx-auto">
+            Choose the solution that fits your organization's current challenges and goals
+          </p>
+        </div>
+
+        <div class="space-y-8">
+          {displayServices.map((service: any) => (
+            <Card class="p-8 lg:p-10 hover:shadow-xl transition-all group">
+              <div class="grid lg:grid-cols-2 gap-8 items-center">
+                <div>
+                  <h3 class="text-3xl font-bold text-primary mb-3">{service.title}</h3>
+                  <p class="text-lg font-semibold text-accent mb-4">{service.subtitle}</p>
+                  <p class="text-slate-600 leading-relaxed mb-6">{service.description}</p>
+                  <Button href={service.link || `/services/${service.slug}`}>
+                    Learn More
+                  </Button>
+                </div>
+
+                <div class="bg-slate-50 rounded-2xl p-6">
+                  <h4 class="font-bold text-slate-900 mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    What's Included
+                  </h4>
+                  <ul class="space-y-3">
+                    {service.features && service.features.length > 0 ? (
+                      service.features.map((feature: string) => (
+                        <li class="flex items-start gap-3">
+                          <div class="w-2 h-2 rounded-full bg-primary mt-2" />
+                          <span class="text-slate-700">{feature}</span>
+                        </li>
+                      ))
+                    ) : (
+                      <li class="text-slate-600">Customized to your needs</li>
+                    )}
+                  </ul>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-20 bg-slate-50">
+      <div class="max-w-4xl mx-auto px-6 lg:px-8">
+        <div class="bg-gradient-to-br from-primary to-primary-dark rounded-3xl p-12 text-center text-white relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-64 h-64 bg-accent/20 rounded-full blur-3xl" />
+          <div class="relative z-10">
+            <h2 class="text-3xl font-bold mb-4">Not Sure Where to Start?</h2>
+            <p class="text-slate-200 text-lg mb-8 max-w-2xl mx-auto">
+              Schedule a consultation and we'll help you identify the perfect solution for your organization's needs.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button href={createPageUrl('ScheduleCall')} variant="secondary" size="lg" class="bg-white text-primary hover:bg-slate-100">
+                Schedule a Call
+              </Button>
+              <Button href={createPageUrl('Contact')} variant="outline" size="lg" class="bg-white/10 border-2 border-white/30 text-white hover:bg-white/20">
+                Contact Us
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Layout>
+

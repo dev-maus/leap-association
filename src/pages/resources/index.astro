@@ -1,0 +1,226 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Head from '../../components/layout/Head.astro';
+import Header from '../../components/layout/Header.astro';
+import Footer from '../../components/layout/Footer.astro';
+import Card from '../../components/ui/Card.astro';
+import Badge from '../../components/ui/Badge.astro';
+import Button from '../../components/ui/Button.astro';
+import NewsletterForm from '../../components/islands/NewsletterForm';
+import { sanity } from '../../lib/sanity';
+import { urlFor } from '../../lib/sanity';
+import { createPageUrl } from '../../lib/utils';
+
+const blogPosts = await sanity.fetch(`*[_type == "blogPost" && status == "published"] | order(publishedAt desc)[0...12]`).catch(() => []);
+const videos = await sanity.fetch(`*[_type == "video" && status == "published"] | order(_createdAt desc)[0...12]`).catch(() => []);
+const downloads = await sanity.fetch(`*[_type == "download" && status == "published"] | order(_createdAt desc)[0...12]`).catch(() => []);
+const books = await sanity.fetch(`*[_type == "book" && status == "published"] | order(_createdAt desc)[0...6]`).catch(() => []);
+---
+
+<Layout>
+  <Head slot="head" title="Resources" description="Tools, insights, and inspiration to fuel your leadership journey." />
+  <Header />
+  <main id="main-content" class="min-h-screen bg-gradient-to-br from-slate-50 to-white pt-24 pb-16">
+    <div class="max-w-7xl mx-auto px-6 lg:px-8">
+      <!-- Header -->
+      <div class="text-center mb-16">
+        <a
+          href={createPageUrl('Home')}
+          class="inline-flex items-center gap-2 text-slate-500 hover:text-slate-700 mb-6 transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to Home
+        </a>
+
+        <span class="block text-primary font-semibold text-sm tracking-wider uppercase mb-4">
+          Learning Hub
+        </span>
+        <h1 class="text-4xl lg:text-5xl font-bold text-primary mb-6">
+          Resources
+        </h1>
+        <p class="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
+          Tools, insights, and inspiration to fuel your leadership journey
+        </p>
+      </div>
+
+      <!-- Blog / Articles Section -->
+      <section class="mb-20">
+        <div class="flex items-center gap-4 mb-8">
+          <div class="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
+            <svg class="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-3xl font-bold text-primary">Blog & Articles</h2>
+            <p class="text-slate-600">Insights and strategies for leadership excellence</p>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {blogPosts.map((post: any) => (
+            <a href={`/resources/blog/${post.slug}`}>
+              <Card class="p-6 hover:border-primary hover:shadow-lg transition-all cursor-pointer group h-full">
+                {post.category && (
+                  <Badge variant="primary" class="mb-3">
+                    {post.category}
+                  </Badge>
+                )}
+                <h3 class="text-xl font-bold text-slate-900 mb-3 group-hover:text-primary transition-colors">
+                  {post.title}
+                </h3>
+                <p class="text-slate-600 mb-4 leading-relaxed">
+                  {post.excerpt}
+                </p>
+                <div class="flex items-center justify-between text-sm text-slate-500">
+                  <span>{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString() : ''}</span>
+                  <span>{post.readTime || 5} min read</span>
+                </div>
+              </Card>
+            </a>
+          ))}
+        </div>
+      </section>
+
+      <!-- Videos Section -->
+      <section class="mb-20">
+        <div class="flex items-center gap-4 mb-8">
+          <div class="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center">
+            <svg class="w-7 h-7 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-3xl font-bold text-primary">Videos</h2>
+            <p class="text-slate-600">Watch, learn, and get inspired</p>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {videos.map((video: any) => (
+            <a href={`/resources/video/${video._id}`}>
+              <Card class="overflow-hidden hover:border-accent hover:shadow-lg transition-all cursor-pointer group">
+                <div class="relative h-40 overflow-hidden bg-slate-100">
+                  {video.thumbnail ? (
+                    <img
+                      src={urlFor(video.thumbnail)?.width(400).height(300).url()}
+                      alt={video.title}
+                      class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                    />
+                  ) : (
+                    <div class="w-full h-full flex items-center justify-center bg-slate-200">
+                      <svg class="w-12 h-12 text-slate-400" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </div>
+                  )}
+                  <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <div class="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <svg class="w-6 h-6 text-accent ml-1" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </div>
+                  </div>
+                  {video.duration && (
+                    <span class="absolute top-3 right-3 px-2 py-1 bg-black/70 text-white text-xs rounded">
+                      {video.duration}
+                    </span>
+                  )}
+                </div>
+                <div class="p-4">
+                  {video.type && (
+                    <Badge variant="accent" class="mb-2">
+                      {video.type}
+                    </Badge>
+                  )}
+                  <h3 class="font-bold text-slate-900 group-hover:text-accent transition-colors">
+                    {video.title}
+                  </h3>
+                </div>
+              </Card>
+            </a>
+          ))}
+        </div>
+      </section>
+
+      <!-- Downloads Section -->
+      <section class="mb-20">
+        <div class="flex items-center gap-4 mb-8">
+          <div class="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
+            <svg class="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-3xl font-bold text-primary">Downloads</h2>
+            <p class="text-slate-600">Free tools, templates, and guides</p>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {downloads.map((item: any) => (
+            <Card class="p-6 hover:border-primary hover:shadow-lg transition-all group">
+              <div class="flex items-start gap-4 mb-4">
+                <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                  <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <div class="flex-1">
+                  <h3 class="font-bold text-slate-900 mb-1 group-hover:text-primary transition-colors">
+                    {item.title}
+                  </h3>
+                  <div class="flex items-center justify-between text-sm text-slate-500">
+                    <span>{item.type}</span>
+                    {item.fileSize && <span>{item.fileSize}</span>}
+                  </div>
+                </div>
+              </div>
+              {item.description && (
+                <p class="text-sm text-slate-600 mb-4">{item.description}</p>
+              )}
+              {item.file && (
+                <a href={urlFor(item.file)?.url()} download>
+                  <Button variant="outline" size="sm" class="w-full">
+                    <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Download
+                  </Button>
+                </a>
+              )}
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      <!-- Newsletter Signup Section -->
+      <section class="mb-8">
+        <div class="bg-gradient-to-br from-primary to-primary-dark rounded-3xl p-10 text-white relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-64 h-64 bg-accent/10 rounded-full blur-3xl" />
+          <div class="relative z-10 max-w-3xl mx-auto text-center">
+            <div class="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center mx-auto mb-6">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+
+            <h2 class="text-3xl font-bold mb-4">
+              Your Best LEAP Yet
+            </h2>
+            <p class="text-slate-200 text-lg mb-8">
+              Weekly insights, tools, and inspiration delivered to your inbox.
+              Join leaders committed to continuous improvement.
+            </p>
+
+            <NewsletterForm client:load />
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+  <Footer />
+</Layout>
+

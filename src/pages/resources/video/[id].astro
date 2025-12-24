@@ -1,0 +1,67 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import Head from '../../../components/layout/Head.astro';
+import Header from '../../../components/layout/Header.astro';
+import Footer from '../../../components/layout/Footer.astro';
+import { sanity } from '../../../lib/sanity';
+import { createPageUrl } from '../../../lib/utils';
+
+const { id } = Astro.params;
+const video = await sanity.fetch(`*[_type == "video" && _id == $id][0]`, { id }).catch(() => null);
+
+if (!video) {
+  return Astro.redirect('/resources');
+}
+---
+
+<Layout>
+  <Head slot="head" title={video.title} description={video.description} />
+  <Header />
+  <main id="main-content" class="min-h-screen bg-white pt-24 pb-16">
+    <div class="max-w-4xl mx-auto px-6 lg:px-8">
+      <a
+        href={createPageUrl('Resources')}
+        class="inline-flex items-center gap-2 text-slate-500 hover:text-slate-700 mb-6 transition-colors"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+        Back to Resources
+      </a>
+
+      <div class="mb-8">
+        <h1 class="text-4xl lg:text-5xl font-bold text-primary mb-4">
+          {video.title}
+        </h1>
+        {video.description && (
+          <p class="text-xl text-slate-600">
+            {video.description}
+          </p>
+        )}
+      </div>
+
+      <div class="aspect-video bg-slate-100 rounded-2xl overflow-hidden mb-8">
+        {video.url ? (
+          <iframe
+            src={video.url}
+            class="w-full h-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+          />
+        ) : (
+          <div class="w-full h-full flex items-center justify-center">
+            <p class="text-slate-500">Video not available</p>
+          </div>
+        )}
+      </div>
+
+      {video.duration && (
+        <p class="text-sm text-slate-500 mb-8">
+          Duration: {video.duration}
+        </p>
+      )}
+    </div>
+  </main>
+  <Footer />
+</Layout>
+

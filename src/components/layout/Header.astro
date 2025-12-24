@@ -1,0 +1,86 @@
+---
+import { createPageUrl } from '../../lib/utils';
+---
+
+<header
+  id="header"
+  class="fixed top-0 left-0 right-0 z-50 transition-all duration-500 bg-primary py-5"
+>
+  <div class="max-w-7xl mx-auto px-6 lg:px-8">
+    <nav class="flex items-center justify-between">
+      <!-- Logo -->
+      <a href={createPageUrl('Home')} class="flex items-center gap-3">
+        <img
+          src="/logo.png"
+          alt="LEAP Association Logo"
+          class="h-12 w-auto"
+        />
+        <span class="text-xl font-semibold tracking-tight text-white">
+          LEAP Association
+        </span>
+      </a>
+
+      <!-- Desktop Nav -->
+      <div class="hidden md:flex items-center gap-6">
+        <a
+          href={createPageUrl('Home')}
+          class="text-sm font-medium transition-colors text-white/80 hover:text-white"
+        >
+          Home
+        </a>
+        <a
+          href={createPageUrl('About')}
+          class="text-sm font-medium transition-colors text-white/80 hover:text-white"
+        >
+          About LEAP
+        </a>
+        <a
+          href={createPageUrl('Solutions')}
+          class="text-sm font-medium transition-colors text-white/80 hover:text-white"
+        >
+          Solutions
+        </a>
+        <a
+          href={createPageUrl('Practice')}
+          class="text-sm font-medium transition-colors text-white/80 hover:text-white"
+        >
+          What's In Your Practice?
+        </a>
+        <a
+          href={createPageUrl('SignatureEvents')}
+          class="text-sm font-medium transition-colors text-white/80 hover:text-white"
+        >
+          Signature Events
+        </a>
+        <a
+          href={createPageUrl('LEAPLounge')}
+          class="text-sm font-medium transition-colors text-white/80 hover:text-white"
+        >
+          LEAP Lounge
+        </a>
+        <a
+          href={createPageUrl('Resources')}
+          class="text-sm font-medium transition-colors text-white/80 hover:text-white"
+        >
+          Resources
+        </a>
+      </div>
+
+      <!-- Mobile Menu Button -->
+      <button
+        id="mobile-menu-button"
+        class="md:hidden p-2 rounded-lg text-white"
+        aria-label="Toggle menu"
+      >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<script>
+  // Mobile menu toggle and scroll behavior will be handled by React island
+</script>
+

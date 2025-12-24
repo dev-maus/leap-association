@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light dark;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-white text-ink antialiased;
+}
+
+/* Section spacing utilities */
+.section {
+  @apply w-full mx-auto;
+}
+
+.section-py {
+  @apply py-16 md:py-24;
+}
+
+.section-py-sm {
+  @apply py-12 md:py-16;
+}
+
+.section-py-lg {
+  @apply py-20 md:py-32;
+}
+
+/* Anchor offset for sticky header */
+section[id] {
+  scroll-margin-top: 88px;
+}
+
+/* Button design system */
+.btn-primary {
+  @apply inline-flex items-center rounded-lg bg-primary text-white px-6 py-3 text-sm
+         hover:bg-primary-dark transition-colors focus-visible:ring-2 focus-visible:ring-primary;
+}
+
+.btn-secondary {
+  @apply inline-flex items-center rounded-lg bg-white border border-primary/30 text-primary
+         px-5 py-2.5 text-sm hover:bg-primary/5 transition-colors;
+}
+
+.btn-outline {
+  @apply inline-flex items-center rounded-lg border border-primary/30 text-ink px-6 py-3
+         text-sm hover:border-primary hover:bg-primary/5 transition-colors;
+}
+
+/* Animations */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeUp {
+  animation: fadeUp 0.8s ease both;
+}
+
+/* Scroll reveal */
+.reveal {
+  opacity: 0;
+  transform: translateY(16px);
+}
+
+.reveal.show {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #D97706 0%, #F59E0B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+

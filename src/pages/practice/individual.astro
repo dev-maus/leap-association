@@ -1,0 +1,42 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Head from '../../components/layout/Head.astro';
+import Header from '../../components/layout/Header.astro';
+import Footer from '../../components/layout/Footer.astro';
+import AssessmentFlow from '../../components/islands/AssessmentFlow';
+import { createPageUrl } from '../../lib/utils';
+---
+
+<Layout>
+  <Head slot="head" title="Individual HATS Assessment" description="Take the Individual HATS Assessment to discover your personal practice patterns." />
+  <Header />
+  <main id="main-content" class="min-h-screen bg-gradient-to-br from-slate-50 to-white pt-24 pb-16">
+    <div class="max-w-6xl mx-auto px-6 lg:px-8">
+      <div class="text-center mb-12">
+        <a
+          href={createPageUrl('Practice')}
+          class="inline-flex items-center gap-2 text-slate-500 hover:text-slate-700 mb-6 transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to Practice
+        </a>
+
+        <span class="block text-primary font-semibold text-sm tracking-wider uppercase mb-4">
+          HATS™ Assessment
+        </span>
+        <h1 class="text-3xl lg:text-4xl font-bold text-primary mb-4">
+          Individual HATS™ Assessment
+        </h1>
+        <p class="text-lg text-slate-600 max-w-2xl mx-auto">
+          Discover your personal practice patterns across Habits, Abilities, Talents, and Skills.
+        </p>
+      </div>
+
+      <AssessmentFlow client:load type="individual" />
+    </div>
+  </main>
+  <Footer />
+</Layout>
+

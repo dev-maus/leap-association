@@ -1,0 +1,89 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import Head from '../../../components/layout/Head.astro';
+import Header from '../../../components/layout/Header.astro';
+import Footer from '../../../components/layout/Footer.astro';
+import Breadcrumbs from '../../../components/common/Breadcrumbs.astro';
+import Button from '../../../components/ui/Button.astro';
+import Card from '../../../components/ui/Card.astro';
+import { sanity } from '../../../lib/sanity';
+import { createPageUrl } from '../../../lib/utils';
+
+const service = await sanity.fetch(`*[_type == "service" && slug == "training"][0]`).catch(() => null);
+---
+
+<Layout>
+  <Head slot="head" title="Leadership Training & Development" description="Build leaders at every level through comprehensive training programs." />
+  <Header />
+  <main id="main-content" class="min-h-screen bg-gradient-to-br from-slate-50 to-white pt-24 pb-16">
+    <div class="max-w-6xl mx-auto px-6 lg:px-8">
+      <Breadcrumbs items={[
+        { label: 'Solutions', path: createPageUrl('Solutions') },
+        { label: 'Training' }
+      ]} />
+
+      <div class="text-center mb-16">
+        <h1 class="text-4xl lg:text-5xl font-bold text-primary mb-6">
+          {service?.title || 'Leadership Training & Development'}
+        </h1>
+        <p class="text-xl text-slate-600 max-w-3xl mx-auto">
+          {service?.subtitle || 'Build Leaders at Every Level'}
+        </p>
+      </div>
+
+      <div class="prose prose-lg max-w-none mb-12">
+        {service?.description ? (
+          <p class="text-lg text-slate-600 leading-relaxed">{service.description}</p>
+        ) : (
+          <p class="text-lg text-slate-600 leading-relaxed">
+            Comprehensive leadership development tracks, from leading yourself to leading organizational change.
+            Build practices that create excellence through intentional, repeatable behaviors.
+          </p>
+        )}
+      </div>
+
+      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+        <Card class="p-6">
+          <h3 class="text-xl font-bold text-primary mb-3">Leading Self</h3>
+          <p class="text-slate-600 mb-4 text-sm">Master personal leadership practices</p>
+          <Button href="/services/training/leading-self" variant="outline" size="sm">Learn More</Button>
+        </Card>
+
+        <Card class="p-6">
+          <h3 class="text-xl font-bold text-primary mb-3">Leading Others</h3>
+          <p class="text-slate-600 mb-4 text-sm">Develop team leadership capabilities</p>
+          <Button href="/services/training/leading-others" variant="outline" size="sm">Learn More</Button>
+        </Card>
+
+        <Card class="p-6">
+          <h3 class="text-xl font-bold text-primary mb-3">Leading Projects</h3>
+          <p class="text-slate-600 mb-4 text-sm">Excel at project and program leadership</p>
+          <Button href="/services/training/leading-projects" variant="outline" size="sm">Learn More</Button>
+        </Card>
+
+        <Card class="p-6">
+          <h3 class="text-xl font-bold text-primary mb-3">Leading Change</h3>
+          <p class="text-slate-600 mb-4 text-sm">Drive organizational transformation</p>
+          <Button href="/services/training/leading-change" variant="outline" size="sm">Learn More</Button>
+        </Card>
+      </div>
+
+      <div class="bg-gradient-to-br from-primary to-primary-dark rounded-3xl p-10 text-white text-center">
+        <h2 class="text-3xl font-bold mb-4">Ready to Develop Your Leaders?</h2>
+        <p class="text-slate-200 mb-8 max-w-2xl mx-auto">
+          Discover which training program fits your organization's needs.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <Button href={createPageUrl('ScheduleCall')} variant="secondary" size="lg" class="bg-white text-primary hover:bg-slate-100">
+            Schedule a Call
+          </Button>
+          <Button href={createPageUrl('Contact')} variant="outline" size="lg" class="bg-white/10 border-2 border-white/30 text-white hover:bg-white/20">
+            Contact Us
+          </Button>
+        </div>
+      </div>
+    </div>
+  </main>
+  <Footer />
+</Layout>
+

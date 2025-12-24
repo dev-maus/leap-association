@@ -1,0 +1,84 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import Head from '../../../components/layout/Head.astro';
+import Header from '../../../components/layout/Header.astro';
+import Footer from '../../../components/layout/Footer.astro';
+import Breadcrumbs from '../../../components/common/Breadcrumbs.astro';
+import Button from '../../../components/ui/Button.astro';
+import Card from '../../../components/ui/Card.astro';
+import { sanity } from '../../../lib/sanity';
+import { createPageUrl } from '../../../lib/utils';
+
+const service = await sanity.fetch(`*[_type == "service" && slug == "consulting"][0]`).catch(() => null);
+---
+
+<Layout>
+  <Head slot="head" title="Consulting Services" description="Strategic organizational transformation through intentional practice." />
+  <Header />
+  <main id="main-content" class="min-h-screen bg-gradient-to-br from-slate-50 to-white pt-24 pb-16">
+    <div class="max-w-6xl mx-auto px-6 lg:px-8">
+      <Breadcrumbs items={[
+        { label: 'Solutions', path: createPageUrl('Solutions') },
+        { label: 'Consulting' }
+      ]} />
+
+      <div class="text-center mb-16">
+        <h1 class="text-4xl lg:text-5xl font-bold text-primary mb-6">
+          {service?.title || 'Consulting Services'}
+        </h1>
+        <p class="text-xl text-slate-600 max-w-3xl mx-auto">
+          {service?.subtitle || 'Strategic Organizational Transformation'}
+        </p>
+      </div>
+
+      <div class="prose prose-lg max-w-none mb-12">
+        {service?.description ? (
+          <p class="text-lg text-slate-600 leading-relaxed">{service.description}</p>
+        ) : (
+          <p class="text-lg text-slate-600 leading-relaxed">
+            From power utility operations to leadership culture, we help organizations build practices
+            that create measurable, sustainable results. Our consulting approach integrates the LEAP
+            Framework to transform how teams operate, communicate, and deliver.
+          </p>
+        )}
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-6 mb-16">
+        <Card class="p-6">
+          <h3 class="text-xl font-bold text-primary mb-3">DRP Consulting</h3>
+          <p class="text-slate-600 mb-4">Disaster Recovery Planning and organizational resilience</p>
+          <Button href="/services/consulting/drp" variant="outline" size="sm">Learn More</Button>
+        </Card>
+
+        <Card class="p-6">
+          <h3 class="text-xl font-bold text-primary mb-3">Readiness Assessment</h3>
+          <p class="text-slate-600 mb-4">Evaluate organizational readiness for change and growth</p>
+          <Button href="/services/consulting/readiness" variant="outline" size="sm">Learn More</Button>
+        </Card>
+
+        <Card class="p-6">
+          <h3 class="text-xl font-bold text-primary mb-3">Team Alignment</h3>
+          <p class="text-slate-600 mb-4">Align teams around shared practices and goals</p>
+          <Button href="/services/consulting/team-alignment" variant="outline" size="sm">Learn More</Button>
+        </Card>
+      </div>
+
+      <div class="bg-gradient-to-br from-primary to-primary-dark rounded-3xl p-10 text-white text-center">
+        <h2 class="text-3xl font-bold mb-4">Ready to Transform Your Organization?</h2>
+        <p class="text-slate-200 mb-8 max-w-2xl mx-auto">
+          Schedule a consultation to discuss how LEAP consulting can help your organization build excellence.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <Button href={createPageUrl('ScheduleCall')} variant="secondary" size="lg" class="bg-white text-primary hover:bg-slate-100">
+            Schedule a Call
+          </Button>
+          <Button href={createPageUrl('Contact')} variant="outline" size="lg" class="bg-white/10 border-2 border-white/30 text-white hover:bg-white/20">
+            Contact Us
+          </Button>
+        </div>
+      </div>
+    </div>
+  </main>
+  <Footer />
+</Layout>
+

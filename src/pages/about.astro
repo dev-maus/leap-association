@@ -1,0 +1,158 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Head from '../components/layout/Head.astro';
+import Header from '../components/layout/Header.astro';
+import Footer from '../components/layout/Footer.astro';
+import { sanity } from '../lib/sanity';
+import { urlFor } from '../lib/sanity';
+import { createPageUrl } from '../lib/utils';
+import CTAButtons from '../components/common/CTAButtons';
+
+const teamMember = await sanity.fetch(`*[_type == "teamMember"][0]`).catch(() => null);
+const testimonials = await sanity.fetch(`*[_type == "testimonial" && featured == true] | order(_createdAt desc)[0...6]`).catch(() => []);
+const caseStudies = await sanity.fetch(`*[_type == "caseStudy"] | order(_createdAt desc)[0...3]`).catch(() => []);
+---
+
+<Layout>
+  <Head slot="head" title="About LEAP Association" description="Learn about LEAP Association and our mission to transform leaders through intentional practice." />
+  <Header />
+  <main id="main-content" class="min-h-screen bg-gradient-to-br from-slate-50 to-white">
+    <!-- Hero Section -->
+    <section class="pt-32 pb-20 px-6 lg:px-8 relative overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5" />
+      <div class="max-w-6xl mx-auto relative z-10">
+        <a
+          href={createPageUrl('Home')}
+          class="inline-flex items-center gap-2 text-slate-500 hover:text-slate-700 mb-8 transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to Home
+        </a>
+
+        <div class="text-center">
+          <span class="text-primary font-semibold text-sm tracking-wider uppercase mb-4 block">
+            About LEAP Association
+          </span>
+          <h1 class="text-4xl lg:text-6xl font-bold text-primary mb-6">
+            Excellence Through <span class="gradient-text">Intentional Practice</span>
+          </h1>
+          <p class="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
+            We help leaders and organizations build repeatable, reliable, scalable behaviors
+            that create lasting excellence, not through theory, but through practice.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Mission, Vision, Values -->
+    <section class="py-20 px-6 lg:px-8">
+      <div class="max-w-6xl mx-auto">
+        <div class="grid md:grid-cols-3 gap-8">
+          <div class="bg-white rounded-3xl p-8 shadow-lg border border-slate-100 hover:shadow-xl transition-shadow">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mb-6 shadow-lg">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-primary mb-4">Our Mission</h3>
+            <p class="text-slate-600 leading-relaxed">
+              To transform how individuals and organizations approach excellence by making intentional practice the foundation of all achievement.
+            </p>
+          </div>
+
+          <div class="bg-white rounded-3xl p-8 shadow-lg border border-slate-100 hover:shadow-xl transition-shadow">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center mb-6 shadow-lg">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-primary mb-4">Our Vision</h3>
+            <p class="text-slate-600 leading-relaxed">
+              A world where every person and organization understands what they're practicing and deliberately builds patterns that lead to repeatable excellence.
+            </p>
+          </div>
+
+          <div class="bg-white rounded-3xl p-8 shadow-lg border border-slate-100 hover:shadow-xl transition-shadow">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center mb-6 shadow-lg">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-primary mb-4">Our Values</h3>
+            <p class="text-slate-600 leading-relaxed">
+              Intentionality over activity. Practice over perfection. Progress over comfort. Growth through deliberate action.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- About Coach Aaron -->
+    {teamMember && (
+      <section class="py-20 px-6 lg:px-8 bg-slate-50">
+        <div class="max-w-6xl mx-auto">
+          <div class="text-center mb-16">
+            <h2 class="text-3xl lg:text-4xl font-bold text-primary mb-6">
+              Meet Coach Aaron
+            </h2>
+            <p class="text-xl text-slate-600 max-w-3xl mx-auto">
+              From NASA mission control to executive coaching, building excellence through practice
+            </p>
+          </div>
+
+          <div class="grid lg:grid-cols-2 gap-12 items-center">
+            {teamMember.image && (
+              <div class="bg-white rounded-3xl shadow-xl p-8">
+                <div class="w-full h-96 rounded-2xl mb-6 overflow-hidden bg-slate-100">
+                  <img
+                    src={urlFor(teamMember.image)?.width(600).height(800).url()}
+                    alt={teamMember.name}
+                    class="w-full h-full object-contain"
+                  />
+                </div>
+                <h3 class="text-2xl font-bold text-primary mb-2">{teamMember.name}</h3>
+                <p class="text-accent font-semibold mb-4">{teamMember.title}</p>
+              </div>
+            )}
+
+            <div class="space-y-6">
+              {teamMember.bio && (
+                <div>
+                  <p class="text-slate-600 leading-relaxed whitespace-pre-line">
+                    {teamMember.bio}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+    )}
+
+    <!-- CTA Section -->
+    <section class="py-20 px-6 lg:px-8">
+      <div class="max-w-4xl mx-auto">
+        <div class="bg-gradient-to-br from-primary to-primary-dark rounded-3xl p-12 text-center text-white relative overflow-hidden">
+          <div class="absolute -top-10 -right-10 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
+          <div class="absolute -bottom-10 -left-10 w-80 h-80 bg-accent/10 rounded-full blur-3xl" />
+
+          <div class="relative z-10">
+            <h2 class="text-3xl lg:text-4xl font-bold mb-6">
+              Ready to Transform Your Practice?
+            </h2>
+            <p class="text-xl text-slate-200 mb-8 max-w-2xl mx-auto">
+              Discover what you're practicing and build the patterns that create excellence.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+              <CTAButtons client:load />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Layout>
+

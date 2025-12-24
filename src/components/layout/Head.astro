@@ -1,0 +1,62 @@
+---
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  url?: string;
+}
+
+const {
+  title = 'LEAP Association - Excellence Through Intentional Practice',
+  description = 'Transforming leaders and organizations through intentional practice. Build repeatable, reliable, scalable behaviors that create lasting excellence.',
+  image = '/og-image.jpg',
+  url = 'https://leapassociation.com',
+} = Astro.props;
+
+const siteTitle = title.includes('LEAP') ? title : `${title} | LEAP Association`;
+---
+
+<title>{siteTitle}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={url} />
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website" />
+<meta property="og:url" content={url} />
+<meta property="og:title" content={siteTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:image" content={image} />
+
+<!-- Twitter -->
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:url" content={url} />
+<meta property="twitter:title" content={siteTitle} />
+<meta property="twitter:description" content={description} />
+<meta property="twitter:image" content={image} />
+
+<!-- Theme Color -->
+<meta name="theme-color" content="#76648F" />
+
+<!-- Structured Data -->
+<script type="application/ld+json" set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "LEAP Association",
+  "url": "https://leapassociation.com",
+  "logo": "https://leapassociation.com/logo.png",
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "telephone": "+1-424-999-5327",
+    "contactType": "customer service",
+    "email": "service@leapassociation.com"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "50 Hurt Plaza",
+    "addressLocality": "Atlanta",
+    "addressRegion": "GA",
+    "postalCode": "30303",
+    "addressCountry": "US"
+  }
+})} />
+

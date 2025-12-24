@@ -1,0 +1,126 @@
+---
+import { sanity } from '../../lib/sanity';
+import { urlFor } from '../../lib/sanity';
+
+const leapItems = await sanity.fetch(`*[_type == "leapFramework"] | order(letter asc)`).catch(() => []);
+
+// Default LEAP items if none in Sanity
+const defaultItems = [
+  {
+    letter: 'L',
+    title: 'Leadership',
+    subtitle: 'The practice of influence.',
+    description: 'How you show up determines how others follow, align, and collaborate.',
+    color: 'from-blue-500 to-blue-600',
+  },
+  {
+    letter: 'E',
+    title: 'Effectiveness',
+    subtitle: 'The practice of clarity and execution.',
+    description: 'Great visions collapse without effective behaviors, structure, and habits.',
+    color: 'from-emerald-500 to-emerald-600',
+  },
+  {
+    letter: 'A',
+    title: 'Accountability',
+    subtitle: 'The practice of ownership and trust.',
+    description: 'Teams rise or fall on their ability to follow through and hold each other up.',
+    color: 'from-purple-500 to-purple-600',
+  },
+  {
+    letter: 'P',
+    title: 'Productivity',
+    subtitle: 'The practice of meaningful progress.',
+    description: 'Not just doing more, but doing what matters most, consistently.',
+    color: 'from-amber-500 to-amber-600',
+  },
+];
+
+const displayItems = leapItems.length > 0 ? leapItems : defaultItems;
+---
+
+<section id="leap" class="py-24 lg:py-32 bg-slate-50">
+  <div class="max-w-7xl mx-auto px-6 lg:px-8">
+    <!-- Section Header -->
+    <div class="text-center mb-20">
+      <span class="inline-block text-primary font-semibold text-sm tracking-wider uppercase mb-4">
+        The Framework
+      </span>
+      <h2 class="text-4xl lg:text-5xl font-bold text-primary mb-6">
+        The LEAP Framework™
+      </h2>
+      <p class="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
+        Four foundational practices that are present in every team meeting, every communication, every decision, and every routine.
+      </p>
+    </div>
+
+    <!-- LEAP Cards -->
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
+      {displayItems.map((item: any) => (
+        <div class="bg-white rounded-2xl overflow-hidden h-full shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100 hover:border-slate-200 hover:-translate-y-1">
+          <!-- Image Card -->
+          <div class={`w-full aspect-[4/3] bg-gradient-to-br ${item.color || 'from-primary to-primary-dark'} flex items-center justify-center relative overflow-hidden`}>
+            {item.image ? (
+              <img
+                src={urlFor(item.image)?.width(400).height(300).url()}
+                alt={item.title}
+                class="w-full h-full object-cover"
+              />
+            ) : (
+              <span class="text-6xl font-bold text-white/80">{item.letter}</span>
+            )}
+          </div>
+
+          <!-- Content -->
+          <div class="p-6">
+            <h3 class="text-xl font-bold text-primary mb-2">{item.title}</h3>
+            <p class="text-primary font-medium text-sm mb-3">{item.subtitle}</p>
+            <p class="text-slate-600 leading-relaxed text-sm">{item.description}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <!-- Why LEAP Section -->
+    <div class="bg-primary rounded-3xl p-10 lg:p-16 text-white">
+      <div class="grid lg:grid-cols-2 gap-12 items-center">
+        <div>
+          <h3 class="text-3xl lg:text-4xl font-bold mb-6">
+            Why LEAP Is Foundational
+          </h3>
+          <p class="text-slate-300 text-lg leading-relaxed mb-6">
+            These four areas are universal. When they are practiced with intention, organizations thrive. When they are neglected or practiced inconsistently, performance breaks down.
+          </p>
+          <p class="text-slate-300 text-lg leading-relaxed">
+            LEAP brings awareness, clarity, and alignment to these practices so leaders and teams can develop repeatable, reliable, scalable behaviors that build momentum immediately and compound over time.
+          </p>
+        </div>
+
+        <div class="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8">
+          <h4 class="font-semibold text-accent text-sm uppercase tracking-wider mb-6">
+            LEAP as a Continuous Improvement Engine
+          </h4>
+          <p class="text-slate-300 mb-6">
+            Continuous improvement isn't a checklist. It's a practice.
+          </p>
+          <ul class="space-y-4">
+            {[
+              "Understand what you're really practicing",
+              "Align your actions with your mission and goals",
+              "Build new habits that support long-term performance",
+              "Create a culture where excellence is practiced daily"
+            ].map((item) => (
+              <li class="flex items-start gap-3">
+                <div class="w-5 h-5 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div class="w-2 h-2 rounded-full bg-accent" />
+                </div>
+                <span class="text-slate-200">{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+

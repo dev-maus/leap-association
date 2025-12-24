@@ -1,0 +1,63 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Head from '../../components/layout/Head.astro';
+import Header from '../../components/layout/Header.astro';
+import Footer from '../../components/layout/Footer.astro';
+import Breadcrumbs from '../../components/common/Breadcrumbs.astro';
+import Button from '../../components/ui/Button.astro';
+import { sanity } from '../../lib/sanity';
+import { createPageUrl } from '../../lib/utils';
+
+const service = await sanity.fetch(`*[_type == "service" && slug == "coaching"][0]`).catch(() => null);
+---
+
+<Layout>
+  <Head slot="head" title="Coaching Services" description="Personalized leadership development for executives, leaders, teens, and couples." />
+  <Header />
+  <main id="main-content" class="min-h-screen bg-gradient-to-br from-slate-50 to-white pt-24 pb-16">
+    <div class="max-w-6xl mx-auto px-6 lg:px-8">
+      <Breadcrumbs items={[
+        { label: 'Solutions', path: createPageUrl('Solutions') },
+        { label: 'Coaching' }
+      ]} />
+
+      <div class="text-center mb-16">
+        <h1 class="text-4xl lg:text-5xl font-bold text-primary mb-6">
+          {service?.title || 'Coaching'}
+        </h1>
+        <p class="text-xl text-slate-600 max-w-3xl mx-auto">
+          {service?.subtitle || 'Personalized Leadership Development'}
+        </p>
+      </div>
+
+      <div class="prose prose-lg max-w-none mb-12">
+        {service?.description ? (
+          <p class="text-lg text-slate-600 leading-relaxed">{service.description}</p>
+        ) : (
+          <p class="text-lg text-slate-600 leading-relaxed">
+            One-on-one coaching for executives, leaders, teens, and couples. Discover what you're practicing
+            and build patterns that create the results you want. Personalized sessions designed to unlock
+            your potential through intentional practice.
+          </p>
+        )}
+      </div>
+
+      <div class="bg-gradient-to-br from-primary to-primary-dark rounded-3xl p-10 text-white text-center">
+        <h2 class="text-3xl font-bold mb-4">Ready to Start Your Coaching Journey?</h2>
+        <p class="text-slate-200 mb-8 max-w-2xl mx-auto">
+          Schedule a consultation to discuss your coaching needs.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <Button href={createPageUrl('ScheduleCall')} variant="secondary" size="lg" class="bg-white text-primary hover:bg-slate-100">
+            Schedule a Call
+          </Button>
+          <Button href={createPageUrl('Contact')} variant="outline" size="lg" class="bg-white/10 border-2 border-white/30 text-white hover:bg-white/20">
+            Contact Us
+          </Button>
+        </div>
+      </div>
+    </div>
+  </main>
+  <Footer />
+</Layout>
+

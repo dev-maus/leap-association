@@ -1,0 +1,28 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Head from '../../components/layout/Head.astro';
+import Header from '../../components/layout/Header.astro';
+import Footer from '../../components/layout/Footer.astro';
+import AdminDashboard from '../../components/islands/AdminDashboard';
+---
+
+<Layout>
+  <Head slot="head" title="Admin Dashboard" description="LEAP Association admin dashboard for managing content, leads, and assessments." />
+  <Header />
+  <main id="main-content" class="min-h-screen bg-gradient-to-br from-slate-50 to-white pt-24 pb-16">
+    <div class="max-w-7xl mx-auto px-6 lg:px-8">
+      <div class="mb-8">
+        <h1 class="text-3xl lg:text-4xl font-bold text-primary mb-2">
+          Admin Dashboard
+        </h1>
+        <p class="text-slate-600">
+          Manage content, leads, assessments, and more
+        </p>
+      </div>
+
+      <AdminDashboard client:load />
+    </div>
+  </main>
+  <Footer />
+</Layout>
+

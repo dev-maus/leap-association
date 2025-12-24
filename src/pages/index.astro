@@ -1,0 +1,20 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Head from '../components/layout/Head.astro';
+import Header from '../components/layout/Header.astro';
+import Footer from '../components/layout/Footer.astro';
+import HeroSection from '../components/sections/HeroSection.astro';
+import LEAPFramework from '../components/sections/LEAPFramework.astro';
+import CTASection from '../components/sections/CTASection.astro';
+---
+
+<Layout>
+  <Head slot="head" title="Home" />
+  <Header />
+  <main id="main-content">
+    <HeroSection />
+    <LEAPFramework />
+    <CTASection />
+  </main>
+  <Footer />
+</Layout>

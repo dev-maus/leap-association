@@ -1,0 +1,37 @@
+---
+import CTAButtons from '../common/CTAButtons';
+
+interface Props {
+  heading?: string;
+  description?: string;
+  class?: string;
+}
+
+const {
+  heading = "Ready to Transform Your Practice?",
+  description = "Discover what you're practicing and build the patterns that create excellence.",
+  class: className = '',
+} = Astro.props;
+---
+
+<section class={`py-20 px-6 lg:px-8 ${className}`}>
+  <div class="max-w-4xl mx-auto">
+    <div class="bg-gradient-to-br from-primary to-primary-dark rounded-3xl p-12 text-center text-white relative overflow-hidden">
+      <div class="absolute -top-10 -right-10 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
+      <div class="absolute -bottom-10 -left-10 w-80 h-80 bg-accent/10 rounded-full blur-3xl" />
+
+      <div class="relative z-10">
+        <h2 class="text-3xl lg:text-4xl font-bold mb-6">
+          {heading}
+        </h2>
+        <p class="text-xl text-slate-200 mb-8 max-w-2xl mx-auto">
+          {description}
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <CTAButtons client:load />
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+

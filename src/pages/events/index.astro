@@ -1,0 +1,73 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Head from '../../components/layout/Head.astro';
+import Header from '../../components/layout/Header.astro';
+import Footer from '../../components/layout/Footer.astro';
+import EventRegistration from '../../components/islands/EventRegistration';
+import Card from '../../components/ui/Card.astro';
+import Badge from '../../components/ui/Badge.astro';
+import { sanity } from '../../lib/sanity';
+import { createPageUrl } from '../../lib/utils';
+
+const events = await sanity.fetch(`*[_type == "signatureEvent"] | order(_createdAt desc)`).catch(() => []);
+---
+
+<Layout>
+  <Head slot="head" title="Signature Events" description="Join LEAP Association signature events designed to transform your leadership practice." />
+  <Header />
+  <main id="main-content" class="min-h-screen bg-gradient-to-br from-slate-50 to-white pt-24 pb-16">
+    <div class="max-w-6xl mx-auto px-6 lg:px-8">
+      <div class="text-center mb-16">
+        <span class="block text-primary font-semibold text-sm tracking-wider uppercase mb-4">
+          Signature Events
+        </span>
+        <h1 class="text-4xl lg:text-5xl font-bold text-primary mb-6">
+          Transform Through Experience
+        </h1>
+        <p class="text-xl text-slate-600 max-w-3xl mx-auto">
+          Join our signature events designed to deepen your practice and connect with other leaders
+          committed to excellence.
+        </p>
+      </div>
+
+      <div class="space-y-8 mb-16">
+        {events.map((event: any) => (
+          <Card class="p-8 hover:shadow-xl transition-all">
+            <div class="flex items-start gap-6">
+              <div class="flex-1">
+                <div class="flex items-center gap-3 mb-4">
+                  <h2 class="text-2xl font-bold text-primary">{event.title}</h2>
+                  {event.format && (
+                    <Badge variant="primary">{event.format}</Badge>
+                  )}
+                </div>
+                {event.subtitle && (
+                  <p class="text-lg text-accent font-semibold mb-4">{event.subtitle}</p>
+                )}
+                {event.description && (
+                  <p class="text-slate-600 mb-6 leading-relaxed">{event.description}</p>
+                )}
+                {event.duration && (
+                  <p class="text-sm text-slate-500 mb-4">Duration: {event.duration}</p>
+                )}
+                <EventRegistration client:load eventId={event._id} />
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      <div class="bg-gradient-to-br from-primary to-primary-dark rounded-3xl p-10 text-white text-center">
+        <h2 class="text-3xl font-bold mb-4">LEAP Lounge</h2>
+        <p class="text-slate-200 mb-8 max-w-2xl mx-auto">
+          Experience our premier event venue in Atlanta. Perfect for workshops, meetings, and team experiences.
+        </p>
+        <a href="/events/lounge" class="inline-block px-8 py-4 bg-white text-primary rounded-xl font-semibold hover:bg-slate-100 transition-colors">
+          Learn More About LEAP Lounge
+        </a>
+      </div>
+    </div>
+  </main>
+  <Footer />
+</Layout>
+

@@ -1,0 +1,57 @@
+---
+import { sanity } from '../../lib/sanity';
+import { urlFor } from '../../lib/sanity';
+import CTAButtons from '../common/CTAButtons';
+
+const heroData = await sanity.fetch(`*[_type == "hero" && page == "home"][0]{
+  heading,
+  subheading,
+  ctaLabel,
+  mediaUrl,
+  image
+}`).catch(() => null);
+---
+
+<section class="relative min-h-screen flex items-center overflow-hidden bg-gradient-to-br from-primary via-primary-dark to-primary-dark">
+  <!-- Decorative elements -->
+  <div class="absolute top-20 right-20 w-64 h-64 bg-accent/10 rounded-full blur-3xl" />
+  <div class="absolute bottom-20 left-20 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
+
+  <!-- Two Column Layout -->
+  <div class="relative z-10 w-full min-h-screen flex">
+    <!-- Left Column - Text Content -->
+    <div class="w-full lg:w-1/2 flex items-center px-6 lg:px-12 xl:px-20 py-20 lg:py-32 relative z-20">
+      <div class="max-w-xl lg:max-w-none">
+        <h1 class="text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-6 leading-tight">
+          {heroData?.heading || "What's In Your Practice?"}
+        </h1>
+
+        <p class="text-lg lg:text-xl text-white/90 mb-6 leading-relaxed">
+          {heroData?.subheading || "Because whether you know it or not, you're already practicing something. The question is: Is it helping you thrive... or holding you back?"}
+        </p>
+
+        <p class="text-base lg:text-lg text-white/80 mb-8 leading-relaxed">
+          Every leader, team and organization operates from a set of daily behaviors, some intentional, many automatic. At LEAP Association, we bring awareness, alignment, and action to your practice so you can unlock Leadership, Effectiveness, Accountability, and Productivity at the highest level.
+        </p>
+
+        <div class="flex flex-col sm:flex-row gap-4">
+          <CTAButtons client:load />
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column - Image -->
+    <div class="hidden lg:flex w-1/2 items-center justify-center relative z-10">
+      {heroData?.image ? (
+        <img
+          src={urlFor(heroData.image)?.width(800).height(1000).url()}
+          alt="Leadership Coach"
+          class="h-full w-auto max-w-none object-contain"
+        />
+      ) : (
+        <div class="w-full h-full bg-white/5 rounded-lg" />
+      )}
+    </div>
+  </div>
+</section>
+

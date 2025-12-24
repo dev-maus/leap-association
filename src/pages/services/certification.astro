@@ -1,0 +1,62 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Head from '../../components/layout/Head.astro';
+import Header from '../../components/layout/Header.astro';
+import Footer from '../../components/layout/Footer.astro';
+import Breadcrumbs from '../../components/common/Breadcrumbs.astro';
+import Button from '../../components/ui/Button.astro';
+import { sanity } from '../../lib/sanity';
+import { createPageUrl } from '../../lib/utils';
+
+const service = await sanity.fetch(`*[_type == "service" && slug == "certification"][0]`).catch(() => null);
+---
+
+<Layout>
+  <Head slot="head" title="LEAP Certification Program" description="Become a Certified LEAP Practitioner and join a growing network of certified practitioners." />
+  <Header />
+  <main id="main-content" class="min-h-screen bg-gradient-to-br from-slate-50 to-white pt-24 pb-16">
+    <div class="max-w-6xl mx-auto px-6 lg:px-8">
+      <Breadcrumbs items={[
+        { label: 'Solutions', path: createPageUrl('Solutions') },
+        { label: 'Certification' }
+      ]} />
+
+      <div class="text-center mb-16">
+        <h1 class="text-4xl lg:text-5xl font-bold text-primary mb-6">
+          {service?.title || 'LEAP Certification Program'}
+        </h1>
+        <p class="text-xl text-slate-600 max-w-3xl mx-auto">
+          {service?.subtitle || 'Become a Certified LEAP Practitioner'}
+        </p>
+      </div>
+
+      <div class="prose prose-lg max-w-none mb-12">
+        {service?.description ? (
+          <p class="text-lg text-slate-600 leading-relaxed">{service.description}</p>
+        ) : (
+          <p class="text-lg text-slate-600 leading-relaxed">
+            Join a growing network of certified practitioners bringing the LEAP Framework to organizations
+            worldwide. Multiple certification levels available to match your experience and goals.
+          </p>
+        )}
+      </div>
+
+      <div class="bg-gradient-to-br from-primary to-primary-dark rounded-3xl p-10 text-white text-center">
+        <h2 class="text-3xl font-bold mb-4">Ready to Become Certified?</h2>
+        <p class="text-slate-200 mb-8 max-w-2xl mx-auto">
+          Learn more about certification requirements and program details.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <Button href={createPageUrl('Contact')} variant="secondary" size="lg" class="bg-white text-primary hover:bg-slate-100">
+            Contact Us
+          </Button>
+          <Button href={createPageUrl('ScheduleCall')} variant="outline" size="lg" class="bg-white/10 border-2 border-white/30 text-white hover:bg-white/20">
+            Schedule a Call
+          </Button>
+        </div>
+      </div>
+    </div>
+  </main>
+  <Footer />
+</Layout>
+
