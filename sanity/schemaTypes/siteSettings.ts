@@ -40,6 +40,12 @@ export default defineType({
         {name: 'facebook', title: 'Facebook', type: 'url'},
       ],
     }),
+    defineField({
+      name: 'bookingUrl',
+      title: 'Booking URL',
+      type: 'url',
+      description: 'External booking page URL (e.g., Koalendar, Calendly). If set, the schedule page will redirect to this URL.',
+    }),
   ],
 })
 

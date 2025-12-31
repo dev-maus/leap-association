@@ -1,43 +1,144 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import Head from '../components/layout/Head.astro';
-import Header from '../components/layout/Header.astro';
-import Footer from '../components/layout/Footer.astro';
-import CalendarBooking from '../components/islands/CalendarBooking';
-import { createPageUrl } from '../lib/utils';
+import { sanity } from '../lib/sanity';
+
+// Fetch booking URL from Sanity
+const siteSettings = await sanity.fetch<{ bookingUrl?: string } | null>(
+  `*[_type == "siteSettings"][0] { bookingUrl }`
+);
+
+const bookingUrl = siteSettings?.bookingUrl;
 ---
-
-<Layout>
-  <Head slot="head" title="Schedule a LEAP Strategy Call" description="Book a consultation to discuss how LEAP can transform your organization." />
-  <Header />
-  <main id="main-content" class="min-h-screen bg-gradient-to-br from-slate-50 to-white pt-24 pb-16">
-    <div class="max-w-6xl mx-auto px-6 lg:px-8">
-      <div class="text-center mb-12">
-        <a
-          href={createPageUrl('Home')}
-          class="inline-flex items-center gap-2 text-slate-500 hover:text-slate-700 mb-6 transition-colors"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-          </svg>
-          Back to Home
-        </a>
-
-        <span class="block text-primary font-semibold text-sm tracking-wider uppercase mb-4">
-          Book a Call
-        </span>
-        <h1 class="text-3xl lg:text-4xl font-bold text-primary mb-4">
-          Schedule a LEAP Strategy Call
-        </h1>
-        <p class="text-lg text-slate-600 max-w-2xl mx-auto">
-          Choose a time that works for you. We'll discuss your organization's needs and how
-          LEAP can help you build excellence through intentional practice.
-        </p>
-      </div>
-
-      <CalendarBooking client:load />
-    </div>
-  </main>
-  <Footer />
-</Layout>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Redirecting to Booking...</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(to bottom right, #f8fafc, #ffffff);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .spinner-container {
+      text-align: center;
+    }
+    .spinner {
+      width: 64px;
+      height: 64px;
+      border: 4px solid #e2e8f0;
+      border-top-color: #76648F;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 24px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .text {
+      color: #475569;
+      font-size: 18px;
+      font-weight: 500;
+    }
+    .fallback-link {
+      margin-top: 16px;
+      color: #76648F;
+      text-decoration: none;
+      font-size: 14px;
+      display: inline-block;
+    }
+    .fallback-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+  {bookingUrl ? (
+    <>
+      <script is:inline define:vars={{ bookingUrl }}>
+        (function() {
+          function redirect() {
+            if (!bookingUrl) {
+              console.error('No booking URL configured');
+              return;
+            }
+            try {
+              const userDetailsStr = localStorage.getItem('leap_user_details');
+              if (userDetailsStr) {
+                const details = JSON.parse(userDetailsStr);
+                const url = new URL(bookingUrl);
+                
+                if (details.full_name && details.full_name.trim()) {
+                  url.searchParams.set('name', details.full_name.trim());
+                }
+                if (details.email && details.email.trim()) {
+                  url.searchParams.set('email', details.email.trim());
+                }
+                
+                const finalUrl = url.toString();
+                console.log('Redirecting to:', finalUrl);
+                window.location.replace(finalUrl);
+                return;
+              }
+            } catch (e) {
+              console.error('Error processing booking URL:', e);
+            }
+            console.log('Redirecting to booking URL (no user details):', bookingUrl);
+            window.location.replace(bookingUrl);
+          }
+          
+          // Run immediately and also on DOMContentLoaded as fallback
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', redirect);
+          } else {
+            redirect();
+          }
+        })();
+      </script>
+    </>
+  ) : (
+    <meta http-equiv="refresh" content="0; url=/" />
+  )}
+</head>
+<body>
+  <div class="spinner-container">
+    <div class="spinner"></div>
+    <p class="text">Redirecting to booking page...</p>
+    {bookingUrl && (
+      <>
+        <a href={bookingUrl} id="fallback-link" class="fallback-link">Click here if you are not redirected automatically</a>
+        <script is:inline define:vars={{ bookingUrl }}>
+          (function() {
+            const link = document.getElementById('fallback-link');
+            if (link && bookingUrl) {
+              try {
+                const userDetailsStr = localStorage.getItem('leap_user_details');
+                if (userDetailsStr) {
+                  const details = JSON.parse(userDetailsStr);
+                  const url = new URL(bookingUrl);
+                  if (details.full_name && details.full_name.trim()) {
+                    url.searchParams.set('name', details.full_name.trim());
+                  }
+                  if (details.email && details.email.trim()) {
+                    url.searchParams.set('email', details.email.trim());
+                  }
+                  link.href = url.toString();
+                }
+              } catch (e) {
+                console.error('Error updating fallback link:', e);
+              }
+            }
+          })();
+        </script>
+      </>
+    )}
+  </div>
+</body>
+</html>
 
