@@ -1,22 +1,36 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabaseClient } from '../../lib/supabase';
 import { buildUrl, BASE_URL } from '../../lib/utils';
 import { Calendar, Users, Mail, Building, Briefcase, Phone, MessageSquare, Loader2, CheckCircle, Target } from 'lucide-react';
 import { getUserDetails, saveUserDetails } from '../../lib/userStorage';
 
 export default function TeamDebriefForm() {
-  const storedDetails = getUserDetails();
   const [formData, setFormData] = useState({
-    full_name: storedDetails.full_name || '',
-    email: storedDetails.email || '',
-    company: storedDetails.company || '',
-    role: storedDetails.role || '',
-    phone: storedDetails.phone || '',
+    full_name: '',
+    email: '',
+    company: '',
+    role: '',
+    phone: '',
     team_size: '',
     message: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+
+  // Load user details after hydration to prevent SSR mismatch
+  useEffect(() => {
+    const stored = getUserDetails();
+    if (stored.full_name || stored.email) {
+      setFormData(prev => ({
+        ...prev,
+        full_name: stored.full_name || '',
+        email: stored.email || '',
+        company: stored.company || '',
+        role: stored.role || '',
+        phone: stored.phone || '',
+      }));
+    }
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData((prev) => ({
@@ -35,14 +49,7 @@ export default function TeamDebriefForm() {
         source: 'team_debrief',
       });
 
-      // Save user details for future form prepopulation
-      saveUserDetails({
-        full_name: formData.full_name,
-        email: formData.email,
-        company: formData.company,
-        role: formData.role,
-        phone: formData.phone,
-      });
+      saveUserDetails(formData);
 
       setIsSubmitted(true);
     } catch (error) {

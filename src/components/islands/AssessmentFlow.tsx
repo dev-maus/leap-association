@@ -54,42 +54,64 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // Initialize contact data from localStorage
-  const [contactData, setContactData] = useState(() => {
-    const stored = getUserDetails();
-    return {
-      full_name: stored.full_name || '',
-      email: stored.email || '',
-      company: stored.company || '',
-      role: stored.role || '',
-      phone: stored.phone || '',
-    };
+  const [contactData, setContactData] = useState({
+    full_name: '',
+    email: '',
+    company: '',
+    role: '',
+    phone: '',
   });
+  
   const [validationErrors, setValidationErrors] = useState<{
     email?: string;
     phone?: string;
   }>({});
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [createdLeadId, setCreatedLeadId] = useState<string | null>(leadId || null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const captchaRef = useRef<HCaptcha>(null);
   
-  // Initialize from localStorage synchronously
-  const getStoredEmail = () => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('assessment_submitted_email');
+  // Initialize states to prevent hydration mismatch - updated in useEffect
+  const [alreadySubmitted, setAlreadySubmitted] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
+  const [submittedResponseId, setSubmittedResponseId] = useState<string | null>(null);
+  const [hasScheduledCall, setHasScheduledCall] = useState(false);
+
+  // Read from localStorage after hydration to prevent SSR mismatch
+  useEffect(() => {
+    // Check submission status
+    const storedEmail = localStorage.getItem('assessment_submitted_email');
+    const storedResponseId = localStorage.getItem('assessment_response_id');
+    const callScheduled = !!localStorage.getItem('call_scheduled');
+    
+    if (storedEmail) {
+      setAlreadySubmitted(true);
+      setSubmittedEmail(storedEmail);
+      setSubmittedResponseId(storedResponseId);
     }
-    return null;
-  };
-  
-  const getCallScheduled = () => {
-    if (typeof window !== 'undefined') {
-      return !!localStorage.getItem('call_scheduled');
+    setHasScheduledCall(callScheduled);
+
+    // Load user details for form prepopulation
+    const stored = getUserDetails();
+    if (stored.full_name || stored.email) {
+      setContactData({
+        full_name: stored.full_name || '',
+        email: stored.email || '',
+        company: stored.company || '',
+        role: stored.role || '',
+        phone: stored.phone || '',
+      });
     }
-    return false;
-  };
-  
-  const [alreadySubmitted, setAlreadySubmitted] = useState(() => !!getStoredEmail());
-  const [submittedEmail, setSubmittedEmail] = useState<string | null>(() => getStoredEmail());
-  const [hasScheduledCall, setHasScheduledCall] = useState(() => getCallScheduled());
+  }, []);
+
+  // Additional useEffect for URL params - must be before any returns
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('leadId');
+    if (id) {
+      // Lead ID provided, skip contact form
+    }
+  }, []);
 
   const currentQuestion = questions[currentIndex];
   const needsContactInfo = !leadId && currentIndex === 0;
@@ -121,9 +143,24 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
             You have already submitted an assessment.
           </p>
           {submittedEmail && (
-            <p className="text-slate-500 text-sm mb-8">
+            <p className="text-slate-500 text-sm mb-6">
               Submitted with: <span className="font-medium">{submittedEmail}</span>
             </p>
+          )}
+
+          {/* View Results Button */}
+          {submittedResponseId && (
+            <div className="mb-8">
+              <a
+                href={`${buildUrl('/practice/results')}?id=${submittedResponseId}`}
+                className="inline-flex items-center gap-2 px-8 py-4 bg-accent text-white rounded-xl font-semibold hover:bg-accent/90 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                View My Results
+              </a>
+            </div>
           )}
           
           {!hasScheduledCall && (
@@ -156,14 +193,6 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
       </div>
     );
   }
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const id = params.get('leadId');
-    if (id) {
-      // Lead ID provided, skip contact form
-    }
-  }, []);
 
   const handleAnswer = (rating: number) => {
     setAnswers((prev) => ({
@@ -215,8 +244,11 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (needsContactInfo) {
+      // Clear any previous errors
+      setErrorMessage(null);
+      
       // Validate required fields
       if (!contactData.full_name || !contactData.email) {
         setValidationErrors({
@@ -228,6 +260,34 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
       // Validate email and phone formats
       if (!validateContactForm()) {
         return;
+      }
+
+      // Create lead before starting assessment
+      if (!createdLeadId) {
+        setIsSubmitting(true);
+        try {
+          const lead = await supabaseClient.entities.Lead.create({
+            ...contactData,
+            source: type === 'team' ? 'team_assessment' : 'individual_assessment',
+          });
+          setCreatedLeadId(lead.id);
+          setErrorMessage(null);
+        } catch (createError: any) {
+          console.error('Failed to create lead:', createError);
+          setIsSubmitting(false);
+          
+          // Check if error is due to unique constraint violation on email
+          if (createError.code === '23505' || 
+              createError.message?.includes('duplicate') || 
+              createError.message?.includes('unique') ||
+              createError.message?.includes('violates unique constraint')) {
+            setErrorMessage('An assessment has already been submitted with this email address. Please use a different email or contact support.');
+          } else {
+            setErrorMessage(createError.message || 'Failed to start assessment. Please try again.');
+          }
+          return;
+        }
+        setIsSubmitting(false);
       }
     }
 
@@ -293,16 +353,19 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
 
   const handleCaptchaError = () => {
     setCaptchaToken(null);
-    alert('Captcha verification failed. Please try again.');
+    setErrorMessage('Captcha verification failed. Please try again.');
   };
 
   const handleSubmit = async () => {
+    console.log('handleSubmit called, createdLeadId:', createdLeadId);
     setIsSubmitting(true);
+    setErrorMessage(null);
 
     try {
       // Check localStorage to prevent duplicate submissions from same device
       const storedEmail = localStorage.getItem('assessment_submitted_email');
       if (storedEmail) {
+        console.log('Assessment already submitted with email:', storedEmail);
         setAlreadySubmitted(true);
         setSubmittedEmail(storedEmail);
         setIsSubmitting(false);
@@ -311,6 +374,7 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
 
       // If captcha is enabled, ensure we have a token
       if (captchaConfig?.enabled && !captchaToken) {
+        console.log('Captcha enabled but no token, triggering captcha');
         // Trigger captcha if not already done
         if (captchaRef.current) {
           captchaRef.current.execute();
@@ -320,6 +384,7 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
       }
 
       const { leapScores, habitScore, abilityScore, talentScore, skillScore } = calculateScores();
+      console.log('Calculated scores:', { leapScores, habitScore, abilityScore, talentScore, skillScore });
 
       const answersArray = Object.entries(answers).map(([qId, score]) => {
         const question = questions.find((q) => q.questionId === qId);
@@ -330,17 +395,19 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
           question_text: question?.text,
         };
       });
+      console.log('Answers array length:', answersArray.length);
 
       let response;
 
       // Use Edge Function if captcha is enabled, otherwise use direct insert
       if (captchaConfig?.enabled && captchaToken) {
+        console.log('Submitting via Edge Function with captcha');
         response = await supabaseClient.submitAssessmentWithCaptcha({
           contactData: {
             ...contactData,
             source: type === 'team' ? 'team_assessment' : 'individual_assessment',
           },
-          leadId,
+          leadId: createdLeadId || undefined,
           assessmentType: type,
           scores: leapScores,
           habitScore,
@@ -350,30 +417,19 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
           answers: answersArray,
           captchaToken,
         });
+        console.log('Edge Function response:', response);
       } else {
         // Direct insert (no captcha or captcha disabled)
-        let finalLeadId = leadId;
+        // Use the lead ID created earlier or the one provided as prop
+        const finalLeadId = createdLeadId;
+        console.log('Direct insert, finalLeadId:', finalLeadId);
 
-        // Create lead if not provided
         if (!finalLeadId) {
-          try {
-            const lead = await supabaseClient.entities.Lead.create({
-              ...contactData,
-              source: type === 'team' ? 'team_assessment' : 'individual_assessment',
-            });
-            finalLeadId = lead.id;
-          } catch (createError: any) {
-            // Check if error is due to unique constraint violation on email
-            if (createError.code === '23505' || 
-                createError.message?.includes('duplicate') || 
-                createError.message?.includes('unique') ||
-                createError.message?.includes('violates unique constraint')) {
-              throw new Error('An assessment has already been submitted with this email address. Please use a different email or contact support.');
-            }
-            throw createError;
-          }
+          console.error('No finalLeadId available');
+          throw new Error('Lead ID is missing. Please start the assessment from the beginning.');
         }
 
+        console.log('Creating assessment response...');
         response = await supabaseClient.entities.AssessmentResponse.create({
           lead_id: finalLeadId,
           assessment_type: type,
@@ -384,19 +440,19 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
           skill_score: skillScore,
           answers: answersArray,
         });
+        console.log('Assessment response created:', response);
       }
 
-      // Store submission flag and user details in localStorage
+      // Verify response has an ID
+      if (!response || !response.id) {
+        throw new Error('Failed to create assessment response - no ID returned');
+      }
+
+      // Store submission flag, response ID, and user details in localStorage
       if (contactData.email) {
         localStorage.setItem('assessment_submitted_email', contactData.email);
-        // Save user details for future form prepopulation
-        saveUserDetails({
-          full_name: contactData.full_name,
-          email: contactData.email,
-          company: contactData.company,
-          role: contactData.role,
-          phone: contactData.phone,
-        });
+        localStorage.setItem('assessment_response_id', response.id);
+        saveUserDetails(contactData);
       }
 
       // Reset captcha for next submission
@@ -406,26 +462,42 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
       }
 
       // Redirect to results page
-      window.location.href = `${buildUrl('/practice/results')}?id=${response.id}`;
+      const resultsUrl = `${buildUrl('/practice/results')}?id=${response.id}`;
+      console.log('Redirecting to:', resultsUrl);
+      
+      // Set a timeout to ensure we stop showing spinner even if redirect fails
+      setTimeout(() => {
+        console.log('Redirect timeout, stopping spinner');
+        setIsSubmitting(false);
+      }, 5000);
+      
+      window.location.href = resultsUrl;
     } catch (error: any) {
       console.error('Failed to submit assessment:', error);
+      console.error('Error details:', {
+        message: error?.message,
+        code: error?.code,
+        details: error?.details,
+        fullError: error
+      });
       
       // Try to extract detailed error message from response
-      let errorMessage = 'Failed to submit assessment. Please try again.';
+      let errorMsg = 'Failed to submit assessment. Please try again.';
       
       if (error?.message) {
-        errorMessage = error.message;
+        errorMsg = error.message;
       } else if (error?.error) {
-        errorMessage = error.error;
+        errorMsg = error.error;
         if (error.details && Array.isArray(error.details)) {
-          errorMessage += ` (${error.details.join(', ')})`;
+          errorMsg += ` (${error.details.join(', ')})`;
         }
         if (error.message) {
-          errorMessage += `: ${error.message}`;
+          errorMsg += `: ${error.message}`;
         }
       }
       
-      alert(errorMessage);
+      setErrorMessage(errorMsg);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       
       // Reset captcha on error
       if (captchaRef.current) {
@@ -453,6 +525,29 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
         <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 lg:p-10">
           <h2 className="text-2xl font-bold text-primary mb-2">Start Your Assessment</h2>
           <p className="text-slate-500 mb-8">Enter your details to access the HATS™ Assessment</p>
+
+          {errorMessage && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+              <div className="flex items-start gap-3">
+                <svg className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+                <div className="flex-1">
+                  <p className="text-sm text-red-800 font-medium">{errorMessage}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setErrorMessage(null)}
+                  className="text-red-600 hover:text-red-800 transition-colors"
+                  aria-label="Dismiss error"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
 
           <form
             onSubmit={(e) => {
@@ -619,6 +714,30 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
             style={{ width: `${progress}%` }}
           />
         </div>
+
+        {/* Error Message */}
+        {errorMessage && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+            <div className="flex items-start gap-3">
+              <svg className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              <div className="flex-1">
+                <p className="text-sm text-red-800 font-medium">{errorMessage}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setErrorMessage(null)}
+                className="text-red-600 hover:text-red-800 transition-colors"
+                aria-label="Dismiss error"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Question */}
         <h2 className="text-xl lg:text-2xl font-bold text-primary mb-8 leading-relaxed">

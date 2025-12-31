@@ -10,19 +10,14 @@ import { getUserDetails } from './userStorage';
  */
 export function getBookingUrlWithParams(baseUrl: string): string {
   try {
-    const userDetails = getUserDetails();
+    const { full_name, email } = getUserDetails();
     const url = new URL(baseUrl);
     
-    if (userDetails.full_name) {
-      url.searchParams.set('name', userDetails.full_name);
-    }
-    if (userDetails.email) {
-      url.searchParams.set('email', userDetails.email);
-    }
+    if (full_name?.trim()) url.searchParams.set('name', full_name.trim());
+    if (email?.trim()) url.searchParams.set('email', email.trim());
     
     return url.toString();
   } catch (error) {
-    // If URL parsing fails, return original URL
     return baseUrl;
   }
 }

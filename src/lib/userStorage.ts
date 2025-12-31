@@ -13,24 +13,21 @@ export interface UserDetails {
 
 const STORAGE_KEY = 'leap_user_details';
 
+const isClient = typeof window !== 'undefined';
+
 /**
  * Get user details from localStorage
  */
 export function getUserDetails(): UserDetails {
-  if (typeof window === 'undefined') {
-    return {};
-  }
+  if (!isClient) return {};
 
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
+    return stored ? JSON.parse(stored) : {};
   } catch (error) {
     console.error('Failed to read user details from localStorage:', error);
+    return {};
   }
-
-  return {};
 }
 
 /**
@@ -38,19 +35,15 @@ export function getUserDetails(): UserDetails {
  * Only saves non-empty values
  */
 export function saveUserDetails(details: Partial<UserDetails>): void {
-  if (typeof window === 'undefined') {
-    return;
-  }
+  if (!isClient) return;
 
   try {
-    const existing = getUserDetails();
-    const updated: UserDetails = {
-      ...existing,
+    const updated = {
+      ...getUserDetails(),
       ...Object.fromEntries(
-        Object.entries(details).filter(([_, value]) => value && value.trim() !== '')
+        Object.entries(details).filter(([_, value]) => value?.trim())
       ),
     };
-
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
   } catch (error) {
     console.error('Failed to save user details to localStorage:', error);
@@ -61,9 +54,7 @@ export function saveUserDetails(details: Partial<UserDetails>): void {
  * Clear user details from localStorage
  */
 export function clearUserDetails(): void {
-  if (typeof window === 'undefined') {
-    return;
-  }
+  if (!isClient) return;
 
   try {
     localStorage.removeItem(STORAGE_KEY);

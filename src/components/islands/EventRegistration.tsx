@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabaseClient } from '../../lib/supabase';
 import { Calendar, Users, Mail, Building, Loader2, CheckCircle } from 'lucide-react';
 import { getUserDetails, saveUserDetails } from '../../lib/userStorage';
@@ -8,16 +8,29 @@ interface EventRegistrationProps {
 }
 
 export default function EventRegistration({ eventId }: EventRegistrationProps) {
-  const storedDetails = getUserDetails();
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState({
-    full_name: storedDetails.full_name || '',
-    email: storedDetails.email || '',
-    company: storedDetails.company || '',
-    phone: storedDetails.phone || '',
+    full_name: '',
+    email: '',
+    company: '',
+    phone: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+
+  // Load user details after hydration to prevent SSR mismatch
+  useEffect(() => {
+    const stored = getUserDetails();
+    if (stored.full_name || stored.email) {
+      setFormData(prev => ({
+        ...prev,
+        full_name: stored.full_name || '',
+        email: stored.email || '',
+        company: stored.company || '',
+        phone: stored.phone || '',
+      }));
+    }
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({
@@ -36,13 +49,7 @@ export default function EventRegistration({ eventId }: EventRegistrationProps) {
         event_id: eventId,
       });
 
-      // Save user details for future form prepopulation
-      saveUserDetails({
-        full_name: formData.full_name,
-        email: formData.email,
-        company: formData.company,
-        phone: formData.phone,
-      });
+      saveUserDetails(formData);
 
       setIsSubmitted(true);
       setFormData({

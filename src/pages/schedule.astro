@@ -60,48 +60,38 @@ const bookingUrl = siteSettings?.bookingUrl;
     }
   </style>
   {bookingUrl ? (
-    <>
-      <script is:inline define:vars={{ bookingUrl }}>
-        (function() {
-          function redirect() {
-            if (!bookingUrl) {
-              console.error('No booking URL configured');
-              return;
-            }
-            try {
-              const userDetailsStr = localStorage.getItem('leap_user_details');
-              if (userDetailsStr) {
-                const details = JSON.parse(userDetailsStr);
-                const url = new URL(bookingUrl);
-                
-                if (details.full_name && details.full_name.trim()) {
-                  url.searchParams.set('name', details.full_name.trim());
-                }
-                if (details.email && details.email.trim()) {
-                  url.searchParams.set('email', details.email.trim());
-                }
-                
-                const finalUrl = url.toString();
-                console.log('Redirecting to:', finalUrl);
-                window.location.replace(finalUrl);
-                return;
-              }
-            } catch (e) {
-              console.error('Error processing booking URL:', e);
-            }
-            console.log('Redirecting to booking URL (no user details):', bookingUrl);
-            window.location.replace(bookingUrl);
+    <script is:inline define:vars={{ bookingUrl }}>
+      (function() {
+        function buildUrl() {
+          try {
+            const details = JSON.parse(localStorage.getItem('leap_user_details') || '{}');
+            const url = new URL(bookingUrl);
+            if (details.full_name?.trim()) url.searchParams.set('name', details.full_name.trim());
+            if (details.email?.trim()) url.searchParams.set('email', details.email.trim());
+            return url.toString();
+          } catch (e) {
+            console.error('Error building URL:', e);
+            return bookingUrl;
           }
+        }
+        
+        function redirect() {
+          const finalUrl = buildUrl();
+          console.log('Redirecting to:', finalUrl);
+          window.location.replace(finalUrl);
           
-          // Run immediately and also on DOMContentLoaded as fallback
-          if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', redirect);
-          } else {
-            redirect();
-          }
-        })();
-      </script>
-    </>
+          // Update fallback link
+          const link = document.getElementById('fallback-link');
+          if (link) link.href = finalUrl;
+        }
+        
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', redirect);
+        } else {
+          redirect();
+        }
+      })();
+    </script>
   ) : (
     <meta http-equiv="refresh" content="0; url=/" />
   )}
@@ -111,32 +101,9 @@ const bookingUrl = siteSettings?.bookingUrl;
     <div class="spinner"></div>
     <p class="text">Redirecting to booking page...</p>
     {bookingUrl && (
-      <>
-        <a href={bookingUrl} id="fallback-link" class="fallback-link">Click here if you are not redirected automatically</a>
-        <script is:inline define:vars={{ bookingUrl }}>
-          (function() {
-            const link = document.getElementById('fallback-link');
-            if (link && bookingUrl) {
-              try {
-                const userDetailsStr = localStorage.getItem('leap_user_details');
-                if (userDetailsStr) {
-                  const details = JSON.parse(userDetailsStr);
-                  const url = new URL(bookingUrl);
-                  if (details.full_name && details.full_name.trim()) {
-                    url.searchParams.set('name', details.full_name.trim());
-                  }
-                  if (details.email && details.email.trim()) {
-                    url.searchParams.set('email', details.email.trim());
-                  }
-                  link.href = url.toString();
-                }
-              } catch (e) {
-                console.error('Error updating fallback link:', e);
-              }
-            }
-          })();
-        </script>
-      </>
+      <a href={bookingUrl} id="fallback-link" class="fallback-link">
+        Click here if you are not redirected automatically
+      </a>
     )}
   </div>
 </body>

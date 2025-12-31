@@ -4,15 +4,14 @@ import { Calendar, Clock, User, Mail, Building, Phone, Loader2, CheckCircle } fr
 import { getUserDetails, saveUserDetails } from '../../lib/userStorage';
 
 export default function CalendarBooking() {
-  const storedDetails = getUserDetails();
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [availableSlots, setAvailableSlots] = useState<any[]>([]);
   const [formData, setFormData] = useState({
-    full_name: storedDetails.full_name || '',
-    email: storedDetails.email || '',
-    company: storedDetails.company || '',
-    phone: storedDetails.phone || '',
+    full_name: '',
+    email: '',
+    company: '',
+    phone: '',
     message: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -20,6 +19,7 @@ export default function CalendarBooking() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Load availability slots
     const loadAvailability = async () => {
       try {
         const slots = await supabaseClient.entities.Availability.list();
@@ -30,6 +30,18 @@ export default function CalendarBooking() {
         setIsLoading(false);
       }
     };
+
+    // Load user details after hydration to prevent SSR mismatch
+    const stored = getUserDetails();
+    if (stored.full_name || stored.email) {
+      setFormData(prev => ({
+        ...prev,
+        full_name: stored.full_name || '',
+        email: stored.email || '',
+        company: stored.company || '',
+        phone: stored.phone || '',
+      }));
+    }
 
     loadAvailability();
   }, []);
@@ -78,14 +90,8 @@ export default function CalendarBooking() {
         });
       }
 
-      // Store call scheduled flag and user details in localStorage
       localStorage.setItem('call_scheduled', 'true');
-      saveUserDetails({
-        full_name: formData.full_name,
-        email: formData.email,
-        company: formData.company,
-        phone: formData.phone,
-      });
+      saveUserDetails(formData);
       
       setIsSubmitted(true);
     } catch (error) {
