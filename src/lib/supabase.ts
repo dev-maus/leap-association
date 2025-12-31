@@ -1,9 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
+import { secureAuthStorage } from './secureAuthStorage';
 
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || '';
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    storage: secureAuthStorage,
+    persistSession: true,
+    autoRefreshToken: false, // Disabled: no refresh_token stored
+  },
+});
 
 // Helper function to convert entity names to table names
 const entityToTable = (entityName: string): string => {

@@ -1,22 +1,58 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { buildUrl } from '../../lib/utils';
-import { Lock, Loader2, CheckCircle } from 'lucide-react';
+import { Lock, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 
 export default function ResetPasswordForm() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sessionReady, setSessionReady] = useState(false);
 
   useEffect(() => {
-    // Check if we have a valid session from the reset link
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
+    const handleTokenExchange = async () => {
+      try {
+        // Check if we have hash params (from Supabase email link redirect)
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+        const type = hashParams.get('type');
+
+        if (accessToken && type === 'recovery') {
+          // Set the session from URL hash tokens
+          const { error: sessionError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken || '',
+          });
+
+          if (sessionError) {
+            throw sessionError;
+          }
+
+          // Clear the hash from URL for security
+          window.history.replaceState(null, '', window.location.pathname);
+          setSessionReady(true);
+        } else {
+          // Check if we already have a valid session
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            setSessionReady(true);
+          } else {
+            setError('Invalid or expired reset link. Please request a new one.');
+          }
+        }
+      } catch (err: any) {
+        console.error('Token exchange error:', err);
         setError('Invalid or expired reset link. Please request a new one.');
+      } finally {
+        setIsLoading(false);
       }
-    });
+    };
+
+    handleTokenExchange();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -49,6 +85,36 @@ export default function ResetPasswordForm() {
     }
   };
 
+  // Loading state while checking tokens
+  if (isLoading) {
+    return (
+      <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 text-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
+        <p className="text-slate-600">Verifying reset link...</p>
+      </div>
+    );
+  }
+
+  // Error state - invalid or expired link
+  if (error && !sessionReady) {
+    return (
+      <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 text-center">
+        <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-6">
+          <AlertCircle className="w-8 h-8 text-red-600" />
+        </div>
+        <h2 className="text-2xl font-bold text-primary mb-4">Link Expired</h2>
+        <p className="text-slate-600 mb-6">{error}</p>
+        <a
+          href={buildUrl('auth/forgot-password')}
+          className="inline-block px-8 py-4 bg-primary text-white rounded-xl font-semibold hover:bg-primary-dark transition-colors"
+        >
+          Request New Link
+        </a>
+      </div>
+    );
+  }
+
+  // Success state
   if (isSubmitted) {
     return (
       <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 text-center">
@@ -69,6 +135,7 @@ export default function ResetPasswordForm() {
     );
   }
 
+  // Password reset form
   return (
     <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8">
       <form onSubmit={handleSubmit} className="space-y-5">
