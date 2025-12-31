@@ -5,12 +5,6 @@ import Header from '../../components/layout/Header.astro';
 import Footer from '../../components/layout/Footer.astro';
 import AssessmentResults from '../../components/islands/AssessmentResults';
 import { createPageUrl } from '../../lib/utils';
-
-const { id } = Astro.params;
-
-if (!id) {
-  return Astro.redirect('/practice');
-}
 ---
 
 <Layout>
@@ -28,7 +22,7 @@ if (!id) {
         Back to Practice
       </a>
 
-      <AssessmentResults client:load responseId={id} />
+      <AssessmentResults client:load />
     </div>
   </main>
   <Footer />

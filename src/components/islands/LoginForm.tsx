@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { supabaseClient } from '../../lib/supabase';
+import { buildUrl } from '../../lib/utils';
 import { Mail, Lock, Loader2 } from 'lucide-react';
 
 export default function LoginForm() {
@@ -27,7 +28,7 @@ export default function LoginForm() {
       await supabaseClient.auth.signInWithPassword(formData.email, formData.password);
       // Redirect to admin or home
       const returnUrl = new URLSearchParams(window.location.search).get('returnUrl');
-      window.location.href = returnUrl || '/admin';
+      window.location.href = returnUrl || buildUrl('admin');
     } catch (err: any) {
       setError(err.message || 'Failed to sign in. Please check your credentials.');
     } finally {
@@ -58,7 +59,7 @@ export default function LoginForm() {
               onChange={handleChange}
               required
               placeholder="you@example.com"
-              className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+              className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
         </div>
@@ -77,7 +78,7 @@ export default function LoginForm() {
               onChange={handleChange}
               required
               placeholder="••••••••"
-              className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+              className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
         </div>

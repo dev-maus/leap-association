@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { buildUrl, BASE_URL } from '../../lib/utils';
 import { Mail, Loader2, CheckCircle } from 'lucide-react';
 
 export default function ForgotPasswordForm() {
@@ -15,7 +16,7 @@ export default function ForgotPasswordForm() {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
+        redirectTo: `${window.location.origin}${BASE_URL}auth/reset-password`,
       });
 
       if (error) throw error;
@@ -37,7 +38,7 @@ export default function ForgotPasswordForm() {
         <p className="text-slate-600 mb-6">
           We've sent a password reset link to {email}. Please check your inbox and follow the instructions.
         </p>
-        <a href="/auth/login" className="text-primary hover:underline">
+        <a href={buildUrl('auth/login')} className="text-primary hover:underline">
           Back to Sign In
         </a>
       </div>
@@ -67,7 +68,7 @@ export default function ForgotPasswordForm() {
               onChange={(e) => setEmail(e.target.value)}
               required
               placeholder="you@example.com"
-              className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+              className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
         </div>
@@ -89,7 +90,7 @@ export default function ForgotPasswordForm() {
       </form>
 
       <div className="mt-6 text-center">
-        <a href="/auth/login" className="text-primary hover:underline text-sm">
+        <a href={buildUrl('auth/login')} className="text-primary hover:underline text-sm">
           Back to Sign In
         </a>
       </div>

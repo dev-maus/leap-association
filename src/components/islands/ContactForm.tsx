@@ -85,7 +85,7 @@ export default function ContactForm() {
               onChange={handleChange}
               required
               placeholder="John Smith"
-              className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+              className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
         </div>
@@ -104,7 +104,7 @@ export default function ContactForm() {
               onChange={handleChange}
               required
               placeholder="john@company.com"
-              className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+              className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
         </div>
@@ -124,7 +124,7 @@ export default function ContactForm() {
               value={formData.company}
               onChange={handleChange}
               placeholder="Acme Inc."
-              className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+              className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
         </div>
@@ -142,7 +142,7 @@ export default function ContactForm() {
               value={formData.phone}
               onChange={handleChange}
               placeholder="+1 (555) 123-4567"
-              className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+              className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
         </div>
@@ -162,7 +162,7 @@ export default function ContactForm() {
             required
             placeholder="Tell us about your needs, questions, or how we can support you..."
             rows={6}
-            className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-primary focus:border-primary resize-none"
+            className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary resize-none"
           />
         </div>
       </div>

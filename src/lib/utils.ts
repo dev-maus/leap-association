@@ -1,4 +1,9 @@
-const base = import.meta.env.BASE_URL;
+// Base URL from Astro config - available at build time
+export const BASE_URL = import.meta.env.BASE_URL;
+
+export function getBaseUrl(): string {
+  return BASE_URL;
+}
 
 export function createPageUrl(pageName: string): string {
   const pageMap: Record<string, string> = {
@@ -16,12 +21,18 @@ export function createPageUrl(pageName: string): string {
   };
   const path = pageMap[pageName] || `/${pageName.toLowerCase()}`;
   // Ensure base path is included (remove trailing slash from base, add path)
-  return `${base.replace(/\/$/, '')}${path}`;
+  return `${BASE_URL.replace(/\/$/, '')}${path}`;
 }
 
 export function getAssetUrl(path: string): string {
   // Remove leading slash if present, then add base path
   const cleanPath = path.startsWith('/') ? path.slice(1) : path;
-  return `${base}${cleanPath}`;
+  return `${BASE_URL}${cleanPath}`;
+}
+
+// Helper to build a full URL path with base
+export function buildUrl(path: string): string {
+  const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+  return `${BASE_URL}${cleanPath}`;
 }
 

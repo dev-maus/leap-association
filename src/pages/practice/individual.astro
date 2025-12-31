@@ -4,7 +4,21 @@ import Head from '../../components/layout/Head.astro';
 import Header from '../../components/layout/Header.astro';
 import Footer from '../../components/layout/Footer.astro';
 import AssessmentFlow from '../../components/islands/AssessmentFlow';
+import type { AssessmentQuestion, RatingLabels } from '../../components/islands/AssessmentFlow';
 import { createPageUrl } from '../../lib/utils';
+import { sanity } from '../../lib/sanity';
+
+const questions = await sanity.fetch<AssessmentQuestion[]>(
+  `*[_type == "assessmentQuestion" && assessmentType == "individual"] | order(order asc) {
+    questionId,
+    category,
+    text
+  }`
+);
+
+const settings = await sanity.fetch<{ ratingLabels?: RatingLabels } | null>(
+  `*[_type == "assessmentSettings"][0] { ratingLabels }`
+);
 ---
 
 <Layout>
@@ -34,7 +48,7 @@ import { createPageUrl } from '../../lib/utils';
         </p>
       </div>
 
-      <AssessmentFlow client:load type="individual" />
+      <AssessmentFlow client:load type="individual" questions={questions} ratingLabels={settings?.ratingLabels} />
     </div>
   </main>
   <Footer />

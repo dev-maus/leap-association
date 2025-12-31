@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { supabaseClient } from '../../lib/supabase';
-import { Users, Mail, FileText, Calendar, Settings, BarChart3, Loader2 } from 'lucide-react';
+import { buildUrl } from '../../lib/utils';
+import { Mail, FileText, Calendar, Settings, Loader2 } from 'lucide-react';
 import jsPDF from 'jspdf';
 
-type Tab = 'leads' | 'assessments' | 'users' | 'events' | 'availability' | 'content';
+type Tab = 'leads' | 'assessments' | 'events' | 'availability' | 'content';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<Tab>('leads');
@@ -11,7 +12,6 @@ export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [leads, setLeads] = useState<any[]>([]);
   const [assessments, setAssessments] = useState<any[]>([]);
-  const [users, setUsers] = useState<any[]>([]);
 
   useEffect(() => {
     checkAuth();
@@ -28,7 +28,7 @@ export default function AdminDashboard() {
       await supabaseClient.auth.me();
       setIsAuthenticated(true);
     } catch (error) {
-      window.location.href = '/auth/login?returnUrl=/admin';
+      window.location.href = `${buildUrl('auth/login')}?returnUrl=${buildUrl('admin')}`;
     } finally {
       setIsLoading(false);
     }
@@ -42,9 +42,6 @@ export default function AdminDashboard() {
       } else if (activeTab === 'assessments') {
         const data = await supabaseClient.entities.AssessmentResponse.list();
         setAssessments(data);
-      } else if (activeTab === 'users') {
-        const data = await supabaseClient.entities.User.list();
-        setUsers(data);
       }
     } catch (error) {
       console.error('Failed to load data:', error);
@@ -84,7 +81,6 @@ export default function AdminDashboard() {
   const tabs = [
     { id: 'leads' as Tab, label: 'Leads', icon: Mail, count: leads.length },
     { id: 'assessments' as Tab, label: 'Assessments', icon: FileText, count: assessments.length },
-    { id: 'users' as Tab, label: 'Users', icon: Users, count: users.length },
     { id: 'events' as Tab, label: 'Events', icon: Calendar, count: 0 },
     { id: 'availability' as Tab, label: 'Availability', icon: Calendar, count: 0 },
     { id: 'content' as Tab, label: 'Content', icon: Settings, count: 0 },
@@ -199,40 +195,6 @@ export default function AdminDashboard() {
                   )}
                 </div>
               ))}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'users' && (
-          <div>
-            <h2 className="text-2xl font-bold text-primary mb-6">Users</h2>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-slate-200">
-                    <th className="text-left py-3 px-4 font-semibold text-slate-700">Name</th>
-                    <th className="text-left py-3 px-4 font-semibold text-slate-700">Email</th>
-                    <th className="text-left py-3 px-4 font-semibold text-slate-700">Role</th>
-                    <th className="text-left py-3 px-4 font-semibold text-slate-700">Created</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.map((user) => (
-                    <tr key={user.id} className="border-b border-slate-100 hover:bg-slate-50">
-                      <td className="py-3 px-4">{user.full_name || '-'}</td>
-                      <td className="py-3 px-4">{user.email}</td>
-                      <td className="py-3 px-4">
-                        <span className="px-2 py-1 bg-primary/10 text-primary rounded text-xs">
-                          {user.role || 'user'}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-sm text-slate-500">
-                        {user.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </div>
           </div>
         )}

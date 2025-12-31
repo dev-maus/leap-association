@@ -1,18 +1,25 @@
 import { useState, useEffect } from 'react';
 import { supabaseClient } from '../../lib/supabase';
+import { buildUrl } from '../../lib/utils';
 import jsPDF from 'jspdf';
 import { Download, Loader2 } from 'lucide-react';
 
-interface AssessmentResultsProps {
-  responseId: string;
-}
-
-export default function AssessmentResults({ responseId }: AssessmentResultsProps) {
+export default function AssessmentResults() {
   const [response, setResponse] = useState<any>(null);
   const [lead, setLead] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const responseId = params.get('id');
+
+    if (!responseId) {
+      setError('No assessment ID provided');
+      setIsLoading(false);
+      return;
+    }
+
     const loadResults = async () => {
       try {
         const foundResponse = await supabaseClient.entities.AssessmentResponse.get(responseId);
@@ -22,15 +29,16 @@ export default function AssessmentResults({ responseId }: AssessmentResultsProps
           const foundLead = await supabaseClient.entities.Lead.get(foundResponse.lead_id);
           setLead(foundLead);
         }
-      } catch (error) {
-        console.error('Error loading results:', error);
+      } catch (err) {
+        console.error('Error loading results:', err);
+        setError('Failed to load assessment results');
       } finally {
         setIsLoading(false);
       }
     };
 
     loadResults();
-  }, [responseId]);
+  }, []);
 
   if (isLoading) {
     return (
@@ -40,8 +48,8 @@ export default function AssessmentResults({ responseId }: AssessmentResultsProps
     );
   }
 
-  if (!response) {
-    return <div className="text-center py-20">Assessment results not found.</div>;
+  if (error || !response) {
+    return <div className="text-center py-20">{error || 'Assessment results not found.'}</div>;
   }
 
   const isTeam = response.assessment_type === 'team';
@@ -316,7 +324,7 @@ export default function AssessmentResults({ responseId }: AssessmentResultsProps
           Download PDF Report
         </button>
         <a
-          href="/practice/team-debrief"
+          href={buildUrl('practice/team-debrief')}
           className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-primary text-primary hover:bg-primary/5 transition-colors"
         >
           Schedule Team Debrief

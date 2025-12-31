@@ -46,25 +46,25 @@ const service = await sanity.fetch(`*[_type == "service" && slug == "training"][
         <Card class="p-6">
           <h3 class="text-xl font-bold text-primary mb-3">Leading Self</h3>
           <p class="text-slate-600 mb-4 text-sm">Master personal leadership practices</p>
-          <Button href="/services/training/leading-self" variant="outline" size="sm">Learn More</Button>
+          <Button href={`${import.meta.env.BASE_URL}services/training/leading-self`} variant="outline" size="sm">Learn More</Button>
         </Card>
 
         <Card class="p-6">
           <h3 class="text-xl font-bold text-primary mb-3">Leading Others</h3>
           <p class="text-slate-600 mb-4 text-sm">Develop team leadership capabilities</p>
-          <Button href="/services/training/leading-others" variant="outline" size="sm">Learn More</Button>
+          <Button href={`${import.meta.env.BASE_URL}services/training/leading-others`} variant="outline" size="sm">Learn More</Button>
         </Card>
 
         <Card class="p-6">
           <h3 class="text-xl font-bold text-primary mb-3">Leading Projects</h3>
           <p class="text-slate-600 mb-4 text-sm">Excel at project and program leadership</p>
-          <Button href="/services/training/leading-projects" variant="outline" size="sm">Learn More</Button>
+          <Button href={`${import.meta.env.BASE_URL}services/training/leading-projects`} variant="outline" size="sm">Learn More</Button>
         </Card>
 
         <Card class="p-6">
           <h3 class="text-xl font-bold text-primary mb-3">Leading Change</h3>
           <p class="text-slate-600 mb-4 text-sm">Drive organizational transformation</p>
-          <Button href="/services/training/leading-change" variant="outline" size="sm">Learn More</Button>
+          <Button href={`${import.meta.env.BASE_URL}services/training/leading-change`} variant="outline" size="sm">Learn More</Button>
         </Card>
       </div>
 

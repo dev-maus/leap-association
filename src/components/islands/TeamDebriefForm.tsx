@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { supabaseClient } from '../../lib/supabase';
+import { buildUrl, BASE_URL } from '../../lib/utils';
 import { Calendar, Users, Mail, Building, Briefcase, Phone, MessageSquare, Loader2, CheckCircle, Target } from 'lucide-react';
 
 export default function TeamDebriefForm() {
@@ -53,10 +54,10 @@ export default function TeamDebriefForm() {
             within 24 hours to schedule your session and prepare customized insights.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="/" className="btn-primary">
+            <a href={BASE_URL} className="btn-primary">
               Back to Home
             </a>
-            <a href="/practice" className="btn-outline">
+            <a href={buildUrl('practice')} className="btn-outline">
               <Target className="w-4 h-4 mr-2 inline" />
               Take Another Assessment
             </a>
@@ -168,7 +169,7 @@ export default function TeamDebriefForm() {
                     onChange={handleChange}
                     required
                     placeholder="John Smith"
-                    className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                    className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary"
                   />
                 </div>
               </div>
@@ -187,7 +188,7 @@ export default function TeamDebriefForm() {
                     onChange={handleChange}
                     required
                     placeholder="john@company.com"
-                    className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                    className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary"
                   />
                 </div>
               </div>
@@ -208,7 +209,7 @@ export default function TeamDebriefForm() {
                     onChange={handleChange}
                     required
                     placeholder="Acme Inc."
-                    className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                    className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary"
                   />
                 </div>
               </div>
@@ -227,7 +228,7 @@ export default function TeamDebriefForm() {
                     onChange={handleChange}
                     required
                     placeholder="Director of Operations"
-                    className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                    className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary"
                   />
                 </div>
               </div>
@@ -247,7 +248,7 @@ export default function TeamDebriefForm() {
                     value={formData.phone}
                     onChange={handleChange}
                     placeholder="+1 (555) 123-4567"
-                    className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                    className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary"
                   />
                 </div>
               </div>
@@ -265,7 +266,7 @@ export default function TeamDebriefForm() {
                     value={formData.team_size}
                     onChange={handleChange}
                     placeholder="e.g., 15 people"
-                    className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                    className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary"
                   />
                 </div>
               </div>
@@ -284,7 +285,7 @@ export default function TeamDebriefForm() {
                   onChange={handleChange}
                   placeholder="What are your team's biggest challenges? What would success look like after this debrief?"
                   rows={4}
-                  className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-primary focus:border-primary resize-none"
+                  className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary resize-none"
                 />
               </div>
             </div>

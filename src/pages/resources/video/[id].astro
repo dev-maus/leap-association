@@ -4,6 +4,7 @@ import Head from '../../../components/layout/Head.astro';
 import Header from '../../../components/layout/Header.astro';
 import Footer from '../../../components/layout/Footer.astro';
 import { sanity } from '../../../lib/sanity';
+import { urlForFile } from '../../../lib/sanity';
 import { createPageUrl } from '../../../lib/utils';
 
 export async function getStaticPaths() {
@@ -17,7 +18,24 @@ export async function getStaticPaths() {
 }
 
 const { id } = Astro.params;
-const video = await sanity.fetch(`*[_type == "video" && _id == $id][0]`, { id }).catch(() => null);
+const video = await sanity.fetch(`*[_type == "video" && _id == $id][0]{
+  _id,
+  title,
+  description,
+  duration,
+  type,
+  status,
+  thumbnail,
+  "videoFile": videoFile.asset->{
+    _id,
+    _ref,
+    url,
+    originalFilename,
+    size,
+    mimeType
+  },
+  url
+}`, { id }).catch(() => null);
 
 if (!video) {
   return Astro.redirect('/resources');
@@ -51,7 +69,16 @@ if (!video) {
       </div>
 
       <div class="aspect-video bg-slate-100 rounded-2xl overflow-hidden mb-8">
-        {video.url ? (
+        {video.videoFile && urlForFile(video.videoFile) ? (
+          <video
+            src={urlForFile(video.videoFile) || ''}
+            controls
+            class="w-full h-full"
+            preload="metadata"
+          >
+            Your browser does not support the video tag.
+          </video>
+        ) : video.url ? (
           <iframe
             src={video.url}
             class="w-full h-full"

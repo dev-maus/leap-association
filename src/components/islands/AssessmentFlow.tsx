@@ -1,36 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabaseClient } from '../../lib/supabase';
+import { buildUrl } from '../../lib/utils';
 import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
 
-// Individual HATS Assessment - 8 questions (2 per category)
-const individualQuestions = [
-  { id: 'h1', category: 'habit', text: 'I consistently follow routines that help me stay focused and productive each day.' },
-  { id: 'h2', category: 'habit', text: 'I regularly reflect on my behaviors and intentionally adjust habits that aren\'t serving me well.' },
-  { id: 'a1', category: 'ability', text: 'I can quickly adapt my approach when facing new challenges or changing circumstances.' },
-  { id: 'a2', category: 'ability', text: 'I effectively learn and apply new concepts or skills when needed for my work.' },
-  { id: 't1', category: 'talent', text: 'I naturally inspire and motivate others through my presence and communication style.' },
-  { id: 't2', category: 'talent', text: 'I instinctively recognize patterns and opportunities that others might miss.' },
-  { id: 's1', category: 'skill', text: 'I have developed strong expertise in areas that are critical to my professional success.' },
-  { id: 's2', category: 'skill', text: 'I can effectively break down complex problems into manageable, actionable steps.' }
-];
-
-// Team HATS Assessment - 12 questions (3 per category)
-const teamQuestions = [
-  { id: 'h1', category: 'habit', text: 'Our team consistently follows established processes and routines that support our goals.' },
-  { id: 'h2', category: 'habit', text: 'We regularly review and adjust our team practices to improve performance.' },
-  { id: 'h3', category: 'habit', text: 'Team members consistently demonstrate behaviors aligned with our values.' },
-  { id: 'a1', category: 'ability', text: 'Our team quickly adapts to changing priorities and circumstances.' },
-  { id: 'a2', category: 'ability', text: 'We effectively learn and apply new approaches when needed.' },
-  { id: 'a3', category: 'ability', text: 'Team members consistently execute on commitments and deliverables.' },
-  { id: 't1', category: 'talent', text: 'Our team naturally collaborates and leverages each member\'s strengths.' },
-  { id: 't2', category: 'talent', text: 'We instinctively identify opportunities and potential challenges.' },
-  { id: 't3', category: 'talent', text: 'Team members naturally support and elevate each other\'s work.' },
-  { id: 's1', category: 'skill', text: 'Our team has developed strong expertise in areas critical to our success.' },
-  { id: 's2', category: 'skill', text: 'We effectively break down complex challenges into manageable actions.' },
-  { id: 's3', category: 'skill', text: 'Team members consistently apply best practices and lessons learned.' }
-];
-
-const ratingLabels: Record<number, string> = {
+const defaultRatingLabels: Record<number, string> = {
   1: 'Strongly Disagree',
   2: 'Disagree',
   3: 'Neutral',
@@ -38,12 +11,37 @@ const ratingLabels: Record<number, string> = {
   5: 'Strongly Agree'
 };
 
+export interface AssessmentQuestion {
+  questionId: string;
+  category: 'habit' | 'ability' | 'talent' | 'skill';
+  text: string;
+}
+
+export interface RatingLabels {
+  rating1: string;
+  rating2: string;
+  rating3: string;
+  rating4: string;
+  rating5: string;
+}
+
 interface AssessmentFlowProps {
   type: 'individual' | 'team';
+  questions: AssessmentQuestion[];
+  ratingLabels?: RatingLabels;
   leadId?: string;
 }
 
-export default function AssessmentFlow({ type, leadId }: AssessmentFlowProps) {
+export default function AssessmentFlow({ type, questions, ratingLabels, leadId }: AssessmentFlowProps) {
+  const labels: Record<number, string> = ratingLabels
+    ? {
+        1: ratingLabels.rating1,
+        2: ratingLabels.rating2,
+        3: ratingLabels.rating3,
+        4: ratingLabels.rating4,
+        5: ratingLabels.rating5,
+      }
+    : defaultRatingLabels;
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -55,9 +53,22 @@ export default function AssessmentFlow({ type, leadId }: AssessmentFlowProps) {
     phone: '',
   });
 
-  const questions = type === 'individual' ? individualQuestions : teamQuestions;
   const currentQuestion = questions[currentIndex];
   const needsContactInfo = !leadId && currentIndex === 0;
+
+  // Show error if no questions are configured
+  if (questions.length === 0) {
+    return (
+      <div className="max-w-xl mx-auto">
+        <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 lg:p-10 text-center">
+          <h2 className="text-2xl font-bold text-primary mb-4">Assessment Unavailable</h2>
+          <p className="text-slate-500">
+            No questions have been configured for this assessment yet. Please check back later.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -70,7 +81,7 @@ export default function AssessmentFlow({ type, leadId }: AssessmentFlowProps) {
   const handleAnswer = (rating: number) => {
     setAnswers((prev) => ({
       ...prev,
-      [currentQuestion.id]: rating,
+      [currentQuestion.questionId]: rating,
     }));
   };
 
@@ -156,10 +167,10 @@ export default function AssessmentFlow({ type, leadId }: AssessmentFlowProps) {
 
       const { leapScores, habitScore, abilityScore, talentScore, skillScore } = calculateScores();
 
-      const answersArray = Object.entries(answers).map(([questionId, score]) => {
-        const question = questions.find((q) => q.id === questionId);
+      const answersArray = Object.entries(answers).map(([qId, score]) => {
+        const question = questions.find((q) => q.questionId === qId);
         return {
-          question_id: questionId,
+          question_id: qId,
           category: question?.category,
           score,
           question_text: question?.text,
@@ -178,7 +189,7 @@ export default function AssessmentFlow({ type, leadId }: AssessmentFlowProps) {
       });
 
       // Redirect to results page
-      window.location.href = `/practice/results?id=${response.id}`;
+      window.location.href = `${buildUrl('/practice/results')}?id=${response.id}`;
     } catch (error) {
       console.error('Failed to submit assessment:', error);
       alert('Failed to submit assessment. Please try again.');
@@ -222,7 +233,7 @@ export default function AssessmentFlow({ type, leadId }: AssessmentFlowProps) {
                 onChange={(e) => setContactData({ ...contactData, full_name: e.target.value })}
                 required
                 placeholder="John Smith"
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary"
               />
             </div>
 
@@ -238,7 +249,7 @@ export default function AssessmentFlow({ type, leadId }: AssessmentFlowProps) {
                 onChange={(e) => setContactData({ ...contactData, email: e.target.value })}
                 required
                 placeholder="john@company.com"
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary"
               />
             </div>
 
@@ -254,7 +265,7 @@ export default function AssessmentFlow({ type, leadId }: AssessmentFlowProps) {
                   value={contactData.company}
                   onChange={(e) => setContactData({ ...contactData, company: e.target.value })}
                   placeholder="Acme Inc."
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary"
                 />
               </div>
 
@@ -269,7 +280,7 @@ export default function AssessmentFlow({ type, leadId }: AssessmentFlowProps) {
                   value={contactData.phone}
                   onChange={(e) => setContactData({ ...contactData, phone: e.target.value })}
                   placeholder="+1 (555) 123-4567"
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary"
                 />
               </div>
             </div>
@@ -320,7 +331,7 @@ export default function AssessmentFlow({ type, leadId }: AssessmentFlowProps) {
               key={rating}
               onClick={() => handleAnswer(rating)}
               className={`w-full p-4 rounded-xl border-2 transition-all text-left flex items-center justify-between group ${
-                answers[currentQuestion.id] === rating
+                answers[currentQuestion.questionId] === rating
                   ? `${colors.border} ${colors.bg}`
                   : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
               }`}
@@ -328,7 +339,7 @@ export default function AssessmentFlow({ type, leadId }: AssessmentFlowProps) {
               <div className="flex items-center gap-4">
                 <div
                   className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-colors ${
-                    answers[currentQuestion.id] === rating
+                    answers[currentQuestion.questionId] === rating
                       ? `${colors.bg} ${colors.text}`
                       : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200'
                   }`}
@@ -337,13 +348,13 @@ export default function AssessmentFlow({ type, leadId }: AssessmentFlowProps) {
                 </div>
                 <span
                   className={`font-medium ${
-                    answers[currentQuestion.id] === rating ? 'text-primary' : 'text-slate-600'
+                    answers[currentQuestion.questionId] === rating ? 'text-primary' : 'text-slate-600'
                   }`}
                 >
-                  {ratingLabels[rating]}
+                  {labels[rating]}
                 </span>
               </div>
-              {answers[currentQuestion.id] === rating && (
+              {answers[currentQuestion.questionId] === rating && (
                 <div className={`w-5 h-5 rounded-full ${colors.bg} flex items-center justify-center`}>
                   <svg className={`w-3 h-3 ${colors.text}`} fill="currentColor" viewBox="0 0 20 20">
                     <path
@@ -371,7 +382,7 @@ export default function AssessmentFlow({ type, leadId }: AssessmentFlowProps) {
 
           <button
             onClick={handleNext}
-            disabled={!answers[currentQuestion.id] || isSubmitting}
+            disabled={!answers[currentQuestion.questionId] || isSubmitting}
             className="flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-white hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {isSubmitting ? (

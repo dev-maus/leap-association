@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
+import { buildUrl } from '../../lib/utils';
 import { Lock, Loader2, CheckCircle } from 'lucide-react';
 
 export default function ResetPasswordForm() {
@@ -59,7 +60,7 @@ export default function ResetPasswordForm() {
           Your password has been updated. You can now sign in with your new password.
         </p>
         <a
-          href="/auth/login"
+          href={buildUrl('auth/login')}
           className="inline-block px-8 py-4 bg-primary text-white rounded-xl font-semibold hover:bg-primary-dark transition-colors"
         >
           Sign In
@@ -92,7 +93,7 @@ export default function ResetPasswordForm() {
               required
               minLength={8}
               placeholder="••••••••"
-              className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+              className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
           <p className="text-xs text-slate-500 mt-1">Must be at least 8 characters</p>
@@ -112,7 +113,7 @@ export default function ResetPasswordForm() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
               placeholder="••••••••"
-              className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+              className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
         </div>

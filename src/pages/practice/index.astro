@@ -78,7 +78,7 @@ import CTAButtons from '../../components/common/CTAButtons';
             <span>Instant results</span>
           </div>
 
-          <Button href="/practice/individual" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 rounded-xl">
+          <Button href={`${import.meta.env.BASE_URL}practice/individual`} class="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 rounded-xl">
             Start Individual Assessment
           </Button>
         </Card>
@@ -121,7 +121,7 @@ import CTAButtons from '../../components/common/CTAButtons';
             <span>Team insights</span>
           </div>
 
-          <Button href="/practice/team" class="w-full bg-amber-600 hover:bg-amber-700 text-white py-6 rounded-xl">
+          <Button href={`${import.meta.env.BASE_URL}practice/team`} class="w-full bg-amber-600 hover:bg-amber-700 text-white py-6 rounded-xl">
             Start Team Assessment
           </Button>
         </Card>

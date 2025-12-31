@@ -12,6 +12,8 @@ import book from './book';
 import signatureEvent from './signatureEvent';
 import teamMember from './teamMember';
 import caseStudy from './caseStudy';
+import assessmentQuestion from './assessmentQuestion';
+import assessmentSettings from './assessmentSettings';
 
 export const schemaTypes = [
   siteSettings,
@@ -28,4 +30,6 @@ export const schemaTypes = [
   signatureEvent,
   teamMember,
   caseStudy,
+  assessmentQuestion,
+  assessmentSettings,
 ];

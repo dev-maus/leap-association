@@ -196,7 +196,7 @@ export default function CalendarBooking() {
               onChange={handleChange}
               required
               placeholder="John Smith"
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
 
@@ -212,7 +212,7 @@ export default function CalendarBooking() {
               onChange={handleChange}
               required
               placeholder="john@company.com"
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
 
@@ -228,7 +228,7 @@ export default function CalendarBooking() {
                 value={formData.company}
                 onChange={handleChange}
                 placeholder="Acme Inc."
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary"
               />
             </div>
 
@@ -243,7 +243,7 @@ export default function CalendarBooking() {
                 value={formData.phone}
                 onChange={handleChange}
                 placeholder="+1 (555) 123-4567"
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary"
               />
             </div>
           </div>
@@ -259,7 +259,7 @@ export default function CalendarBooking() {
               onChange={handleChange}
               placeholder="Tell us about your organization's needs..."
               rows={4}
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-primary focus:border-primary resize-none"
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary resize-none"
             />
           </div>
 

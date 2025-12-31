@@ -170,49 +170,12 @@ export const auth = {
       throw authError;
     }
 
-    const { data: profile, error: profileError } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', user.id)
-      .single();
-
-    if (profileError && (profileError as any).code === 'PGRST116') {
-      const { data: newProfile, error: createError } = await supabase
-        .from('users')
-        .insert({
-          id: user.id,
-          email: user.email,
-          full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || '',
-          role: 'user',
-        })
-        .select()
-        .single();
-
-      if (createError) {
-        console.error('Failed to create user profile:', createError);
-        return {
-          id: user.id,
-          email: user.email,
-          full_name: user.user_metadata?.full_name || '',
-          role: 'user',
-        };
-      }
-
-      return {
-        id: user.id,
-        email: user.email,
-        ...newProfile,
-      };
-    }
-
-    if (profileError) {
-      throw profileError;
-    }
-
+    // Return user info from Supabase Auth (no separate users table)
     return {
       id: user.id,
       email: user.email,
-      ...profile,
+      full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || '',
+      role: user.user_metadata?.role || 'admin',
     };
   },
 
@@ -226,9 +189,12 @@ export const auth = {
   },
 
   redirectToLogin(returnUrl: string | null = null) {
-    const loginUrl = '/auth/login';
+    const base = import.meta.env.BASE_URL;
+    const loginUrl = `${base}auth/login`;
     const url = returnUrl ? `${loginUrl}?returnUrl=${encodeURIComponent(returnUrl)}` : loginUrl;
-    window.location.href = url;
+    if (typeof window !== 'undefined') {
+      window.location.href = url;
+    }
   },
 
   async signInWithPassword(email: string, password: string) {

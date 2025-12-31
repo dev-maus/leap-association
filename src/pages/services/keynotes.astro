@@ -48,7 +48,7 @@ const service = await sanity.fetch(`*[_type == "service" && slug == "keynotes"][
           Bring LEAP to your next event, conference, or organization.
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button href="/services/keynote-booking" variant="secondary" size="lg" class="bg-white text-primary hover:bg-slate-100">
+          <Button href={`${import.meta.env.BASE_URL}services/keynote-booking`} variant="secondary" size="lg" class="bg-white text-primary hover:bg-slate-100">
             Book a Keynote
           </Button>
           <Button href={createPageUrl('Contact')} variant="outline" size="lg" class="bg-white/10 border-2 border-white/30 text-white hover:bg-white/20">
