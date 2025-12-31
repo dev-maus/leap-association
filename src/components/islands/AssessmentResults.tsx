@@ -1,11 +1,24 @@
 import { useState, useEffect } from 'react';
 import { supabaseClient } from '../../lib/supabase';
-import { buildUrl } from '../../lib/utils';
 import { getUserDetails } from '../../lib/userStorage';
 import jsPDF from 'jspdf';
-import { Download, Loader2 } from 'lucide-react';
+import { Download, Loader2, Calendar } from 'lucide-react';
 
-export default function AssessmentResults() {
+interface SchedulingOption {
+  buttonText: string;
+  url: string;
+}
+
+interface SchedulingConfig {
+  individual: SchedulingOption;
+  team: SchedulingOption;
+}
+
+interface AssessmentResultsProps {
+  schedulingConfig: SchedulingConfig;
+}
+
+export default function AssessmentResults({ schedulingConfig }: AssessmentResultsProps) {
   const [response, setResponse] = useState<any>(null);
   const [userDetails, setUserDetails] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -28,7 +41,7 @@ export default function AssessmentResults() {
         console.log('Found response:', foundResponse);
         setResponse(foundResponse);
 
-        // Get user details from localStorage only
+        // Get user details from localStorage
         const storedUserDetails = getUserDetails();
         if (storedUserDetails.full_name || storedUserDetails.email) {
           setUserDetails(storedUserDetails);
@@ -347,12 +360,28 @@ export default function AssessmentResults() {
           <Download className="w-5 h-5" />
           Download PDF Report
         </button>
-        <a
-          href={buildUrl('practice/team-debrief')}
-          className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-primary text-primary hover:bg-primary/5 transition-colors"
-        >
-          Schedule Team Debrief
-        </a>
+        {(() => {
+          const scheduling = isTeam ? schedulingConfig.team : schedulingConfig.individual;
+          if (!scheduling.url) return null;
+          
+          // Build URL with user details as query params
+          const url = new URL(scheduling.url);
+          if (userDetails?.full_name) url.searchParams.set('name', userDetails.full_name);
+          if (userDetails?.email) url.searchParams.set('email', userDetails.email);
+          if (userDetails?.company) url.searchParams.set('company', userDetails.company);
+          
+          return (
+            <a
+              href={url.toString()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-primary text-primary hover:bg-primary/5 transition-colors"
+            >
+              <Calendar className="w-5 h-5" />
+              {scheduling.buttonText}
+            </a>
+          );
+        })()}
       </div>
     </div>
   );

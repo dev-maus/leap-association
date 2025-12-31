@@ -5,6 +5,43 @@ import Header from '../../components/layout/Header.astro';
 import Footer from '../../components/layout/Footer.astro';
 import AssessmentResults from '../../components/islands/AssessmentResults';
 import { createPageUrl } from '../../lib/utils';
+import { sanity } from '../../lib/sanity';
+
+interface SchedulingConfig {
+  buttonText?: string;
+  url?: string;
+}
+
+const settings = await sanity.fetch<{
+  scheduling?: {
+    individualScheduling?: SchedulingConfig;
+    teamScheduling?: SchedulingConfig;
+  };
+} | null>(
+  `*[_type == "assessmentSettings"][0] {
+    scheduling {
+      individualScheduling {
+        buttonText,
+        url
+      },
+      teamScheduling {
+        buttonText,
+        url
+      }
+    }
+  }`
+).catch(() => null);
+
+const schedulingConfig = {
+  individual: {
+    buttonText: settings?.scheduling?.individualScheduling?.buttonText || 'Schedule Coaching Session',
+    url: settings?.scheduling?.individualScheduling?.url || '',
+  },
+  team: {
+    buttonText: settings?.scheduling?.teamScheduling?.buttonText || 'Schedule Team Debrief',
+    url: settings?.scheduling?.teamScheduling?.url || '',
+  },
+};
 ---
 
 <Layout>
@@ -22,7 +59,7 @@ import { createPageUrl } from '../../lib/utils';
         Back to Practice
       </a>
 
-      <AssessmentResults client:load />
+      <AssessmentResults client:load schedulingConfig={schedulingConfig} />
     </div>
   </main>
   <Footer />

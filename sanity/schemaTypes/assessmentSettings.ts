@@ -73,6 +73,54 @@ export default defineType({
         'Note: Store the actual secret key in Supabase secrets using: supabase secrets set HCAPTCHA_SECRET_KEY=your-secret-key. This field is for reference only.',
       hidden: ({parent}) => !parent?.captchaEnabled,
     }),
+    defineField({
+      name: 'scheduling',
+      title: 'Scheduling Configuration',
+      type: 'object',
+      description: 'Configure scheduling links for different assessment types',
+      fields: [
+        defineField({
+          name: 'individualScheduling',
+          title: 'Individual Assessment Scheduling',
+          type: 'object',
+          fields: [
+            defineField({
+              name: 'buttonText',
+              title: 'Button Text',
+              type: 'string',
+              initialValue: 'Schedule Coaching Session',
+            }),
+            defineField({
+              name: 'url',
+              title: 'Scheduling URL',
+              type: 'url',
+              description: 'External scheduling link (e.g., Calendly, Cal.com)',
+              validation: (Rule) => Rule.uri({scheme: ['http', 'https']}),
+            }),
+          ],
+        }),
+        defineField({
+          name: 'teamScheduling',
+          title: 'Team Assessment Scheduling',
+          type: 'object',
+          fields: [
+            defineField({
+              name: 'buttonText',
+              title: 'Button Text',
+              type: 'string',
+              initialValue: 'Schedule Team Debrief',
+            }),
+            defineField({
+              name: 'url',
+              title: 'Scheduling URL',
+              type: 'url',
+              description: 'External scheduling link (e.g., Calendly, Cal.com)',
+              validation: (Rule) => Rule.uri({scheme: ['http', 'https']}),
+            }),
+          ],
+        }),
+      ],
+    }),
   ],
   preview: {
     prepare() {
