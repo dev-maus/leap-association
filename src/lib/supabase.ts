@@ -221,10 +221,65 @@ export const auth = {
   },
 };
 
+// Assessment submission with captcha verification
+async function submitAssessmentWithCaptcha(data: {
+  contactData: {
+    full_name: string;
+    email: string;
+    company?: string;
+    role?: string;
+    phone?: string;
+    source: string;
+  };
+  leadId?: string;
+  assessmentType: 'individual' | 'team';
+  scores: {
+    leadership: number;
+    effectiveness: number;
+    accountability: number;
+    productivity: number;
+  };
+  habitScore: number;
+  abilityScore: number;
+  talentScore: number;
+  skillScore: number;
+  answers: Array<{
+    question_id: string;
+    category?: string;
+    score: number;
+    question_text?: string;
+  }>;
+  captchaToken: string;
+}) {
+  const functionUrl = `${supabaseUrl}/functions/v1/verify-captcha-and-create`;
+
+  const response = await fetch(functionUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${supabaseAnonKey}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    // Create error object with all details
+    const errorObj: any = new Error(error.error || error.message || 'Failed to submit assessment');
+    errorObj.error = error.error;
+    errorObj.message = error.message;
+    errorObj.details = error.details;
+    throw errorObj;
+  }
+
+  return await response.json();
+}
+
 // Export Supabase client wrapper
 export const supabaseClient = {
   supabase,
   entities,
   auth,
+  submitAssessmentWithCaptcha,
 };
 

@@ -43,6 +43,36 @@ export default defineType({
         }),
       ],
     }),
+    defineField({
+      name: 'captchaEnabled',
+      title: 'Enable Captcha',
+      type: 'boolean',
+      description: 'Enable hCaptcha protection for assessment submissions',
+      initialValue: false,
+    }),
+    defineField({
+      name: 'hcaptchaSiteKey',
+      title: 'hCaptcha Site Key',
+      type: 'string',
+      description: 'Your hCaptcha site key (get it from https://www.hcaptcha.com/)',
+      hidden: ({parent}) => !parent?.captchaEnabled,
+      validation: (Rule) =>
+        Rule.custom((value, context) => {
+          const parent = context.parent as {captchaEnabled?: boolean}
+          if (parent?.captchaEnabled && !value) {
+            return 'Site key is required when captcha is enabled'
+          }
+          return true
+        }),
+    }),
+    defineField({
+      name: 'hcaptchaSecretKey',
+      title: 'hCaptcha Secret Key (Reference)',
+      type: 'string',
+      description:
+        'Note: Store the actual secret key in Supabase secrets using: supabase secrets set HCAPTCHA_SECRET_KEY=your-secret-key. This field is for reference only.',
+      hidden: ({parent}) => !parent?.captchaEnabled,
+    }),
   ],
   preview: {
     prepare() {

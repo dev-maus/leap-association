@@ -4,7 +4,7 @@ import Head from '../../components/layout/Head.astro';
 import Header from '../../components/layout/Header.astro';
 import Footer from '../../components/layout/Footer.astro';
 import AssessmentFlow from '../../components/islands/AssessmentFlow';
-import type { AssessmentQuestion, RatingLabels } from '../../components/islands/AssessmentFlow';
+import type { AssessmentQuestion, RatingLabels, CaptchaConfig } from '../../components/islands/AssessmentFlow';
 import { createPageUrl } from '../../lib/utils';
 import { sanity } from '../../lib/sanity';
 
@@ -16,9 +16,24 @@ const questions = await sanity.fetch<AssessmentQuestion[]>(
   }`
 );
 
-const settings = await sanity.fetch<{ ratingLabels?: RatingLabels } | null>(
-  `*[_type == "assessmentSettings"][0] { ratingLabels }`
+const settings = await sanity.fetch<{
+  ratingLabels?: RatingLabels;
+  captchaEnabled?: boolean;
+  hcaptchaSiteKey?: string;
+} | null>(
+  `*[_type == "assessmentSettings"][0] {
+    ratingLabels,
+    captchaEnabled,
+    hcaptchaSiteKey
+  }`
 );
+
+const captchaConfig: CaptchaConfig | undefined = settings?.captchaEnabled
+  ? {
+      enabled: true,
+      siteKey: settings.hcaptchaSiteKey,
+    }
+  : undefined;
 ---
 
 <Layout>
@@ -48,7 +63,7 @@ const settings = await sanity.fetch<{ ratingLabels?: RatingLabels } | null>(
         </p>
       </div>
 
-      <AssessmentFlow client:load type="team" questions={questions} ratingLabels={settings?.ratingLabels} />
+      <AssessmentFlow client:load type="team" questions={questions} ratingLabels={settings?.ratingLabels} captchaConfig={captchaConfig} />
     </div>
   </main>
   <Footer />

@@ -9,6 +9,7 @@
     "astro": "astro"
   },
   "dependencies": {
+    "@hcaptcha/react-hcaptcha": "^1.17.3",
     "@sanity/client": "^7.13.2",
     "@sanity/image-url": "^2.0.2",
     "@supabase/supabase-js": "^2.89.0",

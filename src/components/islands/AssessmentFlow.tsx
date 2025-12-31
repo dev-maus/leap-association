@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabaseClient } from '../../lib/supabase';
 import { buildUrl } from '../../lib/utils';
 import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
+import HCaptcha from '@hcaptcha/react-hcaptcha';
+import { validateEmail, validatePhone } from '../../lib/validation';
 
 const defaultRatingLabels: Record<number, string> = {
   1: 'Strongly Disagree',
@@ -25,14 +27,20 @@ export interface RatingLabels {
   rating5: string;
 }
 
+export interface CaptchaConfig {
+  enabled: boolean;
+  siteKey?: string;
+}
+
 interface AssessmentFlowProps {
   type: 'individual' | 'team';
   questions: AssessmentQuestion[];
   ratingLabels?: RatingLabels;
+  captchaConfig?: CaptchaConfig;
   leadId?: string;
 }
 
-export default function AssessmentFlow({ type, questions, ratingLabels, leadId }: AssessmentFlowProps) {
+export default function AssessmentFlow({ type, questions, ratingLabels, captchaConfig, leadId }: AssessmentFlowProps) {
   const labels: Record<number, string> = ratingLabels
     ? {
         1: ratingLabels.rating1,
@@ -52,6 +60,12 @@ export default function AssessmentFlow({ type, questions, ratingLabels, leadId }
     role: '',
     phone: '',
   });
+  const [validationErrors, setValidationErrors] = useState<{
+    email?: string;
+    phone?: string;
+  }>({});
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captchaRef = useRef<HCaptcha>(null);
 
   const currentQuestion = questions[currentIndex];
   const needsContactInfo = !leadId && currentIndex === 0;
@@ -85,11 +99,61 @@ export default function AssessmentFlow({ type, questions, ratingLabels, leadId }
     }));
   };
 
+  const validateContactForm = (): boolean => {
+    const errors: { email?: string; phone?: string } = {};
+
+    // Validate email
+    const emailValidation = validateEmail(contactData.email);
+    if (!emailValidation.isValid) {
+      errors.email = emailValidation.error;
+    }
+
+    // Validate phone (optional field)
+    const phoneValidation = validatePhone(contactData.phone);
+    if (!phoneValidation.isValid) {
+      errors.phone = phoneValidation.error;
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleEmailBlur = () => {
+    const validation = validateEmail(contactData.email);
+    if (!validation.isValid) {
+      setValidationErrors((prev) => ({ ...prev, email: validation.error }));
+    } else {
+      setValidationErrors((prev) => {
+        const { email, ...rest } = prev;
+        return rest;
+      });
+    }
+  };
+
+  const handlePhoneBlur = () => {
+    const validation = validatePhone(contactData.phone);
+    if (!validation.isValid) {
+      setValidationErrors((prev) => ({ ...prev, phone: validation.error }));
+    } else {
+      setValidationErrors((prev) => {
+        const { phone, ...rest } = prev;
+        return rest;
+      });
+    }
+  };
+
   const handleNext = () => {
     if (needsContactInfo) {
-      // Validate contact info before proceeding
+      // Validate required fields
       if (!contactData.full_name || !contactData.email) {
-        alert('Please fill in all required fields');
+        setValidationErrors({
+          email: !contactData.email ? 'Email is required' : validationErrors.email,
+        });
+        return;
+      }
+
+      // Validate email and phone formats
+      if (!validateContactForm()) {
         return;
       }
     }
@@ -150,19 +214,27 @@ export default function AssessmentFlow({ type, questions, ratingLabels, leadId }
     }
   };
 
+  const handleCaptchaVerify = (token: string) => {
+    setCaptchaToken(token);
+  };
+
+  const handleCaptchaError = () => {
+    setCaptchaToken(null);
+    alert('Captcha verification failed. Please try again.');
+  };
+
   const handleSubmit = async () => {
     setIsSubmitting(true);
 
     try {
-      let finalLeadId = leadId;
-
-      // Create lead if not provided
-      if (!finalLeadId) {
-        const lead = await supabaseClient.entities.Lead.create({
-          ...contactData,
-          source: type === 'team' ? 'team_assessment' : 'individual_assessment',
-        });
-        finalLeadId = lead.id;
+      // If captcha is enabled, ensure we have a token
+      if (captchaConfig?.enabled && !captchaToken) {
+        // Trigger captcha if not already done
+        if (captchaRef.current) {
+          captchaRef.current.execute();
+        }
+        setIsSubmitting(false);
+        return;
       }
 
       const { leapScores, habitScore, abilityScore, talentScore, skillScore } = calculateScores();
@@ -177,22 +249,84 @@ export default function AssessmentFlow({ type, questions, ratingLabels, leadId }
         };
       });
 
-      const response = await supabaseClient.entities.AssessmentResponse.create({
-        lead_id: finalLeadId,
-        assessment_type: type,
-        scores: leapScores,
-        habit_score: habitScore,
-        ability_score: abilityScore,
-        talent_score: talentScore,
-        skill_score: skillScore,
-        answers: answersArray,
-      });
+      let response;
+
+      // Use Edge Function if captcha is enabled, otherwise use direct insert
+      if (captchaConfig?.enabled && captchaToken) {
+        response = await supabaseClient.submitAssessmentWithCaptcha({
+          contactData: {
+            ...contactData,
+            source: type === 'team' ? 'team_assessment' : 'individual_assessment',
+          },
+          leadId,
+          assessmentType: type,
+          scores: leapScores,
+          habitScore,
+          abilityScore,
+          talentScore,
+          skillScore,
+          answers: answersArray,
+          captchaToken,
+        });
+      } else {
+        // Direct insert (no captcha or captcha disabled)
+        let finalLeadId = leadId;
+
+        // Create lead if not provided
+        if (!finalLeadId) {
+          const lead = await supabaseClient.entities.Lead.create({
+            ...contactData,
+            source: type === 'team' ? 'team_assessment' : 'individual_assessment',
+          });
+          finalLeadId = lead.id;
+        }
+
+        response = await supabaseClient.entities.AssessmentResponse.create({
+          lead_id: finalLeadId,
+          assessment_type: type,
+          scores: leapScores,
+          habit_score: habitScore,
+          ability_score: abilityScore,
+          talent_score: talentScore,
+          skill_score: skillScore,
+          answers: answersArray,
+        });
+      }
+
+      // Reset captcha for next submission
+      if (captchaRef.current) {
+        captchaRef.current.resetCaptcha();
+        setCaptchaToken(null);
+      }
 
       // Redirect to results page
       window.location.href = `${buildUrl('/practice/results')}?id=${response.id}`;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to submit assessment:', error);
-      alert('Failed to submit assessment. Please try again.');
+      
+      // Try to extract detailed error message from response
+      let errorMessage = 'Failed to submit assessment. Please try again.';
+      
+      if (error?.message) {
+        errorMessage = error.message;
+      } else if (error?.error) {
+        errorMessage = error.error;
+        if (error.details && Array.isArray(error.details)) {
+          errorMessage += ` (${error.details.join(', ')})`;
+        }
+        if (error.message) {
+          errorMessage += `: ${error.message}`;
+        }
+      }
+      
+      alert(errorMessage);
+      
+      // Reset captcha on error
+      if (captchaRef.current) {
+        captchaRef.current.resetCaptcha();
+        setCaptchaToken(null);
+      }
+      
       setIsSubmitting(false);
     }
   };
@@ -246,9 +380,41 @@ export default function AssessmentFlow({ type, questions, ratingLabels, leadId }
                 name="email"
                 type="email"
                 value={contactData.email}
-                onChange={(e) => setContactData({ ...contactData, email: e.target.value })}
+                onChange={(e) => {
+                  setContactData({ ...contactData, email: e.target.value });
+                  // Clear error when user starts typing
+                  if (validationErrors.email) {
+                    setValidationErrors((prev) => {
+                      const { email, ...rest } = prev;
+                      return rest;
+                    });
+                  }
+                }}
+                onBlur={handleEmailBlur}
                 required
                 placeholder="john@company.com"
+                className={`w-full px-4 py-3 rounded-xl border bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary ${
+                  validationErrors.email
+                    ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+                    : 'border-slate-200'
+                }`}
+              />
+              {validationErrors.email && (
+                <p className="mt-1.5 text-sm text-red-600">{validationErrors.email}</p>
+              )}
+            </div>
+
+            <div>
+              <label htmlFor="role" className="block text-slate-700 font-medium mb-1.5">
+                Your Role
+              </label>
+              <input
+                id="role"
+                name="role"
+                type="text"
+                value={contactData.role}
+                onChange={(e) => setContactData({ ...contactData, role: e.target.value })}
+                placeholder="Director of Operations"
                 className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary"
               />
             </div>
@@ -278,12 +444,41 @@ export default function AssessmentFlow({ type, questions, ratingLabels, leadId }
                   name="phone"
                   type="tel"
                   value={contactData.phone}
-                  onChange={(e) => setContactData({ ...contactData, phone: e.target.value })}
+                  onChange={(e) => {
+                    setContactData({ ...contactData, phone: e.target.value });
+                    // Clear error when user starts typing
+                    if (validationErrors.phone) {
+                      setValidationErrors((prev) => {
+                        const { phone, ...rest } = prev;
+                        return rest;
+                      });
+                    }
+                  }}
+                  onBlur={handlePhoneBlur}
                   placeholder="+1 (555) 123-4567"
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                  className={`w-full px-4 py-3 rounded-xl border bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary ${
+                    validationErrors.phone
+                      ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+                      : 'border-slate-200'
+                  }`}
                 />
+                {validationErrors.phone && (
+                  <p className="mt-1.5 text-sm text-red-600">{validationErrors.phone}</p>
+                )}
               </div>
             </div>
+
+            {captchaConfig?.enabled && captchaConfig.siteKey && (
+              <div className="flex justify-center">
+                <HCaptcha
+                  ref={captchaRef}
+                  sitekey={captchaConfig.siteKey}
+                  onVerify={handleCaptchaVerify}
+                  onError={handleCaptchaError}
+                  onExpire={() => setCaptchaToken(null)}
+                />
+              </div>
+            )}
 
             <button
               type="submit"
@@ -407,4 +602,5 @@ export default function AssessmentFlow({ type, questions, ratingLabels, leadId }
     </div>
   );
 }
+
 
