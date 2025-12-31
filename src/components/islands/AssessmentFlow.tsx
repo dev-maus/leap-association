@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabaseClient } from '../../lib/supabase';
-import { buildUrl } from '../../lib/utils';
-import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
+import { buildUrl, createPageUrl } from '../../lib/utils';
+import { ArrowLeft, ArrowRight, Loader2, CheckCircle, Calendar } from 'lucide-react';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
 import { validateEmail, validatePhone } from '../../lib/validation';
+import { getUserDetails, saveUserDetails } from '../../lib/userStorage';
 
 const defaultRatingLabels: Record<number, string> = {
   1: 'Strongly Disagree',
@@ -53,12 +54,16 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [contactData, setContactData] = useState({
-    full_name: '',
-    email: '',
-    company: '',
-    role: '',
-    phone: '',
+  // Initialize contact data from localStorage
+  const [contactData, setContactData] = useState(() => {
+    const stored = getUserDetails();
+    return {
+      full_name: stored.full_name || '',
+      email: stored.email || '',
+      company: stored.company || '',
+      role: stored.role || '',
+      phone: stored.phone || '',
+    };
   });
   const [validationErrors, setValidationErrors] = useState<{
     email?: string;
@@ -66,6 +71,25 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
   }>({});
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const captchaRef = useRef<HCaptcha>(null);
+  
+  // Initialize from localStorage synchronously
+  const getStoredEmail = () => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('assessment_submitted_email');
+    }
+    return null;
+  };
+  
+  const getCallScheduled = () => {
+    if (typeof window !== 'undefined') {
+      return !!localStorage.getItem('call_scheduled');
+    }
+    return false;
+  };
+  
+  const [alreadySubmitted, setAlreadySubmitted] = useState(() => !!getStoredEmail());
+  const [submittedEmail, setSubmittedEmail] = useState<string | null>(() => getStoredEmail());
+  const [hasScheduledCall, setHasScheduledCall] = useState(() => getCallScheduled());
 
   const currentQuestion = questions[currentIndex];
   const needsContactInfo = !leadId && currentIndex === 0;
@@ -79,6 +103,55 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
           <p className="text-slate-500">
             No questions have been configured for this assessment yet. Please check back later.
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show already submitted UI
+  if (alreadySubmitted) {
+    return (
+      <div className="max-w-xl mx-auto">
+        <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 lg:p-10 text-center">
+          <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
+            <CheckCircle className="w-10 h-10 text-green-600" />
+          </div>
+          <h2 className="text-2xl font-bold text-primary mb-4">Assessment Already Submitted</h2>
+          <p className="text-slate-600 mb-2">
+            You have already submitted an assessment.
+          </p>
+          {submittedEmail && (
+            <p className="text-slate-500 text-sm mb-8">
+              Submitted with: <span className="font-medium">{submittedEmail}</span>
+            </p>
+          )}
+          
+          {!hasScheduledCall && (
+            <div className="mt-8 pt-8 border-t border-slate-200">
+              <p className="text-slate-600 mb-6">
+                Ready to discuss your results? Schedule a strategy call with our team.
+              </p>
+              <a
+                href={createPageUrl('ScheduleCall')}
+                className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-white rounded-xl font-semibold hover:bg-primary-dark transition-colors"
+              >
+                <Calendar className="w-5 h-5" />
+                Schedule a LEAP Strategy Call
+              </a>
+            </div>
+          )}
+          
+          {hasScheduledCall && (
+            <div className="mt-8 pt-8 border-t border-slate-200">
+              <div className="flex items-center justify-center gap-2 text-green-600 mb-4">
+                <CheckCircle className="w-5 h-5" />
+                <p className="font-medium">Call Already Scheduled</p>
+              </div>
+              <p className="text-slate-600 text-sm">
+                Check your email for confirmation and calendar invite.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -227,6 +300,15 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
     setIsSubmitting(true);
 
     try {
+      // Check localStorage to prevent duplicate submissions from same device
+      const storedEmail = localStorage.getItem('assessment_submitted_email');
+      if (storedEmail) {
+        setAlreadySubmitted(true);
+        setSubmittedEmail(storedEmail);
+        setIsSubmitting(false);
+        return;
+      }
+
       // If captcha is enabled, ensure we have a token
       if (captchaConfig?.enabled && !captchaToken) {
         // Trigger captcha if not already done
@@ -274,11 +356,22 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
 
         // Create lead if not provided
         if (!finalLeadId) {
-          const lead = await supabaseClient.entities.Lead.create({
-            ...contactData,
-            source: type === 'team' ? 'team_assessment' : 'individual_assessment',
-          });
-          finalLeadId = lead.id;
+          try {
+            const lead = await supabaseClient.entities.Lead.create({
+              ...contactData,
+              source: type === 'team' ? 'team_assessment' : 'individual_assessment',
+            });
+            finalLeadId = lead.id;
+          } catch (createError: any) {
+            // Check if error is due to unique constraint violation on email
+            if (createError.code === '23505' || 
+                createError.message?.includes('duplicate') || 
+                createError.message?.includes('unique') ||
+                createError.message?.includes('violates unique constraint')) {
+              throw new Error('An assessment has already been submitted with this email address. Please use a different email or contact support.');
+            }
+            throw createError;
+          }
         }
 
         response = await supabaseClient.entities.AssessmentResponse.create({
@@ -290,6 +383,19 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
           talent_score: talentScore,
           skill_score: skillScore,
           answers: answersArray,
+        });
+      }
+
+      // Store submission flag and user details in localStorage
+      if (contactData.email) {
+        localStorage.setItem('assessment_submitted_email', contactData.email);
+        // Save user details for future form prepopulation
+        saveUserDetails({
+          full_name: contactData.full_name,
+          email: contactData.email,
+          company: contactData.company,
+          role: contactData.role,
+          phone: contactData.phone,
         });
       }
 

@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { supabaseClient } from '../../lib/supabase';
 import { Mail, User, Building, Phone, MessageSquare, Loader2, CheckCircle } from 'lucide-react';
+import { getUserDetails, saveUserDetails } from '../../lib/userStorage';
 
 export default function ContactForm() {
+  const storedDetails = getUserDetails();
   const [formData, setFormData] = useState({
-    full_name: '',
-    email: '',
-    company: '',
-    role: '',
-    phone: '',
+    full_name: storedDetails.full_name || '',
+    email: storedDetails.email || '',
+    company: storedDetails.company || '',
+    role: storedDetails.role || '',
+    phone: storedDetails.phone || '',
     message: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,13 +33,22 @@ export default function ContactForm() {
         source: 'contact_form',
       });
 
+      // Save user details for future form prepopulation
+      saveUserDetails({
+        full_name: formData.full_name,
+        email: formData.email,
+        company: formData.company,
+        role: formData.role,
+        phone: formData.phone,
+      });
+
       setIsSubmitted(true);
       setFormData({
-        full_name: '',
-        email: '',
-        company: '',
-        role: '',
-        phone: '',
+        full_name: formData.full_name,
+        email: formData.email,
+        company: formData.company,
+        role: formData.role,
+        phone: formData.phone,
         message: '',
       });
     } catch (error) {

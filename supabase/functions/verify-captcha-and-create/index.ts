@@ -95,6 +95,21 @@ serve(async (req) => {
         .single();
 
       if (leadError) {
+        // Check if error is due to unique constraint violation on email
+        if (leadError.code === '23505' || 
+            leadError.message?.includes('duplicate') || 
+            leadError.message?.includes('unique') ||
+            leadError.message?.includes('violates unique constraint')) {
+          return new Response(
+            JSON.stringify({
+              error: 'An assessment has already been submitted with this email address. Please use a different email or contact support.',
+            }),
+            {
+              status: 400,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            }
+          );
+        }
         throw new Error(`Failed to create lead: ${leadError.message}`);
       }
 
@@ -124,10 +139,10 @@ serve(async (req) => {
     return new Response(JSON.stringify(response), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-  } catch (error) {
+  } catch (error: any) {
     return new Response(
       JSON.stringify({
-        error: error.message || 'Internal server error',
+        error: error?.message || 'Internal server error',
       }),
       {
         status: 500,

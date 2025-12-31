@@ -1,18 +1,20 @@
 import { useState } from 'react';
 import { supabaseClient } from '../../lib/supabase';
 import { Calendar, Users, Mail, Building, Loader2, CheckCircle } from 'lucide-react';
+import { getUserDetails, saveUserDetails } from '../../lib/userStorage';
 
 interface EventRegistrationProps {
   eventId: string;
 }
 
 export default function EventRegistration({ eventId }: EventRegistrationProps) {
+  const storedDetails = getUserDetails();
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState({
-    full_name: '',
-    email: '',
-    company: '',
-    phone: '',
+    full_name: storedDetails.full_name || '',
+    email: storedDetails.email || '',
+    company: storedDetails.company || '',
+    phone: storedDetails.phone || '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -34,12 +36,20 @@ export default function EventRegistration({ eventId }: EventRegistrationProps) {
         event_id: eventId,
       });
 
+      // Save user details for future form prepopulation
+      saveUserDetails({
+        full_name: formData.full_name,
+        email: formData.email,
+        company: formData.company,
+        phone: formData.phone,
+      });
+
       setIsSubmitted(true);
       setFormData({
-        full_name: '',
-        email: '',
-        company: '',
-        phone: '',
+        full_name: formData.full_name,
+        email: formData.email,
+        company: formData.company,
+        phone: formData.phone,
       });
     } catch (error) {
       console.error('Failed to register:', error);

@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react';
 import { supabaseClient } from '../../lib/supabase';
 import { Calendar, Clock, User, Mail, Building, Phone, Loader2, CheckCircle } from 'lucide-react';
+import { getUserDetails, saveUserDetails } from '../../lib/userStorage';
 
 export default function CalendarBooking() {
+  const storedDetails = getUserDetails();
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [availableSlots, setAvailableSlots] = useState<any[]>([]);
   const [formData, setFormData] = useState({
-    full_name: '',
-    email: '',
-    company: '',
-    phone: '',
+    full_name: storedDetails.full_name || '',
+    email: storedDetails.email || '',
+    company: storedDetails.company || '',
+    phone: storedDetails.phone || '',
     message: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -76,6 +78,15 @@ export default function CalendarBooking() {
         });
       }
 
+      // Store call scheduled flag and user details in localStorage
+      localStorage.setItem('call_scheduled', 'true');
+      saveUserDetails({
+        full_name: formData.full_name,
+        email: formData.email,
+        company: formData.company,
+        phone: formData.phone,
+      });
+      
       setIsSubmitted(true);
     } catch (error) {
       console.error('Failed to book:', error);

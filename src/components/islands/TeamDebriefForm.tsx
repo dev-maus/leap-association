@@ -2,14 +2,16 @@ import { useState } from 'react';
 import { supabaseClient } from '../../lib/supabase';
 import { buildUrl, BASE_URL } from '../../lib/utils';
 import { Calendar, Users, Mail, Building, Briefcase, Phone, MessageSquare, Loader2, CheckCircle, Target } from 'lucide-react';
+import { getUserDetails, saveUserDetails } from '../../lib/userStorage';
 
 export default function TeamDebriefForm() {
+  const storedDetails = getUserDetails();
   const [formData, setFormData] = useState({
-    full_name: '',
-    email: '',
-    company: '',
-    role: '',
-    phone: '',
+    full_name: storedDetails.full_name || '',
+    email: storedDetails.email || '',
+    company: storedDetails.company || '',
+    role: storedDetails.role || '',
+    phone: storedDetails.phone || '',
     team_size: '',
     message: '',
   });
@@ -31,6 +33,15 @@ export default function TeamDebriefForm() {
       await supabaseClient.entities.Lead.create({
         ...formData,
         source: 'team_debrief',
+      });
+
+      // Save user details for future form prepopulation
+      saveUserDetails({
+        full_name: formData.full_name,
+        email: formData.email,
+        company: formData.company,
+        role: formData.role,
+        phone: formData.phone,
       });
 
       setIsSubmitted(true);
