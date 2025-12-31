@@ -5,6 +5,10 @@ import { ArrowLeft, ArrowRight, Loader2, CheckCircle, Calendar } from 'lucide-re
 import HCaptcha from '@hcaptcha/react-hcaptcha';
 import { validateEmail, validatePhone } from '../../lib/validation';
 import { getUserDetails, saveUserDetails } from '../../lib/userStorage';
+import { 
+  getAssessmentData, 
+  saveAssessmentData 
+} from '../../lib/assessmentStorage';
 
 const defaultRatingLabels: Record<number, string> = {
   1: 'Strongly Disagree',
@@ -76,31 +80,36 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
   const [submittedResponseId, setSubmittedResponseId] = useState<string | null>(null);
   const [hasScheduledCall, setHasScheduledCall] = useState(false);
+  const [hasStoredUserDetails, setHasStoredUserDetails] = useState(false);
 
   // Read from localStorage after hydration to prevent SSR mismatch
   useEffect(() => {
     // Check submission status
-    const storedEmail = localStorage.getItem('assessment_submitted_email');
-    const storedResponseId = localStorage.getItem('assessment_response_id');
-    const callScheduled = !!localStorage.getItem('call_scheduled');
+    const assessmentData = getAssessmentData();
     
-    if (storedEmail) {
+    if (assessmentData.submittedEmail) {
       setAlreadySubmitted(true);
-      setSubmittedEmail(storedEmail);
-      setSubmittedResponseId(storedResponseId);
+      setSubmittedEmail(assessmentData.submittedEmail);
+      setSubmittedResponseId(assessmentData.responseId || null);
     }
-    setHasScheduledCall(callScheduled);
+    setHasScheduledCall(!!assessmentData.callScheduled);
 
     // Load user details for form prepopulation
     const stored = getUserDetails();
-    if (stored.full_name || stored.email) {
+    if (stored.full_name && stored.email) {
       setContactData({
-        full_name: stored.full_name || '',
-        email: stored.email || '',
+        full_name: stored.full_name,
+        email: stored.email,
         company: stored.company || '',
         role: stored.role || '',
         phone: stored.phone || '',
       });
+      // If we have a stored leadId, use it
+      if (stored.leadId) {
+        setCreatedLeadId(stored.leadId);
+      }
+      // If we have both name and email, skip contact form
+      setHasStoredUserDetails(true);
     }
   }, []);
 
@@ -114,7 +123,8 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
   }, []);
 
   const currentQuestion = questions[currentIndex];
-  const needsContactInfo = !leadId && currentIndex === 0;
+  // Skip contact form if we have stored user details or a leadId was provided
+  const needsContactInfo = !leadId && !hasStoredUserDetails && currentIndex === 0;
 
   // Show error if no questions are configured
   if (questions.length === 0) {
@@ -262,8 +272,17 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
         return;
       }
 
-      // Create lead before starting assessment
-      if (!createdLeadId) {
+      // Verify captcha before proceeding
+      if (captchaConfig?.enabled && !captchaToken) {
+        setErrorMessage('Please complete the captcha verification.');
+        return;
+      }
+
+      // Save user details immediately when starting assessment
+      saveUserDetails(contactData);
+
+      // Create lead before starting assessment (skip if we have stored user details with leadId)
+      if (!createdLeadId && !hasStoredUserDetails) {
         setIsSubmitting(true);
         try {
           const lead = await supabaseClient.entities.Lead.create({
@@ -271,6 +290,8 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
             source: type === 'team' ? 'team_assessment' : 'individual_assessment',
           });
           setCreatedLeadId(lead.id);
+          // Store leadId with user details
+          saveUserDetails({ ...contactData, leadId: lead.id });
           setErrorMessage(null);
         } catch (createError: any) {
           console.error('Failed to create lead:', createError);
@@ -363,23 +384,17 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
 
     try {
       // Check localStorage to prevent duplicate submissions from same device
-      const storedEmail = localStorage.getItem('assessment_submitted_email');
-      if (storedEmail) {
-        console.log('Assessment already submitted with email:', storedEmail);
+      const assessmentData = getAssessmentData();
+      if (assessmentData.submittedEmail) {
+        console.log('Assessment already submitted with email:', assessmentData.submittedEmail);
         setAlreadySubmitted(true);
-        setSubmittedEmail(storedEmail);
-        setIsSubmitting(false);
+        setSubmittedEmail(assessmentData.submittedEmail);
         return;
       }
 
       // If captcha is enabled, ensure we have a token
       if (captchaConfig?.enabled && !captchaToken) {
-        console.log('Captcha enabled but no token, triggering captcha');
-        // Trigger captcha if not already done
-        if (captchaRef.current) {
-          captchaRef.current.execute();
-        }
-        setIsSubmitting(false);
+        setErrorMessage('Please complete the captcha verification before submitting.');
         return;
       }
 
@@ -420,13 +435,20 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
         console.log('Edge Function response:', response);
       } else {
         // Direct insert (no captcha or captcha disabled)
-        // Use the lead ID created earlier or the one provided as prop
-        const finalLeadId = createdLeadId;
-        console.log('Direct insert, finalLeadId:', finalLeadId);
+        let finalLeadId = createdLeadId;
+        console.log('Direct insert, initial finalLeadId:', finalLeadId);
 
+        // Create lead if not already created (e.g., when using stored user details)
         if (!finalLeadId) {
-          console.error('No finalLeadId available');
-          throw new Error('Lead ID is missing. Please start the assessment from the beginning.');
+          console.log('Creating lead for direct insert...');
+          const lead = await supabaseClient.entities.Lead.create({
+            ...contactData,
+            source: type === 'team' ? 'team_assessment' : 'individual_assessment',
+          });
+          finalLeadId = lead.id;
+          // Store leadId for future use
+          saveUserDetails({ leadId: lead.id });
+          console.log('Lead created:', finalLeadId);
         }
 
         console.log('Creating assessment response...');
@@ -448,11 +470,13 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
         throw new Error('Failed to create assessment response - no ID returned');
       }
 
-      // Store submission flag, response ID, and user details in localStorage
+      // Store submission data in localStorage
       if (contactData.email) {
-        localStorage.setItem('assessment_submitted_email', contactData.email);
-        localStorage.setItem('assessment_response_id', response.id);
-        saveUserDetails(contactData);
+        saveAssessmentData({
+          submittedEmail: contactData.email,
+          responseId: response.id,
+          submittedAt: new Date().toISOString(),
+        });
       }
 
       // Reset captcha for next submission
@@ -464,13 +488,6 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
       // Redirect to results page
       const resultsUrl = `${buildUrl('/practice/results')}?id=${response.id}`;
       console.log('Redirecting to:', resultsUrl);
-      
-      // Set a timeout to ensure we stop showing spinner even if redirect fails
-      setTimeout(() => {
-        console.log('Redirect timeout, stopping spinner');
-        setIsSubmitting(false);
-      }, 5000);
-      
       window.location.href = resultsUrl;
     } catch (error: any) {
       console.error('Failed to submit assessment:', error);
@@ -504,7 +521,8 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
         captchaRef.current.resetCaptcha();
         setCaptchaToken(null);
       }
-      
+    } finally {
+      // Ensure spinner always stops
       setIsSubmitting(false);
     }
   };

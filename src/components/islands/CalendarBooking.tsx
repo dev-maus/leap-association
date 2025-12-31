@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabaseClient } from '../../lib/supabase';
 import { Calendar, Clock, User, Mail, Building, Phone, Loader2, CheckCircle } from 'lucide-react';
 import { getUserDetails, saveUserDetails } from '../../lib/userStorage';
+import { saveAssessmentData } from '../../lib/assessmentStorage';
 
 export default function CalendarBooking() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -70,6 +71,9 @@ export default function CalendarBooking() {
     }
 
     setIsSubmitting(true);
+    
+    // Save user details immediately on submit
+    saveUserDetails(formData);
 
     try {
       // Create lead
@@ -90,8 +94,7 @@ export default function CalendarBooking() {
         });
       }
 
-      localStorage.setItem('call_scheduled', 'true');
-      saveUserDetails(formData);
+      saveAssessmentData({ callScheduled: true });
       
       setIsSubmitted(true);
     } catch (error) {

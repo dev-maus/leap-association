@@ -42,14 +42,15 @@ export default function EventRegistration({ eventId }: EventRegistrationProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    
+    // Save user details immediately on submit
+    saveUserDetails(formData);
 
     try {
       await supabaseClient.entities.SignatureEventRegistration.create({
         ...formData,
         event_id: eventId,
       });
-
-      saveUserDetails(formData);
 
       setIsSubmitted(true);
       setFormData({

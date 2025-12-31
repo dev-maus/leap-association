@@ -40,14 +40,15 @@ export default function ContactForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    
+    // Save user details immediately on submit
+    saveUserDetails(formData);
 
     try {
       await supabaseClient.entities.Lead.create({
         ...formData,
         source: 'contact_form',
       });
-
-      saveUserDetails(formData);
 
       setIsSubmitted(true);
       setFormData({

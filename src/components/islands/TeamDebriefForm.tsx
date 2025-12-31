@@ -42,14 +42,15 @@ export default function TeamDebriefForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    
+    // Save user details immediately on submit
+    saveUserDetails(formData);
 
     try {
       await supabaseClient.entities.Lead.create({
         ...formData,
         source: 'team_debrief',
       });
-
-      saveUserDetails(formData);
 
       setIsSubmitted(true);
     } catch (error) {

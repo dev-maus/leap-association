@@ -26,6 +26,15 @@ const entityToTable = (entityName: string): string => {
   return mapping[entityName] || entityName.toLowerCase() + 's';
 };
 
+// Generate UUID v4 client-side
+function generateUUID(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 // Create entity API that mimics Base44's API
 function createEntityAPI(tableName: string) {
   return {
@@ -84,25 +93,63 @@ function createEntityAPI(tableName: string) {
     },
 
     async get(id: string) {
-      const { data, error } = await supabase
+      // Try maybeSingle first (handles 406 better in some cases)
+      let { data, error } = await supabase
         .from(tableName)
         .select('*')
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      // If we get a 406 error, try without maybeSingle as fallback
+      if (error && ((error as any).status === 406 || error.message?.includes('406'))) {
+        console.warn(`Received 406 error, trying alternative query method for ${tableName}`);
+        const fallbackQuery = await supabase
+          .from(tableName)
+          .select('*')
+          .eq('id', id)
+          .limit(1);
+        
+        if (fallbackQuery.error) {
+          error = fallbackQuery.error;
+        } else {
+          data = fallbackQuery.data?.[0] || null;
+          error = null;
+        }
+      }
+
+      if (error) {
+        // Log detailed error for debugging
+        console.error(`Error fetching ${tableName} with id ${id}:`, {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code,
+          status: (error as any).status,
+        });
+        throw error;
+      }
+      
+      if (!data) {
+        const notFoundError = new Error(`${tableName} with id ${id} not found`);
+        (notFoundError as any).code = 'PGRST116';
+        (notFoundError as any).status = 404;
+        throw notFoundError;
+      }
+      
       return data;
     },
 
     async create(record: any) {
-      const { data, error } = await supabase
+      // Generate ID client-side to avoid needing to read back after insert
+      const id = record.id || generateUUID();
+      const recordWithId = { ...record, id };
+
+      const { error } = await supabase
         .from(tableName)
-        .insert(record)
-        .select()
-        .single();
+        .insert(recordWithId);
 
       if (error) throw error;
-      return data;
+      return recordWithId;
     },
 
     async update(id: string, updates: any) {
@@ -253,26 +300,40 @@ async function submitAssessmentWithCaptcha(data: {
 }) {
   const functionUrl = `${supabaseUrl}/functions/v1/verify-captcha-and-create`;
 
-  const response = await fetch(functionUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${supabaseAnonKey}`,
-    },
-    body: JSON.stringify(data),
-  });
+  // Add timeout to prevent hanging
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
-  if (!response.ok) {
-    const error = await response.json();
-    // Create error object with all details
-    const errorObj: any = new Error(error.error || error.message || 'Failed to submit assessment');
-    errorObj.error = error.error;
-    errorObj.message = error.message;
-    errorObj.details = error.details;
-    throw errorObj;
+  try {
+    const response = await fetch(functionUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${supabaseAnonKey}`,
+      },
+      body: JSON.stringify(data),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const error = await response.json();
+      const errorObj: any = new Error(error.error || error.message || 'Failed to submit assessment');
+      errorObj.error = error.error;
+      errorObj.message = error.message;
+      errorObj.details = error.details;
+      throw errorObj;
+    }
+
+    return await response.json();
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      throw new Error('Request timed out. Please try again.');
+    }
+    throw err;
   }
-
-  return await response.json();
 }
 
 // Export Supabase client wrapper

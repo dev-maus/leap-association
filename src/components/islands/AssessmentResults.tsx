@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { supabaseClient } from '../../lib/supabase';
 import { buildUrl } from '../../lib/utils';
+import { getUserDetails } from '../../lib/userStorage';
 import jsPDF from 'jspdf';
 import { Download, Loader2 } from 'lucide-react';
 
 export default function AssessmentResults() {
   const [response, setResponse] = useState<any>(null);
-  const [lead, setLead] = useState<any>(null);
+  const [userDetails, setUserDetails] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,16 +23,36 @@ export default function AssessmentResults() {
 
     const loadResults = async () => {
       try {
+        console.log('Loading assessment results for ID:', responseId);
         const foundResponse = await supabaseClient.entities.AssessmentResponse.get(responseId);
+        console.log('Found response:', foundResponse);
         setResponse(foundResponse);
 
-        if (foundResponse.lead_id) {
-          const foundLead = await supabaseClient.entities.Lead.get(foundResponse.lead_id);
-          setLead(foundLead);
+        // Get user details from localStorage only
+        const storedUserDetails = getUserDetails();
+        if (storedUserDetails.full_name || storedUserDetails.email) {
+          setUserDetails(storedUserDetails);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error loading results:', err);
-        setError('Failed to load assessment results');
+        console.error('Error details:', {
+          message: err?.message,
+          code: err?.code,
+          status: err?.status,
+          details: err?.details,
+          hint: err?.hint,
+        });
+        
+        // Provide more specific error messages
+        if (err?.code === 'PGRST116' || err?.status === 404) {
+          setError('Assessment results not found. Please check the link and try again.');
+        } else if (err?.status === 406) {
+          setError('Unable to load assessment results. Please contact support if this issue persists.');
+        } else if (err?.message?.includes('JWT')) {
+          setError('Authentication error. Please refresh the page and try again.');
+        } else {
+          setError(err?.message || 'Failed to load assessment results. Please try again.');
+        }
       } finally {
         setIsLoading(false);
       }
@@ -131,11 +152,11 @@ export default function AssessmentResults() {
     doc.setTextColor(0, 0, 0);
     doc.text(`${isTeam ? 'Team/Organization' : 'Individual'} Assessment`, 20, 30);
 
-    if (lead) {
+    if (userDetails) {
       doc.setFontSize(10);
-      doc.text(`Name: ${lead.full_name}`, 20, 38);
-      if (lead.company) doc.text(`Company: ${lead.company}`, 20, 44);
-      doc.text(`Date: ${new Date(response.created_date).toLocaleDateString()}`, 20, 50);
+      if (userDetails.full_name) doc.text(`Name: ${userDetails.full_name}`, 20, 38);
+      if (userDetails.company) doc.text(`Company: ${userDetails.company}`, 20, 44);
+      doc.text(`Date: ${new Date(response.created_date).toLocaleDateString()}`, 20, userDetails.company ? 50 : 44);
     }
 
     // LEAP Scores
@@ -198,7 +219,10 @@ export default function AssessmentResults() {
     doc.setTextColor(100, 100, 100);
     doc.text('© LEAP Association - Excellence is a practice, not an event.', 20, 280);
 
-    doc.save(`Assessment-${lead?.full_name?.replace(/\s+/g, '-') || responseId}.pdf`);
+    const fileName = userDetails?.full_name 
+      ? `Assessment-${userDetails.full_name.replace(/\s+/g, '-')}.pdf`
+      : `Assessment-${responseId}.pdf`;
+    doc.save(fileName);
   };
 
   return (

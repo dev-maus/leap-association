@@ -9,6 +9,7 @@ export interface UserDetails {
   company?: string;
   role?: string;
   phone?: string;
+  leadId?: string;
 }
 
 const STORAGE_KEY = 'leap_user_details';
@@ -41,7 +42,9 @@ export function saveUserDetails(details: Partial<UserDetails>): void {
     const updated = {
       ...getUserDetails(),
       ...Object.fromEntries(
-        Object.entries(details).filter(([_, value]) => value?.trim())
+        Object.entries(details).filter(([_, value]) => 
+          typeof value === 'string' ? value.trim() : value
+        )
       ),
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
