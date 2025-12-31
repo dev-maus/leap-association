@@ -123,8 +123,11 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
   }, []);
 
   const currentQuestion = questions[currentIndex];
-  // Skip contact form if we have stored user details or a leadId was provided
-  const needsContactInfo = !leadId && !hasStoredUserDetails && currentIndex === 0;
+  // Show contact form if:
+  // - No leadId provided AND
+  // - We're on the first step (currentIndex === 0) AND
+  // - Either: no stored user details OR captcha is enabled (captcha must be re-verified every time)
+  const needsContactInfo = !leadId && currentIndex === 0 && (!hasStoredUserDetails || captchaConfig?.enabled);
 
   // Show error if no questions are configured
   if (questions.length === 0) {
@@ -281,8 +284,9 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
       // Save user details immediately when starting assessment
       saveUserDetails(contactData);
 
-      // Create lead before starting assessment (skip if we have stored user details with leadId)
-      if (!createdLeadId && !hasStoredUserDetails) {
+      // Create lead before starting assessment if we don't have one
+      // This handles both new users and returning users who need captcha re-verification
+      if (!createdLeadId) {
         setIsSubmitting(true);
         try {
           const lead = await supabaseClient.entities.Lead.create({
@@ -302,11 +306,14 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
               createError.message?.includes('duplicate') || 
               createError.message?.includes('unique') ||
               createError.message?.includes('violates unique constraint')) {
-            setErrorMessage('An assessment has already been submitted with this email address. Please use a different email or contact support.');
+            // Lead already exists for this email - try to continue without creating new lead
+            // The submission will handle associating with existing lead
+            console.log('Lead already exists for email, continuing without new lead');
+            setErrorMessage(null);
           } else {
             setErrorMessage(createError.message || 'Failed to start assessment. Please try again.');
+            return;
           }
-          return;
         }
         setIsSubmitting(false);
       }

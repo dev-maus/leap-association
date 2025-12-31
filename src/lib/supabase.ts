@@ -64,6 +64,60 @@ function createEntityAPI(tableName: string) {
       return data || [];
     },
 
+    async listPaginated(options: {
+      page?: number;
+      pageSize?: number;
+      orderBy?: string | null;
+      search?: string;
+      searchColumns?: string[];
+    } = {}) {
+      const { page = 1, pageSize = 10, orderBy = null, search = '', searchColumns = [] } = options;
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+
+      // Build search filter if search term provided
+      const applySearch = (query: any) => {
+        if (search && searchColumns.length > 0) {
+          // Use ilike for case-insensitive partial matching
+          // Build OR condition for multiple columns
+          const searchPattern = `%${search}%`;
+          const orConditions = searchColumns.map(col => `${col}.ilike.${searchPattern}`).join(',');
+          return query.or(orConditions);
+        }
+        return query;
+      };
+
+      // Get count and data in parallel
+      let countQuery = supabase.from(tableName).select('*', { count: 'exact', head: true });
+      let dataQuery = supabase.from(tableName).select('*');
+
+      // Apply search to both queries
+      countQuery = applySearch(countQuery);
+      dataQuery = applySearch(dataQuery);
+
+      if (orderBy) {
+        const [column, direction] = orderBy.startsWith('-')
+          ? [orderBy.slice(1), 'desc']
+          : [orderBy, 'asc'];
+        dataQuery = dataQuery.order(column, { ascending: direction === 'asc' });
+      }
+
+      dataQuery = dataQuery.range(from, to);
+
+      const [countResult, dataResult] = await Promise.all([countQuery, dataQuery]);
+
+      if (countResult.error) throw countResult.error;
+      if (dataResult.error) throw dataResult.error;
+
+      return {
+        data: dataResult.data || [],
+        total: countResult.count || 0,
+        page,
+        pageSize,
+        totalPages: Math.ceil((countResult.count || 0) / pageSize),
+      };
+    },
+
     async filter(filters: any = {}, orderBy: string | null = null, limit: number | null = null) {
       let query = supabase.from(tableName).select('*');
 
