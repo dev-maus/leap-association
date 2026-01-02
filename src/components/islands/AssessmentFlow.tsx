@@ -81,6 +81,7 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
   const [submittedResponseId, setSubmittedResponseId] = useState<string | null>(null);
   const [hasScheduledCall, setHasScheduledCall] = useState(false);
   const [hasStoredUserDetails, setHasStoredUserDetails] = useState(false);
+  const [contactFormCompleted, setContactFormCompleted] = useState(false);
 
   // Read from localStorage after hydration to prevent SSR mismatch
   useEffect(() => {
@@ -119,15 +120,39 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
     const id = params.get('leadId');
     if (id) {
       // Lead ID provided, skip contact form
+      setCreatedLeadId(id);
     }
   }, []);
 
-  const currentQuestion = questions[currentIndex];
   // Show contact form if:
   // - No leadId provided AND
   // - We're on the first step (currentIndex === 0) AND
+  // - Contact form has not been completed this session AND
   // - Either: no stored user details OR captcha is enabled (captcha must be re-verified every time)
-  const needsContactInfo = !leadId && currentIndex === 0 && (!hasStoredUserDetails || captchaConfig?.enabled);
+  const needsContactInfo = !leadId && currentIndex === 0 && !contactFormCompleted && (!hasStoredUserDetails || captchaConfig?.enabled);
+  
+  // Track previous needsContactInfo to detect transition
+  const prevNeedsContactInfoRef = useRef(needsContactInfo);
+  
+  // Scroll to top when transitioning from contact form to questions
+  useEffect(() => {
+    const wasShowingContactForm = prevNeedsContactInfoRef.current;
+    const isShowingQuestions = !needsContactInfo;
+    
+    // If we just transitioned from contact form to questions, scroll to top
+    if (wasShowingContactForm && isShowingQuestions && questions.length > 0) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    
+    // Update ref for next render
+    prevNeedsContactInfoRef.current = needsContactInfo;
+  }, [needsContactInfo, questions.length]);
+  
+  // Only access currentQuestion when we're actually showing questions (not contact form)
+  // currentIndex starts at 0, so the first question will be shown when transitioning from contact form
+  const currentQuestion = !needsContactInfo && questions.length > 0 && currentIndex >= 0 && currentIndex < questions.length
+    ? questions[currentIndex]
+    : undefined;
 
   // Show error if no questions are configured
   if (questions.length === 0) {
@@ -208,6 +233,7 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
   }
 
   const handleAnswer = (rating: number) => {
+    if (!currentQuestion) return;
     setAnswers((prev) => ({
       ...prev,
       [currentQuestion.questionId]: rating,
@@ -283,6 +309,9 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
 
       // Save user details immediately when starting assessment
       saveUserDetails(contactData);
+      
+      // Update state to indicate we have stored user details
+      setHasStoredUserDetails(true);
 
       // Create lead before starting assessment if we don't have one
       // This handles both new users and returning users who need captcha re-verification
@@ -317,8 +346,14 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
         }
         setIsSubmitting(false);
       }
+      
+      // Mark contact form as completed for this session
+      // This will cause needsContactInfo to become false on next render
+      setContactFormCompleted(true);
+      return;
     }
 
+    // Only increment if we're moving between questions (not from contact form)
     if (currentIndex < questions.length - 1) {
       setCurrentIndex((prev) => prev + 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -541,8 +576,10 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
     skill: { bg: 'bg-amber-100', text: 'text-amber-700', border: 'border-amber-500' },
   };
 
-  const colors = categoryColors[currentQuestion?.category] || categoryColors.habit;
-  const progress = ((currentIndex + 1) / questions.length) * 100;
+  const colors = currentQuestion?.category 
+    ? (categoryColors[currentQuestion.category] || categoryColors.habit)
+    : categoryColors.habit;
+  const progress = questions.length > 0 ? ((currentIndex + 1) / questions.length) * 100 : 0;
 
   if (needsContactInfo) {
     return (
@@ -714,6 +751,20 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
               <ArrowRight className="w-5 h-5 ml-2 inline" />
             </button>
           </form>
+        </div>
+      </div>
+    );
+  }
+
+  // Safety check: ensure we have a valid question before rendering
+  if (!currentQuestion) {
+    return (
+      <div className="max-w-xl mx-auto">
+        <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 lg:p-10 text-center">
+          <h2 className="text-2xl font-bold text-primary mb-4">Assessment Unavailable</h2>
+          <p className="text-slate-500">
+            Unable to load assessment questions. Please try refreshing the page.
+          </p>
         </div>
       </div>
     );
