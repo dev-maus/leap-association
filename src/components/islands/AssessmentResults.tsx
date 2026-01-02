@@ -234,7 +234,7 @@ export default function AssessmentResults({ schedulingConfig }: AssessmentResult
 
     const fileName = userDetails?.full_name 
       ? `Assessment-${userDetails.full_name.replace(/\s+/g, '-')}.pdf`
-      : `Assessment-${responseId}.pdf`;
+      : `Assessment-${response.id}.pdf`;
     doc.save(fileName);
   };
 

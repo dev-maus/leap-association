@@ -359,6 +359,13 @@ async function submitAssessmentWithCaptcha(data: {
   }>;
   captchaToken: string;
 }) {
+  // Validate configuration before making request
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error(
+      'Supabase configuration is missing. Please ensure PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY are set.'
+    );
+  }
+
   const functionUrl = `${supabaseUrl}/functions/v1/verify-captcha-and-create`;
 
   // Add timeout to prevent hanging
@@ -371,6 +378,7 @@ async function submitAssessmentWithCaptcha(data: {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${supabaseAnonKey}`,
+        apikey: supabaseAnonKey,
       },
       body: JSON.stringify(data),
       signal: controller.signal,
