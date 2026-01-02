@@ -238,6 +238,15 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
       ...prev,
       [currentQuestion.questionId]: rating,
     }));
+    
+    // Auto-advance to next question after a brief delay for visual feedback
+    // On the last question, don't auto-advance - let user manually submit
+    if (currentIndex < questions.length - 1) {
+      setTimeout(() => {
+        setCurrentIndex((prev) => prev + 1);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 300);
+    }
   };
 
   const validateContactForm = (): boolean => {
@@ -876,28 +885,29 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
             Previous
           </button>
 
-          <button
-            onClick={handleNext}
-            disabled={!answers[currentQuestion.questionId] || isSubmitting}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-white hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Submitting...
-              </>
-            ) : currentIndex === questions.length - 1 ? (
-              <>
-                Submit Assessment
-                <ArrowRight className="w-5 h-5" />
-              </>
-            ) : (
-              <>
-                Next
-                <ArrowRight className="w-5 h-5" />
-              </>
-            )}
-          </button>
+          {currentIndex === questions.length - 1 ? (
+            <button
+              onClick={handleSubmit}
+              disabled={!answers[currentQuestion.questionId] || isSubmitting}
+              className="flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-white hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                <>
+                  Submit Assessment
+                  <ArrowRight className="w-5 h-5" />
+                </>
+              )}
+            </button>
+          ) : (
+            <span className="text-sm text-slate-400">
+              Select an answer to continue
+            </span>
+          )}
         </div>
       </div>
     </div>
