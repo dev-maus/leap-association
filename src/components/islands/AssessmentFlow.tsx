@@ -9,27 +9,18 @@ import {
   getAssessmentData, 
   saveAssessmentData 
 } from '../../lib/assessmentStorage';
+import { calculateAllScores, type Answer as AnswerData } from '../../lib/assessmentScoring';
 
-const defaultRatingLabels: Record<number, string> = {
-  1: 'Strongly Disagree',
-  2: 'Disagree',
-  3: 'Neutral',
-  4: 'Agree',
-  5: 'Strongly Agree'
-};
-
-export interface AssessmentQuestion {
-  questionId: string;
-  category: 'habit' | 'ability' | 'talent' | 'skill';
-  text: string;
+export interface RatingOption {
+  label: string;
+  points: number;
 }
 
-export interface RatingLabels {
-  rating1: string;
-  rating2: string;
-  rating3: string;
-  rating4: string;
-  rating5: string;
+export interface AssessmentQuestion {
+  _id: string;
+  category: 'habit' | 'ability' | 'talent' | 'skill';
+  text: string;
+  ratingOptions: RatingOption[];
 }
 
 export interface CaptchaConfig {
@@ -40,23 +31,13 @@ export interface CaptchaConfig {
 interface AssessmentFlowProps {
   type: 'individual' | 'team';
   questions: AssessmentQuestion[];
-  ratingLabels?: RatingLabels;
   captchaConfig?: CaptchaConfig;
   leadId?: string;
 }
 
-export default function AssessmentFlow({ type, questions, ratingLabels, captchaConfig, leadId }: AssessmentFlowProps) {
-  const labels: Record<number, string> = ratingLabels
-    ? {
-        1: ratingLabels.rating1,
-        2: ratingLabels.rating2,
-        3: ratingLabels.rating3,
-        4: ratingLabels.rating4,
-        5: ratingLabels.rating5,
-      }
-    : defaultRatingLabels;
+export default function AssessmentFlow({ type, questions, captchaConfig, leadId }: AssessmentFlowProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, number>>({});
+  const [answers, setAnswers] = useState<Record<string, { points: number; optionIndex: number }>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [contactData, setContactData] = useState({
     full_name: '',
@@ -232,11 +213,11 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
     );
   }
 
-  const handleAnswer = (rating: number) => {
+  const handleAnswer = (optionIndex: number, points: number) => {
     if (!currentQuestion) return;
     setAnswers((prev) => ({
       ...prev,
-      [currentQuestion.questionId]: rating,
+      [currentQuestion._id]: { points, optionIndex },
     }));
     
     // Auto-advance to next question after a brief delay for visual feedback
@@ -379,44 +360,25 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
   };
 
   const calculateScores = () => {
-    if (type === 'individual') {
-      const habitScore = (answers.h1 || 0) + (answers.h2 || 0);
-      const abilityScore = (answers.a1 || 0) + (answers.a2 || 0);
-      const talentScore = (answers.t1 || 0) + (answers.t2 || 0);
-      const skillScore = (answers.s1 || 0) + (answers.s2 || 0);
-
+    // Convert answers to format expected by scoring utility
+    const answerData: AnswerData[] = Object.entries(answers).map(([questionId, answer]) => {
+      const question = questions.find((q) => q._id === questionId);
       return {
-        leapScores: {
-          leadership: habitScore + talentScore,
-          effectiveness: habitScore + abilityScore,
-          accountability: abilityScore + skillScore,
-          productivity: habitScore + skillScore,
-        },
-        habitScore,
-        abilityScore,
-        talentScore,
-        skillScore,
+        questionId,
+        category: question?.category || 'habit',
+        points: answer.points,
       };
-    } else {
-      // Team scoring
-      const habitScore = (answers.h1 || 0) + (answers.h2 || 0) + (answers.h3 || 0);
-      const abilityScore = (answers.a1 || 0) + (answers.a2 || 0) + (answers.a3 || 0);
-      const talentScore = (answers.t1 || 0) + (answers.t2 || 0) + (answers.t3 || 0);
-      const skillScore = (answers.s1 || 0) + (answers.s2 || 0) + (answers.s3 || 0);
+    });
 
-      return {
-        leapScores: {
-          leadership: habitScore + talentScore,
-          effectiveness: habitScore + abilityScore,
-          accountability: abilityScore + skillScore,
-          productivity: habitScore + skillScore,
-        },
-        habitScore,
-        abilityScore,
-        talentScore,
-        skillScore,
-      };
-    }
+    const { categoryScores, leapScores } = calculateAllScores(answerData);
+
+    return {
+      leapScores,
+      habitScore: categoryScores.habit,
+      abilityScore: categoryScores.ability,
+      talentScore: categoryScores.talent,
+      skillScore: categoryScores.skill,
+    };
   };
 
   const handleCaptchaVerify = (token: string) => {
@@ -452,12 +414,12 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
       const { leapScores, habitScore, abilityScore, talentScore, skillScore } = calculateScores();
       console.log('Calculated scores:', { leapScores, habitScore, abilityScore, talentScore, skillScore });
 
-      const answersArray = Object.entries(answers).map(([qId, score]) => {
-        const question = questions.find((q) => q.questionId === qId);
+      const answersArray = Object.entries(answers).map(([questionId, answer]) => {
+        const question = questions.find((q) => q._id === questionId);
         return {
-          question_id: qId,
+          question_id: questionId,
           category: question?.category,
-          score,
+          score: answer.points,
           question_text: question?.text,
         };
       });
@@ -831,47 +793,50 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
 
         {/* Rating Scale */}
         <div className="space-y-3 mb-8">
-          {[1, 2, 3, 4, 5].map((rating) => (
-            <button
-              key={rating}
-              onClick={() => handleAnswer(rating)}
-              className={`w-full p-4 rounded-xl border-2 transition-all text-left flex items-center justify-between group ${
-                answers[currentQuestion.questionId] === rating
-                  ? `${colors.border} ${colors.bg}`
-                  : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-              }`}
-            >
-              <div className="flex items-center gap-4">
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-colors ${
-                    answers[currentQuestion.questionId] === rating
-                      ? `${colors.bg} ${colors.text}`
-                      : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200'
-                  }`}
-                >
-                  {rating}
+          {currentQuestion.ratingOptions.map((option, index) => {
+            const isSelected = answers[currentQuestion._id]?.optionIndex === index;
+            return (
+              <button
+                key={index}
+                onClick={() => handleAnswer(index, option.points)}
+                className={`w-full p-4 rounded-xl border-2 transition-all text-left flex items-center justify-between group ${
+                  isSelected
+                    ? `${colors.border} ${colors.bg}`
+                    : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-colors ${
+                      isSelected
+                        ? `${colors.bg} ${colors.text}`
+                        : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200'
+                    }`}
+                  >
+                    {index + 1}
+                  </div>
+                  <span
+                    className={`font-medium ${
+                      isSelected ? 'text-primary' : 'text-slate-600'
+                    }`}
+                  >
+                    {option.label}
+                  </span>
                 </div>
-                <span
-                  className={`font-medium ${
-                    answers[currentQuestion.questionId] === rating ? 'text-primary' : 'text-slate-600'
-                  }`}
-                >
-                  {labels[rating]}
-                </span>
-              </div>
-              {answers[currentQuestion.questionId] === rating && (
-                <div className={`w-5 h-5 rounded-full ${colors.bg} flex items-center justify-center`}>
-                  <svg className={`w-3 h-3 ${colors.text}`} fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-              )}
-            </button>
-          ))}
+                {isSelected && (
+                  <div className={`w-5 h-5 rounded-full ${colors.bg} flex items-center justify-center`}>
+                    <svg className={`w-3 h-3 ${colors.text}`} fill="currentColor" viewBox="0 0 20 20">
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                )}
+              </button>
+            );
+          })}
         </div>
 
         {/* Navigation */}
@@ -888,7 +853,7 @@ export default function AssessmentFlow({ type, questions, ratingLabels, captchaC
           {currentIndex === questions.length - 1 ? (
             <button
               onClick={handleSubmit}
-              disabled={!answers[currentQuestion.questionId] || isSubmitting}
+              disabled={!answers[currentQuestion._id] || isSubmitting}
               className="flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-white hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isSubmitting ? (

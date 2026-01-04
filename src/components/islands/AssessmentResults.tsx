@@ -87,8 +87,8 @@ export default function AssessmentResults({ schedulingConfig }: AssessmentResult
   }
 
   const isTeam = response.assessment_type === 'team';
-  const maxLEAPScore = isTeam ? 30 : 20;
-  const maxHATSScore = isTeam ? 15 : 10;
+  const maxLEAPScore = isTeam ? 24 : 16;  // (12+12) or (8+8)
+  const maxHATSScore = isTeam ? 12 : 8;   // 3×4 or 2×4
 
   const leapScores = [
     { key: 'leadership', score: response.scores?.leadership || 0 },

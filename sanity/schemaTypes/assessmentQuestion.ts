@@ -6,13 +6,6 @@ export default defineType({
   type: 'document',
   fields: [
     defineField({
-      name: 'questionId',
-      title: 'Question ID',
-      type: 'string',
-      description: 'Unique identifier (e.g., h1, a2, t3)',
-      validation: (Rule) => Rule.required(),
-    }),
-    defineField({
       name: 'category',
       title: 'Category',
       type: 'string',
@@ -50,6 +43,43 @@ export default defineType({
       type: 'number',
       description: 'Display order within the assessment',
       validation: (Rule) => Rule.required().min(1),
+    }),
+    defineField({
+      name: 'ratingOptions',
+      title: 'Rating Options',
+      type: 'array',
+      description: 'Rating options in order (first = highest points)',
+      validation: (Rule) => Rule.required().min(2).max(7),
+      of: [
+        {
+          type: 'object',
+          fields: [
+            defineField({
+              name: 'label',
+              title: 'Label',
+              type: 'string',
+              validation: (Rule) => Rule.required(),
+            }),
+            defineField({
+              name: 'points',
+              title: 'Points',
+              type: 'number',
+              validation: (Rule) => Rule.required(),
+            }),
+          ],
+          preview: {
+            select: {
+              label: 'label',
+              points: 'points',
+            },
+            prepare({label, points}) {
+              return {
+                title: `${label} (${points} pts)`,
+              }
+            },
+          },
+        },
+      ],
     }),
   ],
   preview: {

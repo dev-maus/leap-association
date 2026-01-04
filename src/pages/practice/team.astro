@@ -4,25 +4,24 @@ import Head from '../../components/layout/Head.astro';
 import Header from '../../components/layout/Header.astro';
 import Footer from '../../components/layout/Footer.astro';
 import AssessmentFlow from '../../components/islands/AssessmentFlow';
-import type { AssessmentQuestion, RatingLabels, CaptchaConfig } from '../../components/islands/AssessmentFlow';
+import type { AssessmentQuestion, CaptchaConfig } from '../../components/islands/AssessmentFlow';
 import { createPageUrl } from '../../lib/utils';
 import { sanity } from '../../lib/sanity';
 
 const questions = await sanity.fetch<AssessmentQuestion[]>(
   `*[_type == "assessmentQuestion" && assessmentType == "team"] | order(order asc) {
-    questionId,
+    _id,
     category,
-    text
+    text,
+    ratingOptions
   }`
 );
 
 const settings = await sanity.fetch<{
-  ratingLabels?: RatingLabels;
   captchaEnabled?: boolean;
   hcaptchaSiteKey?: string;
 } | null>(
   `*[_type == "assessmentSettings"][0] {
-    ratingLabels,
     captchaEnabled,
     hcaptchaSiteKey
   }`
@@ -63,7 +62,7 @@ const captchaConfig: CaptchaConfig | undefined = settings?.captchaEnabled
         </p>
       </div>
 
-      <AssessmentFlow client:load type="team" questions={questions} ratingLabels={settings?.ratingLabels} captchaConfig={captchaConfig} />
+      <AssessmentFlow client:load type="team" questions={questions} captchaConfig={captchaConfig} />
     </div>
   </main>
   <Footer />
