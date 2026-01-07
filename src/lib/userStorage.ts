@@ -9,7 +9,6 @@ export interface UserDetails {
   company?: string;
   role?: string;
   phone?: string;
-  leadId?: string;
 }
 
 const STORAGE_KEY = 'leap_user_details';

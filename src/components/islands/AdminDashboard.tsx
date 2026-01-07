@@ -21,7 +21,7 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
-type Tab = 'leads' | 'assessments' | 'events' | 'availability' | 'content';
+type Tab = 'users' | 'assessments' | 'events' | 'availability' | 'content';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -101,11 +101,11 @@ export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingData, setIsLoadingData] = useState(false);
   
-  // Leads state
-  const [leads, setLeads] = useState<any[]>([]);
-  const [leadsTotal, setLeadsTotal] = useState(0);
-  const [leadsPage, setLeadsPage] = useState(1);
-  const [leadsSearch, setLeadsSearch] = useState('');
+  // Users state
+  const [users, setUsers] = useState<any[]>([]);
+  const [usersTotal, setUsersTotal] = useState(0);
+  const [usersPage, setUsersPage] = useState(1);
+  const [usersSearch, setUsersSearch] = useState('');
   
   // Assessments state
   const [assessments, setAssessments] = useState<any[]>([]);
@@ -113,11 +113,11 @@ export default function AdminDashboard() {
   const [assessmentsPage, setAssessmentsPage] = useState(1);
   const [assessmentsSearch, setAssessmentsSearch] = useState('');
   
-  // Leads map for assessment lookups
-  const [leadsMap, setLeadsMap] = useState<Map<string, any>>(new Map());
+  // Users map for assessment lookups
+  const [usersMap, setUsersMap] = useState<Map<string, any>>(new Map());
   
   // Debounced search values
-  const debouncedLeadsSearch = useDebounce(leadsSearch, 300);
+  const debouncedUsersSearch = useDebounce(usersSearch, 300);
   const debouncedAssessmentsSearch = useDebounce(assessmentsSearch, 300);
 
   useEffect(() => {
@@ -127,18 +127,18 @@ export default function AdminDashboard() {
   // Load data when tab, page, or search changes
   useEffect(() => {
     if (isAuthenticated) {
-      if (activeTab === 'leads') {
-        loadLeads(leadsPage, debouncedLeadsSearch);
+      if (activeTab === 'users') {
+        loadUsers(usersPage, debouncedUsersSearch);
       } else if (activeTab === 'assessments') {
         loadAssessments(assessmentsPage, debouncedAssessmentsSearch);
       }
     }
-  }, [isAuthenticated, activeTab, leadsPage, assessmentsPage, debouncedLeadsSearch, debouncedAssessmentsSearch]);
+  }, [isAuthenticated, activeTab, usersPage, assessmentsPage, debouncedUsersSearch, debouncedAssessmentsSearch]);
   
   // Reset to page 1 when search changes
   useEffect(() => {
-    setLeadsPage(1);
-  }, [debouncedLeadsSearch]);
+    setUsersPage(1);
+  }, [debouncedUsersSearch]);
   
   useEffect(() => {
     setAssessmentsPage(1);
@@ -155,54 +155,80 @@ export default function AdminDashboard() {
     }
   };
 
-  const loadLeads = async (page: number, search: string) => {
+  const loadUsers = async (page: number, search: string) => {
     setIsLoadingData(true);
     try {
-      const result = await supabaseClient.entities.Lead.listPaginated({
-        page,
-        pageSize: ITEMS_PER_PAGE,
-        orderBy: '-created_at',
-        search: search.trim(),
-        searchColumns: ['full_name', 'email', 'company'],
-      });
-      setLeads(result.data);
-      setLeadsTotal(result.total);
+      let query = supabaseClient.supabase
+        .from('user_profiles')
+        .select('*', { count: 'exact' });
+
+      if (search.trim()) {
+        query = query.or(`full_name.ilike.%${search.trim()}%,email.ilike.%${search.trim()}%,company.ilike.%${search.trim()}%`);
+      }
+
+      const from = (page - 1) * ITEMS_PER_PAGE;
+      const to = from + ITEMS_PER_PAGE - 1;
+
+      const { data, count, error } = await query
+        .order('created_at', { ascending: false })
+        .range(from, to);
+
+      if (error) throw error;
+
+      setUsers(data || []);
+      setUsersTotal(count || 0);
     } catch (error) {
-      console.error('Failed to load leads:', error);
+      console.error('Failed to load users:', error);
     } finally {
       setIsLoadingData(false);
+    }
+  };
+
+  const updateUserRole = async (userId: string, newRole: 'user' | 'admin') => {
+    try {
+      await supabaseClient.supabase
+        .from('user_profiles')
+        .update({ user_role: newRole })
+        .eq('id', userId);
+      
+      // Reload users
+      loadUsers(usersPage, debouncedUsersSearch);
+    } catch (error) {
+      console.error('Failed to update user role:', error);
+      alert('Failed to update user role. Please try again.');
     }
   };
 
   const loadAssessments = async (page: number, search: string) => {
     setIsLoadingData(true);
     try {
-      // For assessments, we need to search by lead info
-      // First fetch all leads that match the search (for lookup), then filter assessments
-      let allLeads: any[] | null = null;
-      let matchingLeadIds: string[] = [];
+      // For assessments, search by user info from user_profiles
+      let allUsers: any[] | null = null;
+      let matchingUserIds: string[] = [];
       
       if (search.trim()) {
-        // Search leads first to get matching IDs
-        const leadsResult = await supabaseClient.entities.Lead.listPaginated({
-          page: 1,
-          pageSize: 1000, // Get all matching leads
-          search: search.trim(),
-          searchColumns: ['full_name', 'email', 'company'],
-        });
-        allLeads = leadsResult.data;
-        matchingLeadIds = leadsResult.data.map((lead: any) => lead.id);
-        setLeadsMap(new Map(leadsResult.data.map((lead: any) => [lead.id, lead])));
-      } else if (leadsMap.size === 0) {
-        // No search, just load all leads for lookup
-        allLeads = await supabaseClient.entities.Lead.list();
-        setLeadsMap(new Map(allLeads.map((lead: any) => [lead.id, lead])));
+        // Search user_profiles first to get matching user IDs
+        const { data: usersData } = await supabaseClient.supabase
+          .from('user_profiles')
+          .select('*')
+          .or(`full_name.ilike.%${search.trim()}%,email.ilike.%${search.trim()}%,company.ilike.%${search.trim()}%`);
+        
+        allUsers = usersData || [];
+        matchingUserIds = allUsers.map((user: any) => user.id);
+        setUsersMap(new Map(allUsers.map((user: any) => [user.id, user])));
+      } else if (usersMap.size === 0) {
+        // No search, just load all users for lookup
+        const { data: usersData } = await supabaseClient.supabase
+          .from('user_profiles')
+          .select('*');
+        allUsers = usersData || [];
+        setUsersMap(new Map(allUsers.map((user: any) => [user.id, user])));
       }
       
-      // Fetch assessments - if we have a search, filter by matching lead IDs
+      // Fetch assessments - if we have a search, filter by matching user IDs
       let assessmentResult;
-      if (search.trim() && matchingLeadIds.length > 0) {
-        // Use filter to get assessments by lead_id
+      if (search.trim() && matchingUserIds.length > 0) {
+        // Use filter to get assessments by user_id
         const from = (page - 1) * ITEMS_PER_PAGE;
         const to = from + ITEMS_PER_PAGE - 1;
         
@@ -210,13 +236,13 @@ export default function AdminDashboard() {
         const { count } = await supabaseClient.supabase
           .from('assessment_responses')
           .select('*', { count: 'exact', head: true })
-          .in('lead_id', matchingLeadIds);
+          .in('user_id', matchingUserIds);
         
         // Get paginated data
         const { data } = await supabaseClient.supabase
           .from('assessment_responses')
           .select('*')
-          .in('lead_id', matchingLeadIds)
+          .in('user_id', matchingUserIds)
           .order('created_at', { ascending: false })
           .range(from, to);
         
@@ -224,8 +250,8 @@ export default function AdminDashboard() {
           data: data || [],
           total: count || 0,
         };
-      } else if (search.trim() && matchingLeadIds.length === 0) {
-        // Search term but no matching leads
+      } else if (search.trim() && matchingUserIds.length === 0) {
+        // Search term but no matching users
         assessmentResult = { data: [], total: 0 };
       } else {
         // No search - get all assessments paginated
@@ -236,18 +262,18 @@ export default function AdminDashboard() {
         });
       }
       
-      // Use the current leadsMap
-      const currentLeadsMap = allLeads 
-        ? new Map(allLeads.map((lead: any) => [lead.id, lead]))
-        : leadsMap;
+      // Use the current usersMap
+      const currentUsersMap = allUsers 
+        ? new Map(allUsers.map((user: any) => [user.id, user]))
+        : usersMap;
       
-      // Attach lead info to each assessment
-      const assessmentsWithLeads = assessmentResult.data.map((assessment: any) => ({
+      // Attach user info to each assessment
+      const assessmentsWithUsers = assessmentResult.data.map((assessment: any) => ({
         ...assessment,
-        lead: assessment.lead_id ? currentLeadsMap.get(assessment.lead_id) : null,
+        user: assessment.user_id ? currentUsersMap.get(assessment.user_id) : null,
       }));
       
-      setAssessments(assessmentsWithLeads);
+      setAssessments(assessmentsWithUsers);
       setAssessmentsTotal(assessmentResult.total);
     } catch (error) {
       console.error('Failed to load assessments:', error);
@@ -267,15 +293,15 @@ export default function AdminDashboard() {
     let yPos = 35;
     
     // Add participant info if available
-    if (assessment.lead) {
+    if (assessment.user) {
       doc.setFontSize(14);
-      doc.text(`Participant: ${assessment.lead.full_name}`, 20, yPos);
+      doc.text(`Participant: ${assessment.user.full_name || 'N/A'}`, 20, yPos);
       yPos += 8;
       doc.setFontSize(11);
-      doc.text(`Email: ${assessment.lead.email}`, 20, yPos);
+      doc.text(`Email: ${assessment.user.email}`, 20, yPos);
       yPos += 8;
-      if (assessment.lead.company) {
-        doc.text(`Company: ${assessment.lead.company}`, 20, yPos);
+      if (assessment.user.company) {
+        doc.text(`Company: ${assessment.user.company}`, 20, yPos);
         yPos += 8;
       }
       yPos += 5;
@@ -300,8 +326,8 @@ export default function AdminDashboard() {
       });
     }
     
-    const filename = assessment.lead 
-      ? `Assessment-${assessment.lead.full_name.replace(/\s+/g, '_')}.pdf`
+    const filename = assessment.user?.full_name
+      ? `Assessment-${assessment.user.full_name.replace(/\s+/g, '_')}.pdf`
       : `Assessment-${assessment.id}.pdf`;
     doc.save(filename);
   };
@@ -322,8 +348,8 @@ export default function AdminDashboard() {
     setActiveTab(tab);
   };
 
-  const handleLeadsPageChange = (page: number) => {
-    setLeadsPage(page);
+  const handleUsersPageChange = (page: number) => {
+    setUsersPage(page);
   };
 
   const handleAssessmentsPageChange = (page: number) => {
@@ -331,7 +357,7 @@ export default function AdminDashboard() {
   };
 
   const tabs = [
-    { id: 'leads' as Tab, label: 'Leads', icon: Mail, count: leadsTotal },
+    { id: 'users' as Tab, label: 'Users', icon: Mail, count: usersTotal },
     { id: 'assessments' as Tab, label: 'Assessments', icon: FileText, count: assessmentsTotal },
     { id: 'events' as Tab, label: 'Events', icon: Calendar, count: 0 },
     { id: 'availability' as Tab, label: 'Availability', icon: Calendar, count: 0 },
@@ -372,22 +398,22 @@ export default function AdminDashboard() {
 
       {/* Tab Content */}
       <div className="bg-white rounded-xl border border-slate-200 p-6">
-        {activeTab === 'leads' && (
+        {activeTab === 'users' && (
           <div>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-primary">Leads</h2>
+              <h2 className="text-2xl font-bold text-primary">Users</h2>
               <div className="relative w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
                   type="text"
                   placeholder="Search by name, email, company..."
-                  value={leadsSearch}
-                  onChange={(e) => setLeadsSearch(e.target.value)}
+                  value={usersSearch}
+                  onChange={(e) => setUsersSearch(e.target.value)}
                   className="w-full pl-10 pr-10 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary"
                 />
-                {leadsSearch && (
+                {usersSearch && (
                   <button
-                    onClick={() => setLeadsSearch('')}
+                    onClick={() => setUsersSearch('')}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                   >
                     <X className="w-4 h-4" />
@@ -399,8 +425,8 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
               </div>
-            ) : leadsTotal === 0 ? (
-              <p className="text-slate-500 text-center py-8">No leads yet.</p>
+            ) : usersTotal === 0 ? (
+              <p className="text-slate-500 text-center py-8">No users yet.</p>
             ) : (
               <>
                 <div className="overflow-x-auto">
@@ -410,23 +436,38 @@ export default function AdminDashboard() {
                         <th className="text-left py-3 px-4 font-semibold text-slate-700">Name</th>
                         <th className="text-left py-3 px-4 font-semibold text-slate-700">Email</th>
                         <th className="text-left py-3 px-4 font-semibold text-slate-700">Company</th>
-                        <th className="text-left py-3 px-4 font-semibold text-slate-700">Source</th>
+                        <th className="text-left py-3 px-4 font-semibold text-slate-700">Role</th>
                         <th className="text-left py-3 px-4 font-semibold text-slate-700">Date</th>
+                        <th className="text-left py-3 px-4 font-semibold text-slate-700">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {leads.map((lead) => (
-                        <tr key={lead.id} className="border-b border-slate-100 hover:bg-slate-50">
-                          <td className="py-3 px-4">{lead.full_name}</td>
-                          <td className="py-3 px-4">{lead.email}</td>
-                          <td className="py-3 px-4">{lead.company || '-'}</td>
+                      {users.map((user) => (
+                        <tr key={user.id} className="border-b border-slate-100 hover:bg-slate-50">
+                          <td className="py-3 px-4">{user.full_name || '-'}</td>
+                          <td className="py-3 px-4">{user.email}</td>
+                          <td className="py-3 px-4">{user.company || '-'}</td>
                           <td className="py-3 px-4">
-                            <span className="px-2 py-1 bg-primary/10 text-primary rounded text-xs">
-                              {lead.source}
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                              user.user_role === 'admin' 
+                                ? 'bg-purple-100 text-purple-700' 
+                                : 'bg-slate-100 text-slate-700'
+                            }`}>
+                              {user.user_role || 'user'}
                             </span>
                           </td>
                           <td className="py-3 px-4 text-sm text-slate-500">
-                            {lead.created_at ? new Date(lead.created_at).toLocaleDateString() : '-'}
+                            {user.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}
+                          </td>
+                          <td className="py-3 px-4">
+                            <select
+                              value={user.user_role || 'user'}
+                              onChange={(e) => updateUserRole(user.id, e.target.value as 'user' | 'admin')}
+                              className="text-sm border border-slate-200 rounded-lg px-2 py-1 focus:ring-2 focus:ring-primary focus:border-primary"
+                            >
+                              <option value="user">User</option>
+                              <option value="admin">Admin</option>
+                            </select>
                           </td>
                         </tr>
                       ))}
@@ -434,10 +475,10 @@ export default function AdminDashboard() {
                   </table>
                 </div>
                 <Pagination
-                  currentPage={leadsPage}
-                  totalItems={leadsTotal}
+                  currentPage={usersPage}
+                  totalItems={usersTotal}
                   itemsPerPage={ITEMS_PER_PAGE}
-                  onPageChange={handleLeadsPageChange}
+                  onPageChange={handleUsersPageChange}
                 />
               </>
             )}
@@ -486,14 +527,19 @@ export default function AdminDashboard() {
                           <h3 className="font-semibold text-slate-900">
                             {assessment.assessment_type === 'team' ? 'Team' : 'Individual'} Assessment
                           </h3>
-                          {assessment.lead ? (
+                          {assessment.user ? (
                             <div className="mt-1">
                               <p className="text-sm font-medium text-slate-700">
-                                {assessment.lead.full_name}
+                                {assessment.user.full_name || 'No name'}
                               </p>
                               <p className="text-sm text-slate-500">
-                                {assessment.lead.email}
+                                {assessment.user.email}
                               </p>
+                              {assessment.user.company && (
+                                <p className="text-xs text-slate-400">
+                                  {assessment.user.company}
+                                </p>
+                              )}
                             </div>
                           ) : (
                             <p className="text-sm text-slate-400 italic mt-1">No contact info</p>

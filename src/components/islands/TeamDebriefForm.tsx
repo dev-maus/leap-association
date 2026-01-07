@@ -47,10 +47,8 @@ export default function TeamDebriefForm() {
     saveUserDetails(formData);
 
     try {
-      await supabaseClient.entities.Lead.create({
-        ...formData,
-        source: 'team_debrief',
-      });
+      // Send Magic Link to create/authenticate user
+      await supabaseClient.auth.signInWithMagicLink(formData.email);
 
       setIsSubmitted(true);
     } catch (error) {

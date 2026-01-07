@@ -32,10 +32,9 @@ interface AssessmentFlowProps {
   type: 'individual' | 'team';
   questions: AssessmentQuestion[];
   captchaConfig?: CaptchaConfig;
-  leadId?: string;
 }
 
-export default function AssessmentFlow({ type, questions, captchaConfig, leadId }: AssessmentFlowProps) {
+export default function AssessmentFlow({ type, questions, captchaConfig }: AssessmentFlowProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, { points: number; optionIndex: number }>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -52,7 +51,9 @@ export default function AssessmentFlow({ type, questions, captchaConfig, leadId 
     phone?: string;
   }>({});
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [createdLeadId, setCreatedLeadId] = useState<string | null>(leadId || null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [magicLinkSent, setMagicLinkSent] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const captchaRef = useRef<HCaptcha>(null);
   
@@ -63,6 +64,22 @@ export default function AssessmentFlow({ type, questions, captchaConfig, leadId 
   const [hasScheduledCall, setHasScheduledCall] = useState(false);
   const [hasStoredUserDetails, setHasStoredUserDetails] = useState(false);
   const [contactFormCompleted, setContactFormCompleted] = useState(false);
+
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data: { session } } = await supabaseClient.supabase.auth.getSession();
+        if (session?.user) {
+          setIsAuthenticated(true);
+          setUserId(session.user.id);
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+      }
+    };
+    checkAuth();
+  }, []);
 
   // Read from localStorage after hydration to prevent SSR mismatch
   useEffect(() => {
@@ -86,31 +103,16 @@ export default function AssessmentFlow({ type, questions, captchaConfig, leadId 
         role: stored.role || '',
         phone: stored.phone || '',
       });
-      // If we have a stored leadId, use it
-      if (stored.leadId) {
-        setCreatedLeadId(stored.leadId);
-      }
       // If we have both name and email, skip contact form
       setHasStoredUserDetails(true);
     }
   }, []);
 
-  // Additional useEffect for URL params - must be before any returns
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const id = params.get('leadId');
-    if (id) {
-      // Lead ID provided, skip contact form
-      setCreatedLeadId(id);
-    }
-  }, []);
-
   // Show contact form if:
-  // - No leadId provided AND
   // - We're on the first step (currentIndex === 0) AND
   // - Contact form has not been completed this session AND
   // - Either: no stored user details OR captcha is enabled (captcha must be re-verified every time)
-  const needsContactInfo = !leadId && currentIndex === 0 && !contactFormCompleted && (!hasStoredUserDetails || captchaConfig?.enabled);
+  const needsContactInfo = currentIndex === 0 && !contactFormCompleted && (!hasStoredUserDetails || captchaConfig?.enabled);
   
   // Track previous needsContactInfo to detect transition
   const prevNeedsContactInfoRef = useRef(needsContactInfo);
@@ -303,40 +305,26 @@ export default function AssessmentFlow({ type, questions, captchaConfig, leadId 
       // Update state to indicate we have stored user details
       setHasStoredUserDetails(true);
 
-      // Create lead before starting assessment if we don't have one
-      // This handles both new users and returning users who need captcha re-verification
-      if (!createdLeadId) {
+      // If user is not authenticated, send Magic Link
+      if (!isAuthenticated || !userId) {
         setIsSubmitting(true);
         try {
-          const lead = await supabaseClient.entities.Lead.create({
-            ...contactData,
-            source: type === 'team' ? 'team_assessment' : 'individual_assessment',
-          });
-          setCreatedLeadId(lead.id);
-          // Store leadId with user details
-          saveUserDetails({ ...contactData, leadId: lead.id });
+          // Redirect back to the current assessment page after authentication
+          const currentPath = typeof window !== 'undefined' ? window.location.pathname : `/practice/${type}`;
+          await supabaseClient.auth.signInWithMagicLink(contactData.email, currentPath);
+          setMagicLinkSent(true);
           setErrorMessage(null);
-        } catch (createError: any) {
-          console.error('Failed to create lead:', createError);
           setIsSubmitting(false);
-          
-          // Check if error is due to unique constraint violation on email
-          if (createError.code === '23505' || 
-              createError.message?.includes('duplicate') || 
-              createError.message?.includes('unique') ||
-              createError.message?.includes('violates unique constraint')) {
-            // Lead already exists for this email - try to continue without creating new lead
-            // The submission will handle associating with existing lead
-            console.log('Lead already exists for email, continuing without new lead');
-            setErrorMessage(null);
-          } else {
-            setErrorMessage(createError.message || 'Failed to start assessment. Please try again.');
-            return;
-          }
+          return; // Wait for user to click Magic Link
+        } catch (magicLinkError: any) {
+          console.error('Failed to send magic link:', magicLinkError);
+          setIsSubmitting(false);
+          setErrorMessage(magicLinkError.message || 'Failed to send magic link. Please try again.');
+          return;
         }
-        setIsSubmitting(false);
       }
-      
+
+      // User is authenticated, continue with assessment
       // Mark contact form as completed for this session
       // This will cause needsContactInfo to become false on next render
       setContactFormCompleted(true);
@@ -391,11 +379,18 @@ export default function AssessmentFlow({ type, questions, captchaConfig, leadId 
   };
 
   const handleSubmit = async () => {
-    console.log('handleSubmit called, createdLeadId:', createdLeadId);
+    console.log('handleSubmit called, userId:', userId);
     setIsSubmitting(true);
     setErrorMessage(null);
 
     try {
+      // Check if user is authenticated
+      if (!isAuthenticated || !userId) {
+        setErrorMessage('Please authenticate first by clicking the magic link sent to your email.');
+        setIsSubmitting(false);
+        return;
+      }
+
       // Check localStorage to prevent duplicate submissions from same device
       const assessmentData = getAssessmentData();
       if (assessmentData.submittedEmail) {
@@ -435,7 +430,7 @@ export default function AssessmentFlow({ type, questions, captchaConfig, leadId 
             ...contactData,
             source: type === 'team' ? 'team_assessment' : 'individual_assessment',
           },
-          leadId: createdLeadId || undefined,
+          userId: userId, // Pass authenticated user ID
           assessmentType: type,
           scores: leapScores,
           habitScore,
@@ -448,25 +443,9 @@ export default function AssessmentFlow({ type, questions, captchaConfig, leadId 
         console.log('Edge Function response:', response);
       } else {
         // Direct insert (no captcha or captcha disabled)
-        let finalLeadId = createdLeadId;
-        console.log('Direct insert, initial finalLeadId:', finalLeadId);
-
-        // Create lead if not already created (e.g., when using stored user details)
-        if (!finalLeadId) {
-          console.log('Creating lead for direct insert...');
-          const lead = await supabaseClient.entities.Lead.create({
-            ...contactData,
-            source: type === 'team' ? 'team_assessment' : 'individual_assessment',
-          });
-          finalLeadId = lead.id;
-          // Store leadId for future use
-          saveUserDetails({ leadId: lead.id });
-          console.log('Lead created:', finalLeadId);
-        }
-
-        console.log('Creating assessment response...');
+        console.log('Creating assessment response with userId:', userId);
         response = await supabaseClient.entities.AssessmentResponse.create({
-          lead_id: finalLeadId,
+          user_id: userId, // Use authenticated user ID
           assessment_type: type,
           scores: leapScores,
           habit_score: habitScore,
@@ -553,6 +532,29 @@ export default function AssessmentFlow({ type, questions, captchaConfig, leadId 
   const progress = questions.length > 0 ? ((currentIndex + 1) / questions.length) * 100 : 0;
 
   if (needsContactInfo) {
+    // Show Magic Link sent message
+    if (magicLinkSent) {
+      return (
+        <div className="max-w-xl mx-auto">
+          <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 lg:p-10 text-center">
+            <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
+              <CheckCircle className="w-10 h-10 text-green-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-primary mb-4">Check Your Email</h2>
+            <p className="text-slate-600 mb-2">
+              We've sent a magic link to <strong>{contactData.email}</strong>
+            </p>
+            <p className="text-slate-500 text-sm mb-6">
+              Click the link in the email to continue with your assessment. The link will expire in 1 hour.
+            </p>
+            <p className="text-slate-400 text-xs">
+              Once you click the link, you'll be redirected back to continue your assessment.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="max-w-xl mx-auto">
         <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 lg:p-10">

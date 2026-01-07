@@ -15,7 +15,7 @@ interface RequestBody {
     phone?: string;
     source: string;
   };
-  leadId?: string;
+  userId?: string; // Authenticated user ID
   assessmentType: 'individual' | 'team';
   scores: {
     leadership: number;
@@ -79,48 +79,106 @@ serve(async (req) => {
       );
     }
 
-    // Initialize Supabase client
+    // Initialize Supabase client with service role for admin operations
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Create or use existing lead
-    let finalLeadId = body.leadId;
+    let finalUserId: string | null = body.userId || null;
 
-    if (!finalLeadId) {
-      const { data: lead, error: leadError } = await supabase
-        .from('leads')
-        .insert(body.contactData)
-        .select()
-        .single();
-
-      if (leadError) {
-        // Check if error is due to unique constraint violation on email
-        if (leadError.code === '23505' || 
-            leadError.message?.includes('duplicate') || 
-            leadError.message?.includes('unique') ||
-            leadError.message?.includes('violates unique constraint')) {
-          return new Response(
-            JSON.stringify({
-              error: 'An assessment has already been submitted with this email address. Please use a different email or contact support.',
-            }),
-            {
-              status: 400,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            }
-          );
-        }
-        throw new Error(`Failed to create lead: ${leadError.message}`);
+    // If user_id is provided, use it (user is authenticated)
+    if (finalUserId) {
+      // Verify user exists
+      const { data: user, error: userError } = await supabase.auth.admin.getUserById(finalUserId);
+      if (userError || !user) {
+        throw new Error(`User not found: ${userError?.message}`);
       }
 
-      finalLeadId = lead.id;
+      // Update user profile if needed
+      const { data: existingProfile } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', finalUserId)
+        .single();
+
+      if (existingProfile) {
+        // Update profile with latest contact data
+        await supabase
+          .from('user_profiles')
+          .update({
+            full_name: body.contactData.full_name,
+            company: body.contactData.company,
+            role: body.contactData.role,
+            phone: body.contactData.phone,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', finalUserId);
+      }
+    } else {
+      // No user_id provided - check if user exists by email
+      const { data: existingUsers } = await supabase.auth.admin.listUsers();
+      const existingUser = existingUsers?.users.find(u => u.email === body.contactData.email);
+
+      if (existingUser) {
+        finalUserId = existingUser.id;
+        
+        // Update profile
+        await supabase
+          .from('user_profiles')
+          .update({
+            full_name: body.contactData.full_name,
+            company: body.contactData.company,
+            role: body.contactData.role,
+            phone: body.contactData.phone,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', finalUserId)
+          .upsert({
+            id: finalUserId,
+            email: body.contactData.email,
+            full_name: body.contactData.full_name,
+            company: body.contactData.company,
+            role: body.contactData.role,
+            phone: body.contactData.phone,
+          });
+      } else {
+        // Create new auth user
+        const { data: newUser, error: createUserError } = await supabase.auth.admin.createUser({
+          email: body.contactData.email,
+          email_confirm: false, // Will be confirmed via Magic Link
+          user_metadata: {
+            full_name: body.contactData.full_name,
+            company: body.contactData.company,
+            role: body.contactData.role,
+          },
+        });
+
+        if (createUserError || !newUser.user) {
+          throw new Error(`Failed to create user: ${createUserError?.message}`);
+        }
+
+        finalUserId = newUser.user.id;
+
+        // Create user profile (trigger should handle this, but ensure it exists)
+        await supabase
+          .from('user_profiles')
+          .upsert({
+            id: finalUserId,
+            email: body.contactData.email,
+            full_name: body.contactData.full_name,
+            company: body.contactData.company,
+            role: body.contactData.role,
+            phone: body.contactData.phone,
+            user_role: 'user',
+          });
+      }
     }
 
-    // Create assessment response
+    // Create assessment response with user_id
     const { data: response, error: responseError } = await supabase
       .from('assessment_responses')
       .insert({
-        lead_id: finalLeadId,
+        user_id: finalUserId,
         assessment_type: body.assessmentType,
         scores: body.scores,
         habit_score: body.habitScore,

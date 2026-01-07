@@ -15,7 +15,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 // Helper function to convert entity names to table names
 const entityToTable = (entityName: string): string => {
   const mapping: Record<string, string> = {
-    'Lead': 'leads',
     'User': 'users',
     'AssessmentResponse': 'assessment_responses',
     'Availability': 'availability',
@@ -241,8 +240,8 @@ function createEntityAPI(tableName: string) {
 
 // Export entities
 export const entities = {
-  Lead: createEntityAPI('leads'),
   User: createEntityAPI('users'),
+  UserProfile: createEntityAPI('user_profiles'),
   AssessmentResponse: createEntityAPI('assessment_responses'),
   Availability: createEntityAPI('availability'),
   LEAPLunchRegistration: createEntityAPI('leap_lunch_registrations'),
@@ -278,12 +277,21 @@ export const auth = {
       throw authError;
     }
 
-    // Return user info from Supabase Auth (no separate users table)
+    // Try to get user profile from user_profiles table
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+
+    // Return user info from profile if available, otherwise from auth metadata
     return {
       id: user.id,
-      email: user.email,
-      full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || '',
-      role: user.user_metadata?.role || 'admin',
+      email: profile?.email || user.email || '',
+      full_name: profile?.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || '',
+      role: profile?.user_role || user.user_metadata?.role || 'user',
+      company: profile?.company,
+      phone: profile?.phone,
     };
   },
 
@@ -327,6 +335,36 @@ export const auth = {
     if (error) throw error;
     return data;
   },
+
+  async signInWithMagicLink(email: string, redirectTo?: string) {
+    // Always use window.location.origin when available (browser context)
+    // This ensures we use the actual current URL, not a potentially stale env var
+    const siteUrl = typeof window !== 'undefined' 
+      ? window.location.origin 
+      : (import.meta.env.PUBLIC_SITE_URL || '');
+    const baseUrl = import.meta.env.BASE_URL || '/';
+    
+    // Construct the callback URL with the next parameter
+    // The next parameter tells AuthCallback where to redirect after authentication
+    let callbackUrl = `${siteUrl}${baseUrl}auth/callback`;
+    if (redirectTo) {
+      // Ensure redirectTo doesn't start with a slash if baseUrl already has one
+      const cleanRedirectTo = redirectTo.startsWith('/') ? redirectTo : `/${redirectTo}`;
+      callbackUrl += `?next=${encodeURIComponent(cleanRedirectTo)}`;
+    }
+
+    console.log('Magic Link redirect URL:', callbackUrl); // Debug log
+
+    const { data, error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: callbackUrl,
+      },
+    });
+
+    if (error) throw error;
+    return data;
+  },
 };
 
 // Assessment submission with captcha verification
@@ -339,7 +377,7 @@ async function submitAssessmentWithCaptcha(data: {
     phone?: string;
     source: string;
   };
-  leadId?: string;
+  userId?: string; // Authenticated user ID
   assessmentType: 'individual' | 'team';
   scores: {
     leadership: number;

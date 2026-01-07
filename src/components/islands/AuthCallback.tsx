@@ -20,6 +20,15 @@ export default function AuthCallback() {
 
         setAuthType(type);
 
+        // Check URL query params for redirect destination
+        const urlParams = new URLSearchParams(window.location.search);
+        const nextUrl = urlParams.get('next');
+        const errorDescription = urlParams.get('error_description');
+
+        if (errorDescription) {
+          throw new Error(errorDescription);
+        }
+
         if (accessToken) {
           // Exchange tokens for session
           const { error: sessionError } = await supabase.auth.setSession({
@@ -29,7 +38,13 @@ export default function AuthCallback() {
 
           if (sessionError) throw sessionError;
 
-          // Redirect based on auth type
+          // Redirect based on auth type or next parameter
+          if (nextUrl) {
+            // Use the next parameter if provided
+            window.location.href = buildUrl(nextUrl);
+            return;
+          }
+
           switch (type) {
             case 'recovery':
               window.location.href = buildUrl('auth/reset-password');
@@ -37,26 +52,39 @@ export default function AuthCallback() {
             case 'signup':
             case 'magiclink':
             case 'invite':
-              window.location.href = buildUrl('admin');
+              // Default to admin for admins, home for regular users
+              // Check user role to determine redirect
+              const { data: { user } } = await supabase.auth.getUser();
+              if (user) {
+                const { data: profile } = await supabase
+                  .from('user_profiles')
+                  .select('user_role')
+                  .eq('id', user.id)
+                  .single();
+                
+                if (profile?.user_role === 'admin') {
+                  window.location.href = buildUrl('admin');
+                } else {
+                  window.location.href = buildUrl('/');
+                }
+              } else {
+                window.location.href = buildUrl('/');
+              }
               return;
             default:
-              window.location.href = buildUrl('admin');
+              window.location.href = buildUrl('/');
               return;
           }
-        }
-
-        // Check URL query params (some Supabase flows use query params)
-        const urlParams = new URLSearchParams(window.location.search);
-        const errorDescription = urlParams.get('error_description');
-        
-        if (errorDescription) {
-          throw new Error(errorDescription);
         }
 
         // No tokens found - check if there's an existing session
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
-          window.location.href = buildUrl('admin');
+          if (nextUrl) {
+            window.location.href = buildUrl(nextUrl);
+          } else {
+            window.location.href = buildUrl('admin');
+          }
           return;
         }
 

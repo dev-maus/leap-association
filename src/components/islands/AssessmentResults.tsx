@@ -37,8 +37,38 @@ export default function AssessmentResults({ schedulingConfig }: AssessmentResult
     const loadResults = async () => {
       try {
         console.log('Loading assessment results for ID:', responseId);
+        
+        // Check authentication
+        const { data: { session } } = await supabaseClient.supabase.auth.getSession();
+        const currentUserId = session?.user?.id || null;
+
         const foundResponse = await supabaseClient.entities.AssessmentResponse.get(responseId);
         console.log('Found response:', foundResponse);
+        
+        // Verify user has access to this assessment
+        if (currentUserId) {
+          // Get user profile to check role
+          const { data: profile } = await supabaseClient.supabase
+            .from('user_profiles')
+            .select('user_role')
+            .eq('id', currentUserId)
+            .single();
+
+          const isAdmin = profile?.user_role === 'admin';
+          const isOwner = foundResponse.user_id === currentUserId;
+
+          if (!isAdmin && !isOwner) {
+            setError('You do not have permission to view this assessment.');
+            setIsLoading(false);
+            return;
+          }
+        } else if (foundResponse.user_id) {
+          // Assessment is linked to a user but current user is not authenticated
+          // Allow viewing for backward compatibility with old assessments (no user_id)
+          // But show a message encouraging login
+          console.warn('Assessment requires authentication but user is not logged in');
+        }
+
         setResponse(foundResponse);
 
         // Get user details from localStorage

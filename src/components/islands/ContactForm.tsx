@@ -14,6 +14,7 @@ export default function ContactForm() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [magicLinkSent, setMagicLinkSent] = useState(false);
 
   // Load user details after hydration to prevent SSR mismatch
   useEffect(() => {
@@ -45,10 +46,9 @@ export default function ContactForm() {
     saveUserDetails(formData);
 
     try {
-      await supabaseClient.entities.Lead.create({
-        ...formData,
-        source: 'contact_form',
-      });
+      // Send Magic Link to create/authenticate user
+      await supabaseClient.auth.signInWithMagicLink(formData.email);
+      setMagicLinkSent(true);
 
       setIsSubmitted(true);
       setFormData({
@@ -59,9 +59,9 @@ export default function ContactForm() {
         phone: formData.phone,
         message: '',
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to submit form:', error);
-      alert('Failed to send message. Please try again.');
+      alert(error.message || 'Failed to send message. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -74,11 +74,22 @@ export default function ContactForm() {
           <CheckCircle className="w-10 h-10 text-green-600" />
         </div>
         <h2 className="text-3xl font-bold text-primary mb-4">Message Received!</h2>
+        {magicLinkSent && (
+          <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+            <p className="text-sm text-blue-800">
+              We've also sent a magic link to <strong>{formData.email}</strong>. 
+              Click the link in your email to create your account and access your assessment results.
+            </p>
+          </div>
+        )}
         <p className="text-lg text-slate-600 mb-8">
           Thank you for reaching out. We'll respond within 24 hours.
         </p>
         <button
-          onClick={() => setIsSubmitted(false)}
+          onClick={() => {
+            setIsSubmitted(false);
+            setMagicLinkSent(false);
+          }}
           className="btn-primary"
         >
           Send Another Message

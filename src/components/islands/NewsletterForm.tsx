@@ -12,16 +12,13 @@ export default function NewsletterForm() {
     setIsSubmitting(true);
 
     try {
-      await supabaseClient.entities.Lead.create({
-        email: email,
-        source: 'newsletter_signup',
-      });
-
+      // Send Magic Link to create/authenticate user
+      await supabaseClient.auth.signInWithMagicLink(email);
       setIsSubscribed(true);
       setEmail('');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to subscribe:', error);
-      alert('Failed to subscribe. Please try again.');
+      alert(error.message || 'Failed to subscribe. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

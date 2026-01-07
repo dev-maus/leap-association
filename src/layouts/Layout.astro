@@ -19,6 +19,17 @@ const base = import.meta.env.BASE_URL;
       Skip to main content
     </a>
     <slot />
+    <script define:vars={{ base }}>
+      // Redirect auth tokens to callback page if they land on any page
+      // This handles cases where Supabase redirects to Site URL instead of callback URL
+      (function() {
+        const hash = window.location.hash;
+        if (hash.includes('access_token=') && !window.location.pathname.includes('/auth/callback')) {
+          const callbackUrl = `${base}auth/callback${window.location.search}${hash}`;
+          window.location.replace(callbackUrl);
+        }
+      })();
+    </script>
   </body>
 </html>
 
