@@ -41,7 +41,17 @@ export default function AuthCallback() {
           // Redirect based on auth type or next parameter
           if (nextUrl) {
             // Use the next parameter if provided
-            window.location.href = buildUrl(nextUrl);
+            // Decode the URL-encoded path and ensure it doesn't have base path duplicated
+            const decodedNext = decodeURIComponent(nextUrl);
+            const baseUrl = import.meta.env.BASE_URL || '/';
+            let finalPath = decodedNext;
+            
+            // If path already starts with base path, use it as-is, otherwise add base path
+            if (finalPath.startsWith(baseUrl)) {
+              window.location.href = finalPath;
+            } else {
+              window.location.href = buildUrl(finalPath);
+            }
             return;
           }
 

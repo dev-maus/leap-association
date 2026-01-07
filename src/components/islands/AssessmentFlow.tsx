@@ -310,7 +310,16 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
         setIsSubmitting(true);
         try {
           // Redirect back to the current assessment page after authentication
-          const currentPath = typeof window !== 'undefined' ? window.location.pathname : `/practice/${type}`;
+          // Strip base path from pathname since buildUrl will add it back
+          let currentPath = typeof window !== 'undefined' ? window.location.pathname : `/practice/${type}`;
+          const baseUrl = import.meta.env.BASE_URL || '/';
+          if (currentPath.startsWith(baseUrl)) {
+            currentPath = currentPath.slice(baseUrl.length);
+          }
+          // Ensure path starts with /
+          if (!currentPath.startsWith('/')) {
+            currentPath = '/' + currentPath;
+          }
           await supabaseClient.auth.signInWithMagicLink(contactData.email, currentPath);
           setMagicLinkSent(true);
           setErrorMessage(null);
