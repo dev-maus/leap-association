@@ -1,112 +1,119 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import { buildUrl } from '../../lib/utils';
 import { Loader2, AlertCircle } from 'lucide-react';
+import { syncUserDetailsFromSupabase } from '../../lib/userStorage';
 
 type AuthType = 'recovery' | 'signup' | 'magiclink' | 'invite' | null;
 
 export default function AuthCallback() {
   const [error, setError] = useState<string | null>(null);
   const [authType, setAuthType] = useState<AuthType>(null);
+  const hasProcessedRef = useRef(false);
 
   useEffect(() => {
-    const handleAuthCallback = async () => {
-      try {
-        // Check URL hash for tokens (Supabase redirect)
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const accessToken = hashParams.get('access_token');
-        const refreshToken = hashParams.get('refresh_token');
-        const type = hashParams.get('type') as AuthType;
+    // Only run once - use a ref that persists across strict mode double-invocations
+    if (hasProcessedRef.current) {
+      return;
+    }
+    hasProcessedRef.current = true;
 
-        setAuthType(type);
+    // Capture URL params immediately (before any async operations)
+    const urlParams = new URLSearchParams(window.location.search);
+    const nextUrl = urlParams.get('next');
+    const errorDescription = urlParams.get('error_description');
+    
+    // Check URL hash for auth type (but DON'T manually parse tokens)
+    const hash = window.location.hash.substring(1);
+    const hashParams = new URLSearchParams(hash);
+    const type = hashParams.get('type') as AuthType;
+    const hasTokens = !!hashParams.get('access_token');
+    
+    setAuthType(type);
 
-        // Check URL query params for redirect destination
-        const urlParams = new URLSearchParams(window.location.search);
-        const nextUrl = urlParams.get('next');
-        const errorDescription = urlParams.get('error_description');
+    if (errorDescription) {
+      setError(errorDescription);
+      return;
+    }
 
-        if (errorDescription) {
-          throw new Error(errorDescription);
-        }
+    // Clear hash immediately - Supabase should have already captured it on client init
+    if (hash) {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
 
-        if (accessToken) {
-          // Exchange tokens for session
-          const { error: sessionError } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken || '',
-          });
+    // Use onAuthStateChange to wait for Supabase to process the tokens
+    // This is the recommended approach - let Supabase handle token processing internally
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // Only proceed on SIGNED_IN or INITIAL_SESSION events
+      if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
+        // Unsubscribe to prevent multiple firings
+        subscription.unsubscribe();
+        
+        // Sync user details
+        await syncUserDetailsFromSupabase();
 
-          if (sessionError) throw sessionError;
-
-          // Redirect based on auth type or next parameter
-          if (nextUrl) {
-            // Use the next parameter if provided
-            // Decode the URL-encoded path and ensure it doesn't have base path duplicated
-            const decodedNext = decodeURIComponent(nextUrl);
-            const baseUrl = import.meta.env.BASE_URL || '/';
-            let finalPath = decodedNext;
-            
-            // If path already starts with base path, use it as-is, otherwise add base path
-            if (finalPath.startsWith(baseUrl)) {
-              window.location.href = finalPath;
-            } else {
-              window.location.href = buildUrl(finalPath);
-            }
-            return;
-          }
-
-          switch (type) {
-            case 'recovery':
-              window.location.href = buildUrl('auth/reset-password');
-              return;
-            case 'signup':
-            case 'magiclink':
-            case 'invite':
-              // Default to admin for admins, home for regular users
-              // Check user role to determine redirect
-              const { data: { user } } = await supabase.auth.getUser();
-              if (user) {
-                const { data: profile } = await supabase
-                  .from('user_profiles')
-                  .select('user_role')
-                  .eq('id', user.id)
-                  .single();
-                
-                if (profile?.user_role === 'admin') {
-                  window.location.href = buildUrl('admin');
-                } else {
-                  window.location.href = buildUrl('/');
-                }
-              } else {
-                window.location.href = buildUrl('/');
-              }
-              return;
-            default:
-              window.location.href = buildUrl('/');
-              return;
-          }
-        }
-
-        // No tokens found - check if there's an existing session
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          if (nextUrl) {
-            window.location.href = buildUrl(nextUrl);
-          } else {
-            window.location.href = buildUrl('admin');
-          }
-          return;
-        }
-
-        // No tokens, no session - invalid callback
-        throw new Error('Invalid authentication callback');
-      } catch (err: any) {
-        console.error('Auth callback error:', err);
-        setError(err.message || 'Authentication failed. Please try again.');
+        // Handle redirect
+        await handleRedirect(nextUrl, type, session.user.id);
       }
+    });
+
+    // Also check immediately for existing session (in case auth already happened)
+    const checkExistingSession = async () => {
+      // Small delay to let Supabase process hash tokens if present
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session?.user) {
+        // Unsubscribe since we found session
+        subscription.unsubscribe();
+        
+        await syncUserDetailsFromSupabase();
+        await handleRedirect(nextUrl, type, session.user.id);
+      } else if (!hasTokens) {
+        // No tokens and no session - show error
+        setError('No active session found. Please sign in again.');
+      }
+      // If hasTokens but no session yet, wait for onAuthStateChange
     };
 
-    handleAuthCallback();
+    checkExistingSession();
+
+    // Helper function to handle redirect
+    async function handleRedirect(nextUrl: string | null, type: AuthType, userId: string) {
+      if (nextUrl) {
+        const decodedNext = decodeURIComponent(nextUrl);
+        const baseUrl = import.meta.env.BASE_URL || '/';
+        const redirectUrl = decodedNext.startsWith(baseUrl) ? decodedNext : buildUrl(decodedNext);
+        window.location.replace(redirectUrl);
+        return;
+      }
+
+      if (type === 'recovery') {
+        window.location.replace(buildUrl('auth/reset-password'));
+        return;
+      }
+
+      // Check user role for default redirect
+      try {
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('user_role')
+          .eq('id', userId)
+          .single();
+
+        const redirectUrl = profile?.user_role === 'admin' ? buildUrl('admin') : buildUrl('/');
+        window.location.replace(redirectUrl);
+      } catch {
+        window.location.replace(buildUrl('/'));
+      }
+    }
+
+    // Cleanup subscription on unmount
+    return () => {
+      subscription.unsubscribe();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (error) {
@@ -137,4 +144,3 @@ export default function AuthCallback() {
     </div>
   );
 }
-

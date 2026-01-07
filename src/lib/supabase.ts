@@ -296,12 +296,25 @@ export const auth = {
   },
 
   async logout(redirectUrl: string | null = null) {
+    // Clear localStorage
+    if (typeof window !== 'undefined') {
+      const { clearUserDetails } = await import('./userStorage');
+      const { clearAssessmentData } = await import('./assessmentStorage');
+      clearUserDetails();
+      clearAssessmentData();
+    }
+
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
 
     if (redirectUrl) {
       window.location.href = redirectUrl;
     }
+  },
+
+  async signOut(redirectUrl: string | null = null) {
+    // Alias for logout for consistency
+    return this.logout(redirectUrl);
   },
 
   redirectToLogin(returnUrl: string | null = null) {
@@ -344,26 +357,39 @@ export const auth = {
       : (import.meta.env.PUBLIC_SITE_URL || '');
     const baseUrl = import.meta.env.BASE_URL || '/';
     
+    // Ensure baseUrl ends with a slash for proper path joining
+    const normalizedBaseUrl = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+    
     // Construct the callback URL with the next parameter
     // The next parameter tells AuthCallback where to redirect after authentication
-    let callbackUrl = `${siteUrl}${baseUrl}auth/callback`;
+    let callbackUrl = `${siteUrl}${normalizedBaseUrl}auth/callback`;
     if (redirectTo) {
-      // Ensure redirectTo doesn't start with a slash if baseUrl already has one
+      // Ensure redirectTo starts with a slash
       const cleanRedirectTo = redirectTo.startsWith('/') ? redirectTo : `/${redirectTo}`;
       callbackUrl += `?next=${encodeURIComponent(cleanRedirectTo)}`;
     }
 
     console.log('Magic Link redirect URL:', callbackUrl); // Debug log
 
-    const { data, error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: callbackUrl,
-      },
-    });
+    try {
+      const { data, error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: callbackUrl,
+        },
+      });
 
-    if (error) throw error;
-    return data;
+      if (error) {
+        console.error('Magic Link error:', error);
+        throw error;
+      }
+      
+      console.log('Magic Link sent successfully:', data);
+      return data;
+    } catch (err: any) {
+      console.error('Failed to send Magic Link:', err);
+      throw err;
+    }
   },
 };
 

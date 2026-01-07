@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabaseClient } from '../../lib/supabase';
 import { buildUrl, BASE_URL } from '../../lib/utils';
-import { Calendar, Users, Mail, Building, Briefcase, Phone, MessageSquare, Loader2, CheckCircle, Target } from 'lucide-react';
-import { getUserDetails, saveUserDetails } from '../../lib/userStorage';
+import { Calendar, Users, Mail, Building, Briefcase, Phone, MessageSquare, Loader2, CheckCircle, Target, User, LogOut } from 'lucide-react';
+import { getUserDetails, saveUserDetails, clearUserDetails } from '../../lib/userStorage';
+import { clearAssessmentData } from '../../lib/assessmentStorage';
 
 export default function TeamDebriefForm() {
   const [formData, setFormData] = useState({
@@ -16,6 +17,39 @@ export default function TeamDebriefForm() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data: { session } } = await supabaseClient.supabase.auth.getSession();
+        if (session?.user) {
+          setIsAuthenticated(true);
+          setUserEmail(session.user.email || null);
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+      }
+    };
+    checkAuth();
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabaseClient.supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        setIsAuthenticated(true);
+        setUserEmail(session.user.email || null);
+      } else {
+        setIsAuthenticated(false);
+        setUserEmail(null);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   // Load user details after hydration to prevent SSR mismatch
   useEffect(() => {
@@ -47,14 +81,31 @@ export default function TeamDebriefForm() {
     saveUserDetails(formData);
 
     try {
-      // Send Magic Link to create/authenticate user
-      await supabaseClient.auth.signInWithMagicLink(formData.email);
+      // If user is not authenticated, send Magic Link
+      if (!isAuthenticated) {
+        await supabaseClient.auth.signInWithMagicLink(formData.email);
+      }
 
       setIsSubmitted(true);
     } catch (error) {
       console.error('Failed to submit:', error);
       alert('Failed to submit request. Please try again.');
       setIsSubmitting(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      // Clear localStorage
+      clearUserDetails();
+      clearAssessmentData();
+      // Sign out
+      await supabaseClient.supabase.auth.signOut();
+      // Reload page to reset state
+      window.location.reload();
+    } catch (error) {
+      console.error('Sign out error:', error);
+      alert('Failed to sign out. Please try again.');
     }
   };
 
@@ -171,6 +222,28 @@ export default function TeamDebriefForm() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Auth Status Banner */}
+            {isAuthenticated && userEmail && (
+              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <User className="w-5 h-5 text-blue-600" />
+                    <p className="text-sm text-blue-800">
+                      Logged in as <strong>{userEmail}</strong>
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="grid md:grid-cols-2 gap-5">
               <div>
                 <label htmlFor="full_name" className="block text-slate-700 font-medium mb-1.5">

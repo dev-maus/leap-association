@@ -1,5 +1,6 @@
 ---
 import { createPageUrl } from '../../lib/utils';
+import AuthStatusIndicator from '../islands/AuthStatusIndicator';
 
 const base = import.meta.env.BASE_URL;
 ---
@@ -66,6 +67,7 @@ const base = import.meta.env.BASE_URL;
         >
           Resources
         </a>
+        <AuthStatusIndicator client:load />
       </div>
 
       <!-- Mobile Menu Button -->

@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabaseClient } from '../../lib/supabase';
 import { buildUrl, createPageUrl } from '../../lib/utils';
-import { ArrowLeft, ArrowRight, Loader2, CheckCircle, Calendar } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Loader2, CheckCircle, Calendar, User } from 'lucide-react';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
 import { validateEmail, validatePhone } from '../../lib/validation';
-import { getUserDetails, saveUserDetails } from '../../lib/userStorage';
+import { getUserDetails, saveUserDetails, clearUserDetails, syncUserDetailsFromSupabase } from '../../lib/userStorage';
 import { 
   getAssessmentData, 
-  saveAssessmentData 
+  saveAssessmentData,
+  clearAssessmentData
 } from '../../lib/assessmentStorage';
 import { calculateAllScores, type Answer as AnswerData } from '../../lib/assessmentScoring';
 
@@ -53,6 +54,7 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [magicLinkSent, setMagicLinkSent] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const captchaRef = useRef<HCaptcha>(null);
@@ -64,22 +66,46 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
   const [hasScheduledCall, setHasScheduledCall] = useState(false);
   const [hasStoredUserDetails, setHasStoredUserDetails] = useState(false);
   const [contactFormCompleted, setContactFormCompleted] = useState(false);
+  const [isCheckingAssessment, setIsCheckingAssessment] = useState(true);
 
-  // Check authentication status
+  // Check authentication status and existing assessment
   useEffect(() => {
-    const checkAuth = async () => {
+    const checkAuthAndAssessment = async () => {
       try {
         const { data: { session } } = await supabaseClient.supabase.auth.getSession();
         if (session?.user) {
           setIsAuthenticated(true);
           setUserId(session.user.id);
+          setUserEmail(session.user.email || null);
+
+          // Sync user details from Supabase to localStorage
+          await syncUserDetailsFromSupabase();
+
+          // Check if user already has an assessment
+          const { data: existingAssessment, error: assessmentError } = await supabaseClient.supabase
+            .from('assessment_responses')
+            .select('id')
+            .eq('user_id', session.user.id)
+            .eq('assessment_type', type)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+          if (!assessmentError && existingAssessment) {
+            // User already has an assessment, redirect to results
+            const resultsUrl = buildUrl(`/practice/results?id=${existingAssessment.id}`);
+            window.location.href = resultsUrl;
+            return;
+          }
         }
       } catch (error) {
         console.error('Auth check error:', error);
+      } finally {
+        setIsCheckingAssessment(false);
       }
     };
-    checkAuth();
-  }, []);
+    checkAuthAndAssessment();
+  }, [type]);
 
   // Read from localStorage after hydration to prevent SSR mismatch
   useEffect(() => {
@@ -752,9 +778,49 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
     );
   }
 
+  // Show loading state while checking for existing assessment
+  if (isCheckingAssessment) {
+    return (
+      <div className="max-w-3xl mx-auto">
+        <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 lg:p-10 text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-slate-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-3xl mx-auto">
       <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 lg:p-10">
+        {/* Auth Status Banner */}
+        {isAuthenticated && userId && (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <User className="w-5 h-5 text-blue-600" />
+                <p className="text-sm text-blue-800">
+                  Logged in as <strong>{contactData.email || userEmail || 'user'}</strong>
+                </p>
+              </div>
+              <button
+                onClick={async () => {
+                  // Clear localStorage
+                  clearUserDetails();
+                  clearAssessmentData();
+                  // Sign out
+                  await supabaseClient.supabase.auth.signOut();
+                  // Reload page to reset state
+                  window.location.reload();
+                }}
+                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Progress */}
         <div className="flex items-center justify-between mb-6">
           <span className="text-sm font-medium text-slate-500">
