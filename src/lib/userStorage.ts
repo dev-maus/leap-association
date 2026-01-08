@@ -121,6 +121,36 @@ export async function syncUserDetailsFromSupabase(): Promise<void> {
         })
       ),
     });
+
+    // Also sync assessment data from Supabase - always replace with latest from database
+    try {
+      const { saveAssessmentData } = await import('./assessmentStorage');
+      
+      // Fetch the most recent assessment for this user
+      const { data: assessment, error: assessmentError } = await supabase
+        .from('assessment_responses')
+        .select('id, created_at')
+        .eq('user_id', session.user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!assessmentError && assessment) {
+        // Always replace assessment data with what's in Supabase (replace: true)
+        saveAssessmentData({
+          responseId: assessment.id,
+          submittedEmail: userData.email,
+          submittedAt: assessment.created_at,
+        }, true); // Replace instead of merge
+      } else {
+        // No assessment found - clear the assessment data
+        const { clearAssessmentData } = await import('./assessmentStorage');
+        clearAssessmentData();
+      }
+    } catch (assessmentSyncError) {
+      console.warn('Failed to sync assessment data from Supabase:', assessmentSyncError);
+      // Don't throw - assessment sync failure shouldn't block user details sync
+    }
   } catch (error) {
     console.error('Failed to sync user details from Supabase:', error);
   }

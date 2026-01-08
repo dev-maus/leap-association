@@ -14,44 +14,65 @@ export default function AuthStatusIndicator() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const { data: { session } } = await supabaseClient.supabase.auth.getSession();
-        if (session?.user) {
-          setIsAuthenticated(true);
-          setUserEmail(session.user.email || null);
-        } else {
-          setIsAuthenticated(false);
-          setUserEmail(null);
-        }
-      } catch (error) {
-        console.error('Auth check error:', error);
-        setIsAuthenticated(false);
-        setUserEmail(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    let mounted = true;
 
-    checkAuth();
-
-    // Listen for auth state changes
+    // Listen for auth state changes FIRST - this will fire INITIAL_SESSION if session exists
     const { data: { subscription } } = supabaseClient.supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('[AuthStatusIndicator] onAuthStateChange:', event, 'hasSession:', !!session, 'userEmail:', session?.user?.email);
+      
+      if (!mounted) return;
+      
       if (session?.user) {
         setIsAuthenticated(true);
         setUserEmail(session.user.email || null);
-        // Sync user details from Supabase when user logs in
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        setIsLoading(false);
+        // Sync user details from Supabase when user logs in or session is initialized
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
           await syncUserDetailsFromSupabase();
         }
       } else {
         setIsAuthenticated(false);
         setUserEmail(null);
+        setIsLoading(false);
       }
       setIsOpen(false); // Close dropdown on auth state change
     });
 
+    // Also check session directly as fallback
+    const checkAuth = async () => {
+      try {
+        // Small delay to let onAuthStateChange fire first
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        const { data: { session }, error: sessionError } = await supabaseClient.supabase.auth.getSession();
+        console.log('[AuthStatusIndicator] Direct getSession check:', { hasSession: !!session, error: sessionError, userEmail: session?.user?.email });
+        
+        if (mounted) {
+          if (session?.user) {
+            setIsAuthenticated(true);
+            setUserEmail(session.user.email || null);
+            setIsLoading(false);
+          } else {
+            // Only update if we haven't been set by onAuthStateChange yet
+            setIsAuthenticated(prev => prev ? prev : false);
+            setUserEmail(prev => prev ? prev : null);
+            setIsLoading(false);
+          }
+        }
+      } catch (error) {
+        console.error('[AuthStatusIndicator] Auth check error:', error);
+        if (mounted) {
+          setIsAuthenticated(prev => prev ? prev : false);
+          setUserEmail(prev => prev ? prev : null);
+          setIsLoading(false);
+        }
+      }
+    };
+
+    checkAuth();
+
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);

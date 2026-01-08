@@ -1,14 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
-import { secureAuthStorage } from './secureAuthStorage';
 
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || '';
 
+// Use Supabase's default configuration - follows their best practices
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    storage: secureAuthStorage,
     persistSession: true,
-    autoRefreshToken: false, // Disabled: no refresh_token stored
+    autoRefreshToken: true, // Enable token refresh for better UX
+    detectSessionInUrl: true, // Automatically detect and handle auth callbacks
   },
 });
 

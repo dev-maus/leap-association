@@ -52,6 +52,7 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
     phone?: string;
   }>({});
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [rateLimitCountdown, setRateLimitCountdown] = useState<number | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
@@ -121,7 +122,10 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
             saveAssessmentData({ responseId: existingAssessment.id });
             
             // User already has an assessment, redirect to results
-            const resultsUrl = buildUrl(`/practice/results?id=${existingAssessment.id}`);
+            const resultsPath = buildUrl(`/practice/results?id=${existingAssessment.id}`);
+            const resultsUrl = typeof window !== 'undefined' 
+              ? `${window.location.origin}${resultsPath}`
+              : resultsPath;
             window.location.href = resultsUrl;
             return;
           }
@@ -134,6 +138,26 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
     };
     checkAuthAndAssessment();
   }, [type]);
+
+  // Countdown timer for rate limit
+  useEffect(() => {
+    if (rateLimitCountdown === null || rateLimitCountdown <= 0) {
+      if (rateLimitCountdown === 0) {
+        setRateLimitCountdown(null);
+        setErrorMessage(null);
+      }
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setRateLimitCountdown(rateLimitCountdown - 1);
+      if (rateLimitCountdown > 1) {
+        setErrorMessage(`Too many requests. Please try again in ${rateLimitCountdown - 1} seconds.`);
+      }
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [rateLimitCountdown]);
 
   // Read from localStorage after hydration to prevent SSR mismatch
   useEffect(() => {
@@ -381,18 +405,33 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
           if (!currentPath.startsWith('/')) {
             currentPath = '/' + currentPath;
           }
-          await supabaseClient.auth.signInWithMagicLink(contactData.email, currentPath);
-          setMagicLinkSent(true);
-          setErrorMessage(null);
-          setIsSubmitting(false);
-          return; // Wait for user to click Magic Link
+          try {
+            await supabaseClient.auth.signInWithMagicLink(contactData.email, currentPath);
+            setMagicLinkSent(true);
+            setErrorMessage(null);
+            setIsSubmitting(false);
+            return; // Wait for user to click Magic Link
+          } catch (err: any) {
+            // Handle rate limit error
+            if (err?.code === 'over_email_send_rate_limit') {
+              setRateLimitCountdown(30);
+              setErrorMessage('Too many requests. Please try again in 30 seconds.');
+              setIsSubmitting(false);
+              return;
+            }
+            // Other errors
+            setErrorMessage(err?.message || 'Failed to send magic link. Please try again.');
+            setIsSubmitting(false);
+            return;
+          }
         } else {
           // First-time user - save to localStorage and continue with assessment
-          saveUserDetails({
+          const userDetailsToSave = {
             ...contactData,
             isNewUser: true,
             pendingAssessmentType: type,
-          });
+          };
+          saveUserDetails(userDetailsToSave);
           setHasStoredUserDetails(true);
           setContactFormCompleted(true);
           // Ensure we're at the first question
@@ -561,11 +600,12 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
 
       // Store submission data in localStorage
       if (contactData.email) {
-        saveAssessmentData({
+        const assessmentDataToSave = {
           submittedEmail: contactData.email,
           responseId: response.id,
           submittedAt: new Date().toISOString(),
-        });
+        };
+        saveAssessmentData(assessmentDataToSave);
       }
 
       // Reset captcha for next submission
@@ -575,7 +615,10 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
       }
 
       // Redirect to results page
-      const resultsUrl = `${buildUrl('/practice/results')}?id=${response.id}`;
+      const resultsPath = `${buildUrl('/practice/results')}?id=${response.id}`;
+      const resultsUrl = typeof window !== 'undefined' 
+        ? `${window.location.origin}${resultsPath}`
+        : resultsPath;
       console.log('Redirecting to:', resultsUrl);
       window.location.href = resultsUrl;
     } catch (error: any) {
@@ -665,13 +708,22 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                 </svg>
                 <div className="flex-1">
-                  <p className="text-sm text-red-800 font-medium">{errorMessage}</p>
+                  <p className="text-sm text-red-800 font-medium">
+                    {errorMessage}
+                    {rateLimitCountdown !== null && rateLimitCountdown > 0 && (
+                      <span className="ml-2 font-semibold">(Try again in {rateLimitCountdown} seconds)</span>
+                    )}
+                  </p>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setErrorMessage(null)}
+                  onClick={() => {
+                    setErrorMessage(null);
+                    setRateLimitCountdown(null);
+                  }}
                   className="text-red-600 hover:text-red-800 transition-colors"
                   aria-label="Dismiss error"
+                  disabled={rateLimitCountdown !== null && rateLimitCountdown > 0}
                 >
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -919,13 +971,22 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
               </svg>
               <div className="flex-1">
-                <p className="text-sm text-red-800 font-medium">{errorMessage}</p>
+                <p className="text-sm text-red-800 font-medium">
+                  {errorMessage}
+                  {rateLimitCountdown !== null && rateLimitCountdown > 0 && (
+                    <span className="ml-2 font-semibold">(Try again in {rateLimitCountdown} seconds)</span>
+                  )}
+                </p>
               </div>
               <button
                 type="button"
-                onClick={() => setErrorMessage(null)}
+                onClick={() => {
+                  setErrorMessage(null);
+                  setRateLimitCountdown(null);
+                }}
                 className="text-red-600 hover:text-red-800 transition-colors"
                 aria-label="Dismiss error"
+                disabled={rateLimitCountdown !== null && rateLimitCountdown > 0}
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />

@@ -12,6 +12,7 @@ export default function LoginForm() {
   const [isSendingMagicLink, setIsSendingMagicLink] = useState(false);
   const [magicLinkSent, setMagicLinkSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [rateLimitCountdown, setRateLimitCountdown] = useState<number | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({
@@ -20,6 +21,26 @@ export default function LoginForm() {
     }));
     setError(null);
   };
+
+  // Countdown timer for rate limit
+  useEffect(() => {
+    if (rateLimitCountdown === null || rateLimitCountdown <= 0) {
+      if (rateLimitCountdown === 0) {
+        setRateLimitCountdown(null);
+        setError(null);
+      }
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setRateLimitCountdown(rateLimitCountdown - 1);
+      if (rateLimitCountdown > 1) {
+        setError(`Too many requests. Please try again in ${rateLimitCountdown - 1} seconds.`);
+      }
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [rateLimitCountdown]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,7 +74,13 @@ export default function LoginForm() {
       await supabaseClient.auth.signInWithMagicLink(formData.email, returnUrl || undefined);
       setMagicLinkSent(true);
     } catch (err: any) {
-      setError(err.message || 'Failed to send magic link. Please try again.');
+      // Handle rate limit error
+      if (err?.code === 'over_email_send_rate_limit') {
+        setRateLimitCountdown(30);
+        setError('Too many requests. Please try again in 30 seconds.');
+      } else {
+        setError(err.message || 'Failed to send magic link. Please try again.');
+      }
     } finally {
       setIsSendingMagicLink(false);
     }
@@ -91,6 +118,9 @@ export default function LoginForm() {
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
             {error}
+            {rateLimitCountdown !== null && rateLimitCountdown > 0 && (
+              <span className="ml-2 font-semibold">(Try again in {rateLimitCountdown} seconds)</span>
+            )}
           </div>
         )}
 
@@ -115,7 +145,7 @@ export default function LoginForm() {
 
         <button
           type="submit"
-          disabled={isSendingMagicLink || !formData.email}
+          disabled={isSendingMagicLink || !formData.email || (rateLimitCountdown !== null && rateLimitCountdown > 0)}
           className="w-full bg-primary hover:bg-primary-dark text-white py-6 rounded-xl font-semibold text-base disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
         >
           {isSendingMagicLink ? (
