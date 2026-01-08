@@ -23,63 +23,105 @@ export default function AssessmentResults({ schedulingConfig }: AssessmentResult
   const [userDetails, setUserDetails] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [responseId, setResponseId] = useState<string | null>(null);
 
+  // Extract responseId from URL on mount and track it
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const responseId = params.get('id');
+    const id = params.get('id');
+    console.log('[AssessmentResults] Component mounted, responseId from URL:', id);
+    setResponseId(id);
+  }, []); // Run once on mount - component remounts on page refresh
 
-    if (!responseId) {
+  // Listen for URL changes (e.g., browser back/forward)
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get('id');
+      console.log('[AssessmentResults] PopState event, new responseId:', id);
+      setResponseId(id);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  useEffect(() => {
+    // Always check URL directly as fallback in case state is stale (e.g., on refresh)
+    const params = new URLSearchParams(window.location.search);
+    const urlResponseId = params.get('id');
+    const currentResponseId = responseId || urlResponseId;
+
+    console.log('[AssessmentResults] useEffect triggered', {
+      responseIdFromState: responseId,
+      responseIdFromURL: urlResponseId,
+      usingResponseId: currentResponseId
+    });
+
+    if (!currentResponseId) {
+      console.error('[AssessmentResults] No assessment ID provided in URL or state');
       setError('No assessment ID provided');
       setIsLoading(false);
       return;
     }
 
+    // Reset state when responseId changes
+    setIsLoading(true);
+    setError(null);
+    setResponse(null);
+
     const loadResults = async () => {
+      console.log('[AssessmentResults] loadResults called for ID:', currentResponseId);
+      
+      const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || '';
+      const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || '';
+      
+      if (!supabaseUrl || !supabaseAnonKey) {
+        console.error('[AssessmentResults] Supabase configuration missing');
+        setError('Configuration error. Please contact support.');
+        setIsLoading(false);
+        return;
+      }
+      
+      const functionUrl = `${supabaseUrl}/functions/v1/get-assessment-results`;
+      console.log('[AssessmentResults] Calling Edge Function:', functionUrl, 'with responseId:', currentResponseId);
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        console.warn('[AssessmentResults] Request timeout triggered, aborting...');
+        controller.abort();
+      }, 10000); // 10 second timeout
+      
       try {
-        console.log('Loading assessment results for ID:', responseId);
-        
-        // Check authentication
-        const { data: { session } } = await supabaseClient.supabase.auth.getSession();
-        const currentUserId = session?.user?.id || null;
+        console.log('[AssessmentResults] Starting fetch request...');
+        const response = await fetch(functionUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${supabaseAnonKey}`,
+            apikey: supabaseAnonKey,
+          },
+          body: JSON.stringify({ responseId: currentResponseId }),
+          signal: controller.signal,
+        });
 
-        // Fetch assessment - public read access is now allowed via RLS policy
-        // Assessments contain no personal data, so anyone can view by ID
-        console.log('Attempting to fetch assessment with ID:', responseId);
-        let foundResponse;
-        
-        try {
-          foundResponse = await supabaseClient.entities.AssessmentResponse.get(responseId);
-          console.log('Successfully fetched response via direct query:', foundResponse);
-        } catch (directError: any) {
-          // If direct query fails (migration might not be run yet), use Edge Function as fallback
-          console.log('Direct query failed, trying Edge Function fallback:', directError?.message);
-          const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || '';
-          const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || '';
-          
-          if (!supabaseUrl || !supabaseAnonKey) {
-            throw new Error('Supabase configuration missing');
-          }
-          
-          const functionUrl = `${supabaseUrl}/functions/v1/get-assessment-results`;
-          const response = await fetch(functionUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${supabaseAnonKey}`,
-              apikey: supabaseAnonKey,
-            },
-            body: JSON.stringify({ responseId }),
-          });
+        clearTimeout(timeoutId);
+        console.log('[AssessmentResults] Fetch response received, status:', response.status);
 
-          if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-            throw new Error(errorData.error || 'Failed to fetch assessment results');
-          }
-
-          foundResponse = await response.json();
-          console.log('Successfully fetched response via Edge Function:', foundResponse);
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+          console.error('[AssessmentResults] Edge Function error response:', errorData);
+          throw new Error(errorData.error || `Failed to fetch assessment results (${response.status})`);
         }
 
+        const foundResponse = await response.json();
+        console.log('[AssessmentResults] Successfully fetched response:', foundResponse?.id);
+
+        if (!foundResponse) {
+          throw new Error('Assessment response is null or undefined');
+        }
+
+        console.log('[AssessmentResults] Setting response and clearing loading state');
         setResponse(foundResponse);
 
         // Get user details from localStorage
@@ -87,33 +129,37 @@ export default function AssessmentResults({ schedulingConfig }: AssessmentResult
         if (storedUserDetails.full_name || storedUserDetails.email) {
           setUserDetails(storedUserDetails);
         }
-      } catch (err: any) {
-        console.error('Error loading results:', err);
-        console.error('Error details:', {
-          message: err?.message,
-          code: err?.code,
-          status: err?.status,
-          details: err?.details,
-          hint: err?.hint,
-        });
+      } catch (fetchError: any) {
+        clearTimeout(timeoutId);
+        console.error('[AssessmentResults] Error in fetch:', fetchError);
         
-        // Provide more specific error messages
-        if (err?.code === 'PGRST116' || err?.status === 404) {
-          setError('Assessment results not found. Please check the link and try again.');
-        } else if (err?.status === 406) {
-          setError('Unable to load assessment results. Please contact support if this issue persists.');
-        } else if (err?.message?.includes('JWT')) {
-          setError('Authentication error. Please refresh the page and try again.');
+        if (fetchError.name === 'AbortError') {
+          setError('Request timed out. Please try again.');
         } else {
-          setError(err?.message || 'Failed to load assessment results. Please try again.');
+          // Provide more specific error messages
+          if (fetchError?.code === 'PGRST116' || fetchError?.status === 404) {
+            setError('Assessment results not found. Please check the link and try again.');
+          } else if (fetchError?.status === 406) {
+            setError('Unable to load assessment results. Please contact support if this issue persists.');
+          } else if (fetchError?.message?.includes('JWT')) {
+            setError('Authentication error. Please refresh the page and try again.');
+          } else {
+            setError(fetchError?.message || 'Failed to load assessment results. Please try again.');
+          }
         }
       } finally {
+        console.log('[AssessmentResults] Finally block - setting isLoading to false');
         setIsLoading(false);
       }
     };
 
-    loadResults();
-  }, []);
+    // Always call loadResults, even if there were previous errors
+    loadResults().catch((err) => {
+      console.error('[AssessmentResults] Unhandled error in loadResults:', err);
+      setError('An unexpected error occurred. Please try again.');
+      setIsLoading(false);
+    });
+  }, [responseId]); // Re-run when responseId changes
 
   if (isLoading) {
     return (

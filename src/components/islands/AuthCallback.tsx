@@ -10,6 +10,7 @@ export default function AuthCallback() {
   const [error, setError] = useState<string | null>(null);
   const [authType, setAuthType] = useState<AuthType>(null);
   const hasProcessedRef = useRef(false);
+  const hasRedirectedRef = useRef(false);
 
   useEffect(() => {
     // Only run once - use a ref that persists across strict mode double-invocations
@@ -19,8 +20,8 @@ export default function AuthCallback() {
     hasProcessedRef.current = true;
 
     // Capture URL params immediately (before any async operations)
-    const urlParams = new URLSearchParams(window.location.search);
-    const nextUrl = urlParams.get('next');
+    let urlParams = new URLSearchParams(window.location.search);
+    let nextUrl = urlParams.get('next');
     const errorDescription = urlParams.get('error_description');
     
     // Check URL hash for auth type (but DON'T manually parse tokens)
@@ -29,6 +30,22 @@ export default function AuthCallback() {
     const type = hashParams.get('type') as AuthType;
     const hasTokens = !!hashParams.get('access_token');
     
+    // Extract redirect_to from hash if present (Supabase sometimes puts it in the hash)
+    const redirectToFromHash = hashParams.get('redirect_to');
+    if (redirectToFromHash && !nextUrl) {
+      // Parse the redirect_to URL to extract next parameter if it exists
+      try {
+        const redirectUrl = new URL(redirectToFromHash);
+        const nextParam = redirectUrl.searchParams.get('next');
+        if (nextParam) {
+          // Store the next parameter for use in redirect
+          nextUrl = nextParam;
+        }
+      } catch (e) {
+        // Invalid URL, ignore
+      }
+    }
+    
     setAuthType(type);
 
     if (errorDescription) {
@@ -36,18 +53,34 @@ export default function AuthCallback() {
       return;
     }
 
-    // Clear hash immediately - Supabase should have already captured it on client init
-    if (hash) {
-      window.history.replaceState(null, '', window.location.pathname + window.location.search);
-    }
+    // DON'T clear hash immediately - let Supabase process it first
+    // We'll clear it after session is established
+
+    let sessionEstablished = false;
+    let subscriptionCleanup: (() => void) | null = null;
 
     // Use onAuthStateChange to wait for Supabase to process the tokens
     // This is the recommended approach - let Supabase handle token processing internally
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('[AuthCallback] onAuthStateChange event:', event, 'hasSession:', !!session);
+      
       // Only proceed on SIGNED_IN or INITIAL_SESSION events
       if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
+        // Prevent multiple redirects
+        if (hasRedirectedRef.current || sessionEstablished) {
+          return;
+        }
+        sessionEstablished = true;
+        hasRedirectedRef.current = true;
+        
         // Unsubscribe to prevent multiple firings
         subscription.unsubscribe();
+        subscriptionCleanup = null;
+        
+        // Clear hash now that session is established
+        if (hash) {
+          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
         
         // Sync user details
         await syncUserDetailsFromSupabase();
@@ -57,35 +90,107 @@ export default function AuthCallback() {
       }
     });
 
-    // Also check immediately for existing session (in case auth already happened)
+    subscriptionCleanup = () => subscription.unsubscribe();
+
+    // If we have tokens in the hash, explicitly trigger Supabase to process them
+    // This ensures Supabase processes the hash tokens even if onAuthStateChange hasn't fired yet
+    if (hasTokens) {
+      console.log('[AuthCallback] Hash tokens detected, triggering session check...');
+      // Call getSession() to trigger Supabase to process hash tokens
+      supabase.auth.getSession().then(({ data: { session }, error }) => {
+        console.log('[AuthCallback] Initial session check after token detection:', { hasSession: !!session, error });
+      });
+    }
+
+    // Also check for existing session with retries (in case auth already happened)
     const checkExistingSession = async () => {
-      // Small delay to let Supabase process hash tokens if present
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Wait longer for Supabase to process hash tokens if present
+      // Magic links need time for Supabase to exchange tokens
+      const maxRetries = hasTokens ? 15 : 3; // More retries if we have tokens (increased from 10)
+      const delayMs = hasTokens ? 400 : 200; // Longer delay if we have tokens (increased from 300)
       
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session?.user) {
-        // Unsubscribe since we found session
-        subscription.unsubscribe();
+      for (let i = 0; i < maxRetries; i++) {
+        await new Promise(resolve => setTimeout(resolve, delayMs));
         
-        await syncUserDetailsFromSupabase();
-        await handleRedirect(nextUrl, type, session.user.id);
-      } else if (!hasTokens) {
-        // No tokens and no session - show error
-        setError('No active session found. Please sign in again.');
+        // Explicitly call getSession to trigger processing
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        console.log('[AuthCallback] Session check attempt', i + 1, 'hasSession:', !!session, 'error:', sessionError);
+        
+        if (session?.user) {
+          // Prevent multiple redirects
+          if (hasRedirectedRef.current || sessionEstablished) {
+            return;
+          }
+          sessionEstablished = true;
+          hasRedirectedRef.current = true;
+          
+          // Unsubscribe since we found session
+          if (subscriptionCleanup) {
+            subscriptionCleanup();
+            subscriptionCleanup = null;
+          }
+          
+          // Clear hash now that session is established
+          if (hash) {
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+          }
+          
+          await syncUserDetailsFromSupabase();
+          await handleRedirect(nextUrl, type, session.user.id);
+          return;
+        }
       }
-      // If hasTokens but no session yet, wait for onAuthStateChange
+      
+      // After all retries, if we had tokens but no session, wait for onAuthStateChange
+      // If we had no tokens and no session, show error
+      if (!hasTokens && !sessionEstablished) {
+        console.error('[AuthCallback] No tokens and no session after retries');
+        setError('No active session found. Please sign in again.');
+      } else if (hasTokens && !sessionEstablished) {
+        console.warn('[AuthCallback] Had tokens but no session after retries, waiting for onAuthStateChange...');
+        // Don't show error yet - onAuthStateChange might still fire
+      }
+      // If hasTokens but no session yet, onAuthStateChange will handle it
     };
 
     checkExistingSession();
 
     // Helper function to handle redirect
     async function handleRedirect(nextUrl: string | null, type: AuthType, userId: string) {
+      // Wait longer to ensure session is fully established and persisted
+      // This is critical for magic link flows where the session needs to be saved
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Verify session is still valid and persisted before redirecting
+      let sessionValid = false;
+      for (let i = 0; i < 5; i++) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user && session.user.id === userId) {
+          sessionValid = true;
+          break;
+        }
+        // Wait a bit more and retry
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+      
+      if (!sessionValid) {
+        console.error('Session not properly established before redirect');
+        setError('Authentication session not ready. Please wait a moment and try again.');
+        return;
+      }
+      
       // If nextUrl is explicitly provided, use it (e.g., from assessment flow)
       if (nextUrl) {
         const decodedNext = decodeURIComponent(nextUrl);
         const baseUrl = import.meta.env.BASE_URL || '/';
-        const redirectUrl = decodedNext.startsWith(baseUrl) ? decodedNext : buildUrl(decodedNext);
+        let redirectUrl = decodedNext.startsWith(baseUrl) ? decodedNext : buildUrl(decodedNext);
+        
+        // Prevent redirect loops - don't redirect to callback page or auth pages
+        if (redirectUrl.includes('/auth/')) {
+          redirectUrl = buildUrl('/');
+        }
+        
+        console.log('Redirecting to:', redirectUrl);
         window.location.replace(redirectUrl);
         return;
       }
@@ -110,6 +215,7 @@ export default function AuthCallback() {
           if (!assessmentError && existingAssessment) {
             // User has an existing assessment - redirect to results
             const resultsUrl = buildUrl(`/practice/results?id=${existingAssessment.id}`);
+            console.log('Redirecting to results:', resultsUrl);
             window.location.replace(resultsUrl);
             return;
           }
@@ -119,6 +225,7 @@ export default function AuthCallback() {
           if (userDetails.pendingAssessmentType) {
             // Redirect to the assessment page they were trying to access
             const assessmentUrl = buildUrl(`/practice/${userDetails.pendingAssessmentType}`);
+            console.log('Redirecting to assessment:', assessmentUrl);
             window.location.replace(assessmentUrl);
             return;
           }
@@ -137,15 +244,22 @@ export default function AuthCallback() {
           .single();
 
         const redirectUrl = profile?.user_role === 'admin' ? buildUrl('admin') : buildUrl('/');
+        console.log('Redirecting to default:', redirectUrl);
         window.location.replace(redirectUrl);
       } catch {
-        window.location.replace(buildUrl('/'));
+        const redirectUrl = buildUrl('/');
+        console.log('Redirecting to home (fallback):', redirectUrl);
+        window.location.replace(redirectUrl);
       }
     }
 
     // Cleanup subscription on unmount
     return () => {
-      subscription.unsubscribe();
+      if (subscriptionCleanup) {
+        subscriptionCleanup();
+      } else {
+        subscription.unsubscribe();
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
