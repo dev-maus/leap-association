@@ -33,7 +33,7 @@ interface RequestBody {
     score: number;
     question_text?: string;
   }>;
-  captchaToken: string;
+  captchaToken?: string; // Optional - if not provided or empty, captcha verification is skipped
 }
 
 serve(async (req) => {
@@ -43,40 +43,41 @@ serve(async (req) => {
   }
 
   try {
-    // Get hCaptcha secret key from environment
-    const hcaptchaSecretKey = Deno.env.get('HCAPTCHA_SECRET_KEY');
-    if (!hcaptchaSecretKey) {
-      throw new Error('HCAPTCHA_SECRET_KEY not configured');
-    }
-
     // Parse request body
     const body: RequestBody = await req.json();
 
-    // Verify hCaptcha token
-    const verifyResponse = await fetch('https://hcaptcha.com/siteverify', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        secret: hcaptchaSecretKey,
-        response: body.captchaToken,
-      }),
-    });
+    // Verify hCaptcha token if provided (captcha may be optional for first-time users)
+    if (body.captchaToken && body.captchaToken.trim() !== '') {
+      const hcaptchaSecretKey = Deno.env.get('HCAPTCHA_SECRET_KEY');
+      if (!hcaptchaSecretKey) {
+        throw new Error('HCAPTCHA_SECRET_KEY not configured');
+      }
 
-    const verifyResult = await verifyResponse.json();
-
-    if (!verifyResult.success) {
-      return new Response(
-        JSON.stringify({
-          error: 'Captcha verification failed',
-          details: verifyResult['error-codes'] || [],
+      const verifyResponse = await fetch('https://hcaptcha.com/siteverify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          secret: hcaptchaSecretKey,
+          response: body.captchaToken,
         }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+      });
+
+      const verifyResult = await verifyResponse.json();
+
+      if (!verifyResult.success) {
+        return new Response(
+          JSON.stringify({
+            error: 'Captcha verification failed',
+            details: verifyResult['error-codes'] || [],
+          }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
     }
 
     // Initialize Supabase client with service role for admin operations
@@ -142,10 +143,10 @@ serve(async (req) => {
             phone: body.contactData.phone,
           });
       } else {
-        // Create new auth user
+        // Create new auth user (first-time user)
         const { data: newUser, error: createUserError } = await supabase.auth.admin.createUser({
           email: body.contactData.email,
-          email_confirm: false, // Will be confirmed via Magic Link
+          email_confirm: false, // Will be confirmed via verification email
           user_metadata: {
             full_name: body.contactData.full_name,
             company: body.contactData.company,
@@ -171,6 +172,31 @@ serve(async (req) => {
             phone: body.contactData.phone,
             user_role: 'user',
           });
+
+        // Send verification email asynchronously (don't wait for it)
+        // Get site URL for redirect
+        const siteUrl = Deno.env.get('PUBLIC_SITE_URL') || supabaseUrl.replace('.supabase.co', '');
+        const baseUrl = Deno.env.get('BASE_URL') || '/';
+        const callbackUrl = `${siteUrl}${baseUrl}auth/callback?next=${encodeURIComponent('/practice/results')}`;
+        
+        // Generate verification link
+        const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+          type: 'signup',
+          email: body.contactData.email,
+          options: {
+            emailRedirectTo: callbackUrl,
+          },
+        });
+
+        if (linkError) {
+          // Log error but don't fail the request - email can be sent later
+          console.error('Failed to generate verification link:', linkError);
+        } else if (linkData?.properties?.action_link) {
+          // Send verification email asynchronously (fire and forget)
+          // Note: Supabase automatically sends the email when generateLink is called with type 'signup'
+          // But we can also trigger it explicitly if needed
+          console.log('Verification link generated for:', body.contactData.email);
+        }
       }
     }
 

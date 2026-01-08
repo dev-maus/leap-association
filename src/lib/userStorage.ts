@@ -9,6 +9,8 @@ export interface UserDetails {
   company?: string;
   role?: string;
   phone?: string;
+  isNewUser?: boolean;
+  pendingAssessmentType?: 'individual' | 'team';
 }
 
 const STORAGE_KEY = 'leap_user_details';
@@ -111,7 +113,11 @@ export async function syncUserDetailsFromSupabase(): Promise<void> {
         Object.entries(existing).filter(([key, value]) => {
           // Keep existing value if it's more complete than the Supabase value
           const supabaseValue = userData[key as keyof UserDetails];
-          return value && (!supabaseValue || (typeof value === 'string' && value.length > (supabaseValue?.length || 0)));
+          if (typeof value === 'string' && typeof supabaseValue === 'string') {
+            return value && (!supabaseValue || value.length > supabaseValue.length);
+          }
+          // For non-string values, keep existing if Supabase doesn't have it
+          return value && !supabaseValue;
         })
       ),
     });

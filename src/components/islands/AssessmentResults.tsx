@@ -42,31 +42,42 @@ export default function AssessmentResults({ schedulingConfig }: AssessmentResult
         const { data: { session } } = await supabaseClient.supabase.auth.getSession();
         const currentUserId = session?.user?.id || null;
 
-        const foundResponse = await supabaseClient.entities.AssessmentResponse.get(responseId);
-        console.log('Found response:', foundResponse);
+        // Fetch assessment - public read access is now allowed via RLS policy
+        // Assessments contain no personal data, so anyone can view by ID
+        console.log('Attempting to fetch assessment with ID:', responseId);
+        let foundResponse;
         
-        // Verify user has access to this assessment
-        if (currentUserId) {
-          // Get user profile to check role
-          const { data: profile } = await supabaseClient.supabase
-            .from('user_profiles')
-            .select('user_role')
-            .eq('id', currentUserId)
-            .single();
-
-          const isAdmin = profile?.user_role === 'admin';
-          const isOwner = foundResponse.user_id === currentUserId;
-
-          if (!isAdmin && !isOwner) {
-            setError('You do not have permission to view this assessment.');
-            setIsLoading(false);
-            return;
+        try {
+          foundResponse = await supabaseClient.entities.AssessmentResponse.get(responseId);
+          console.log('Successfully fetched response via direct query:', foundResponse);
+        } catch (directError: any) {
+          // If direct query fails (migration might not be run yet), use Edge Function as fallback
+          console.log('Direct query failed, trying Edge Function fallback:', directError?.message);
+          const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || '';
+          const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || '';
+          
+          if (!supabaseUrl || !supabaseAnonKey) {
+            throw new Error('Supabase configuration missing');
           }
-        } else if (foundResponse.user_id) {
-          // Assessment is linked to a user but current user is not authenticated
-          // Allow viewing for backward compatibility with old assessments (no user_id)
-          // But show a message encouraging login
-          console.warn('Assessment requires authentication but user is not logged in');
+          
+          const functionUrl = `${supabaseUrl}/functions/v1/get-assessment-results`;
+          const response = await fetch(functionUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${supabaseAnonKey}`,
+              apikey: supabaseAnonKey,
+            },
+            body: JSON.stringify({ responseId }),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+            throw new Error(errorData.error || 'Failed to fetch assessment results');
+          }
+
+          foundResponse = await response.json();
+          console.log('Successfully fetched response via Edge Function:', foundResponse);
         }
 
         setResponse(foundResponse);
@@ -108,12 +119,23 @@ export default function AssessmentResults({ schedulingConfig }: AssessmentResult
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <p className="ml-4 text-slate-600">Loading assessment results...</p>
       </div>
     );
   }
 
   if (error || !response) {
-    return <div className="text-center py-20">{error || 'Assessment results not found.'}</div>;
+    return (
+      <div className="text-center py-20">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6 max-w-md mx-auto">
+          <p className="text-red-800 font-medium mb-2">Unable to load assessment results</p>
+          <p className="text-red-600 text-sm mb-4">{error || 'Assessment results not found.'}</p>
+          <p className="text-slate-500 text-xs">
+            If you just submitted this assessment, the results may still be processing. Please try refreshing the page.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   const isTeam = response.assessment_type === 'team';

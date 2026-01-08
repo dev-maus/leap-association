@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import { buildUrl } from '../../lib/utils';
 import { Loader2, AlertCircle } from 'lucide-react';
-import { syncUserDetailsFromSupabase } from '../../lib/userStorage';
+import { syncUserDetailsFromSupabase, getUserDetails } from '../../lib/userStorage';
 
 type AuthType = 'recovery' | 'signup' | 'magiclink' | 'invite' | null;
 
@@ -81,6 +81,7 @@ export default function AuthCallback() {
 
     // Helper function to handle redirect
     async function handleRedirect(nextUrl: string | null, type: AuthType, userId: string) {
+      // If nextUrl is explicitly provided, use it (e.g., from assessment flow)
       if (nextUrl) {
         const decodedNext = decodeURIComponent(nextUrl);
         const baseUrl = import.meta.env.BASE_URL || '/';
@@ -94,7 +95,40 @@ export default function AuthCallback() {
         return;
       }
 
-      // Check user role for default redirect
+      // For returning users (magic link), check if they have an existing assessment
+      if (type === 'magiclink' || type === 'signup') {
+        try {
+          // Check for existing assessment
+          const { data: existingAssessment, error: assessmentError } = await supabase
+            .from('assessment_responses')
+            .select('id, assessment_type')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+          if (!assessmentError && existingAssessment) {
+            // User has an existing assessment - redirect to results
+            const resultsUrl = buildUrl(`/practice/results?id=${existingAssessment.id}`);
+            window.location.replace(resultsUrl);
+            return;
+          }
+
+          // No existing assessment - check localStorage for pending assessment type
+          const userDetails = getUserDetails();
+          if (userDetails.pendingAssessmentType) {
+            // Redirect to the assessment page they were trying to access
+            const assessmentUrl = buildUrl(`/practice/${userDetails.pendingAssessmentType}`);
+            window.location.replace(assessmentUrl);
+            return;
+          }
+        } catch (error) {
+          // If error checking assessment, continue with default redirect
+          console.error('Error checking assessment:', error);
+        }
+      }
+
+      // Default redirect: Check user role for admin or home
       try {
         const { data: profile } = await supabase
           .from('user_profiles')

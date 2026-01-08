@@ -469,11 +469,70 @@ async function submitAssessmentWithCaptcha(data: {
   }
 }
 
+// Check if user exists by email
+async function checkUserExists(email: string): Promise<{ exists: boolean; userId: string | null }> {
+  // Validate configuration before making request
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error(
+      'Supabase configuration is missing. Please ensure PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY are set.'
+    );
+  }
+
+  const functionUrl = `${supabaseUrl}/functions/v1/check-user-exists`;
+
+  // Add timeout to prevent hanging
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+  try {
+    const response = await fetch(functionUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${supabaseAnonKey}`,
+        apikey: supabaseAnonKey,
+      },
+      body: JSON.stringify({ email }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const error = await response.json();
+      const errorObj: any = new Error(error.error || error.message || 'Failed to check user existence');
+      errorObj.error = error.error;
+      errorObj.message = error.message;
+      throw errorObj;
+    }
+
+    const result = await response.json();
+    
+    // Validate response structure
+    if (typeof result !== 'object' || result === null) {
+      throw new Error('Invalid response format from check-user-exists');
+    }
+    
+    // Ensure exists is a boolean
+    const exists = Boolean(result.exists);
+    const userId = result.userId || null;
+    
+    return { exists, userId };
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      throw new Error('Request timed out. Please try again.');
+    }
+    throw err;
+  }
+}
+
 // Export Supabase client wrapper
 export const supabaseClient = {
   supabase,
   entities,
   auth,
   submitAssessmentWithCaptcha,
+  checkUserExists,
 };
 
