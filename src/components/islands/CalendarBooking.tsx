@@ -18,8 +18,24 @@ export default function CalendarBooking() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
+    // Check authentication status
+    const checkAuth = async () => {
+      try {
+        const { data: { session } } = await supabaseClient.supabase.auth.getSession();
+        if (session?.user) {
+          setIsAuthenticated(true);
+          setUserId(session.user.id);
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+      }
+    };
+    checkAuth();
+
     // Load availability slots
     const loadAvailability = async () => {
       try {
@@ -76,24 +92,16 @@ export default function CalendarBooking() {
     saveUserDetails(formData);
 
     try {
-      // Create lead
-      const lead = await supabaseClient.entities.Lead.create({
-        ...formData,
-        source: 'strategy_call_booking',
-      });
-
-      // Update availability slot
-      const slot = availableSlots.find(
-        (s) => s.date === selectedDate && s.time === selectedTime && !s.booked
-      );
-
-      if (slot) {
-        await supabaseClient.entities.Availability.update(slot.id, {
-          booked: true,
-          lead_id: lead.id,
-        });
+      // If user is not authenticated, send Magic Link
+      if (!isAuthenticated || !userId) {
+        await supabaseClient.auth.signInWithMagicLink(formData.email);
+        alert('Please check your email for a magic link to complete your booking. Once you click the link, you can return to book your call.');
+        setIsSubmitting(false);
+        return;
       }
 
+      // Note: Actual calendar booking is handled externally
+      // This just tracks that the user has scheduled a call
       saveAssessmentData({ callScheduled: true });
       
       setIsSubmitted(true);

@@ -1,21 +1,20 @@
 import { createClient } from '@supabase/supabase-js';
-import { secureAuthStorage } from './secureAuthStorage';
 
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || '';
 
+// Use Supabase's default configuration - follows their best practices
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    storage: secureAuthStorage,
     persistSession: true,
-    autoRefreshToken: false, // Disabled: no refresh_token stored
+    autoRefreshToken: true, // Enable token refresh for better UX
+    detectSessionInUrl: true, // Automatically detect and handle auth callbacks
   },
 });
 
 // Helper function to convert entity names to table names
 const entityToTable = (entityName: string): string => {
   const mapping: Record<string, string> = {
-    'Lead': 'leads',
     'User': 'users',
     'AssessmentResponse': 'assessment_responses',
     'Availability': 'availability',
@@ -241,8 +240,8 @@ function createEntityAPI(tableName: string) {
 
 // Export entities
 export const entities = {
-  Lead: createEntityAPI('leads'),
   User: createEntityAPI('users'),
+  UserProfile: createEntityAPI('user_profiles'),
   AssessmentResponse: createEntityAPI('assessment_responses'),
   Availability: createEntityAPI('availability'),
   LEAPLunchRegistration: createEntityAPI('leap_lunch_registrations'),
@@ -278,22 +277,44 @@ export const auth = {
       throw authError;
     }
 
-    // Return user info from Supabase Auth (no separate users table)
+    // Try to get user profile from user_profiles table
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+
+    // Return user info from profile if available, otherwise from auth metadata
     return {
       id: user.id,
-      email: user.email,
-      full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || '',
-      role: user.user_metadata?.role || 'admin',
+      email: profile?.email || user.email || '',
+      full_name: profile?.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || '',
+      role: profile?.user_role || user.user_metadata?.role || 'user',
+      company: profile?.company,
+      phone: profile?.phone,
     };
   },
 
   async logout(redirectUrl: string | null = null) {
+    // Clear localStorage
+    if (typeof window !== 'undefined') {
+      const { clearUserDetails } = await import('./userStorage');
+      const { clearAssessmentData } = await import('./assessmentStorage');
+      clearUserDetails();
+      clearAssessmentData();
+    }
+
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
 
     if (redirectUrl) {
       window.location.href = redirectUrl;
     }
+  },
+
+  async signOut(redirectUrl: string | null = null) {
+    // Alias for logout for consistency
+    return this.logout(redirectUrl);
   },
 
   redirectToLogin(returnUrl: string | null = null) {
@@ -327,6 +348,49 @@ export const auth = {
     if (error) throw error;
     return data;
   },
+
+  async signInWithMagicLink(email: string, redirectTo?: string) {
+    // Always use window.location.origin when available (browser context)
+    // This ensures we use the actual current URL, not a potentially stale env var
+    const siteUrl = typeof window !== 'undefined' 
+      ? window.location.origin 
+      : (import.meta.env.PUBLIC_SITE_URL || '');
+    const baseUrl = import.meta.env.BASE_URL || '/';
+    
+    // Ensure baseUrl ends with a slash for proper path joining
+    const normalizedBaseUrl = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+    
+    // Construct the callback URL with the next parameter
+    // The next parameter tells AuthCallback where to redirect after authentication
+    let callbackUrl = `${siteUrl}${normalizedBaseUrl}auth/callback`;
+    if (redirectTo) {
+      // Ensure redirectTo starts with a slash
+      const cleanRedirectTo = redirectTo.startsWith('/') ? redirectTo : `/${redirectTo}`;
+      callbackUrl += `?next=${encodeURIComponent(cleanRedirectTo)}`;
+    }
+
+    console.log('Magic Link redirect URL:', callbackUrl); // Debug log
+
+    try {
+      const { data, error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: callbackUrl,
+        },
+      });
+
+      if (error) {
+        console.error('Magic Link error:', error);
+        throw error;
+      }
+      
+      console.log('Magic Link sent successfully:', data);
+      return data;
+    } catch (err: any) {
+      console.error('Failed to send Magic Link:', err);
+      throw err;
+    }
+  },
 };
 
 // Assessment submission with captcha verification
@@ -339,7 +403,7 @@ async function submitAssessmentWithCaptcha(data: {
     phone?: string;
     source: string;
   };
-  leadId?: string;
+  userId?: string; // Authenticated user ID
   assessmentType: 'individual' | 'team';
   scores: {
     leadership: number;
@@ -405,11 +469,70 @@ async function submitAssessmentWithCaptcha(data: {
   }
 }
 
+// Check if user exists by email
+async function checkUserExists(email: string): Promise<{ exists: boolean; userId: string | null }> {
+  // Validate configuration before making request
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error(
+      'Supabase configuration is missing. Please ensure PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY are set.'
+    );
+  }
+
+  const functionUrl = `${supabaseUrl}/functions/v1/check-user-exists`;
+
+  // Add timeout to prevent hanging
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+  try {
+    const response = await fetch(functionUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${supabaseAnonKey}`,
+        apikey: supabaseAnonKey,
+      },
+      body: JSON.stringify({ email }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const error = await response.json();
+      const errorObj: any = new Error(error.error || error.message || 'Failed to check user existence');
+      errorObj.error = error.error;
+      errorObj.message = error.message;
+      throw errorObj;
+    }
+
+    const result = await response.json();
+    
+    // Validate response structure
+    if (typeof result !== 'object' || result === null) {
+      throw new Error('Invalid response format from check-user-exists');
+    }
+    
+    // Ensure exists is a boolean
+    const exists = Boolean(result.exists);
+    const userId = result.userId || null;
+    
+    return { exists, userId };
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      throw new Error('Request timed out. Please try again.');
+    }
+    throw err;
+  }
+}
+
 // Export Supabase client wrapper
 export const supabaseClient = {
   supabase,
   entities,
   auth,
   submitAssessmentWithCaptcha,
+  checkUserExists,
 };
 

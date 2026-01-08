@@ -29,16 +29,19 @@ export function getAssessmentData(): AssessmentData {
 
 /**
  * Save assessment data to localStorage
+ * @param data - Data to save
+ * @param replace - If true, replace all data instead of merging (default: false)
  */
-export function saveAssessmentData(data: Partial<AssessmentData>): void {
+export function saveAssessmentData(data: Partial<AssessmentData>, replace: boolean = false): void {
   if (!isClient) return;
 
   try {
-    const existing = getAssessmentData();
-    const updated: AssessmentData = {
-      ...existing,
-      ...data,
-    };
+    const updated: AssessmentData = replace 
+      ? (data as AssessmentData) // Replace entirely
+      : {
+          ...getAssessmentData(), // Merge with existing
+          ...data,
+        };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
   } catch (error) {
     console.error('Failed to save assessment data to localStorage:', error);

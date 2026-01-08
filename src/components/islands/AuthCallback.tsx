@@ -1,74 +1,219 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import { buildUrl } from '../../lib/utils';
 import { Loader2, AlertCircle } from 'lucide-react';
+import { syncUserDetailsFromSupabase, getUserDetails } from '../../lib/userStorage';
 
 type AuthType = 'recovery' | 'signup' | 'magiclink' | 'invite' | null;
 
 export default function AuthCallback() {
   const [error, setError] = useState<string | null>(null);
   const [authType, setAuthType] = useState<AuthType>(null);
+  const hasProcessedRef = useRef(false);
 
   useEffect(() => {
-    const handleAuthCallback = async () => {
-      try {
-        // Check URL hash for tokens (Supabase redirect)
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const accessToken = hashParams.get('access_token');
-        const refreshToken = hashParams.get('refresh_token');
-        const type = hashParams.get('type') as AuthType;
+    // Only run once - use a ref that persists across strict mode double-invocations
+    if (hasProcessedRef.current) {
+      return;
+    }
+    hasProcessedRef.current = true;
 
-        setAuthType(type);
+    // Capture URL params immediately (before any async operations)
+    const urlParams = new URLSearchParams(window.location.search);
+    const nextUrl = urlParams.get('next');
+    const errorDescription = urlParams.get('error_description');
+    
+    // Check URL hash for auth type
+    const hash = window.location.hash.substring(1);
+    const hashParams = new URLSearchParams(hash);
+    const type = hashParams.get('type') as AuthType;
+    setAuthType(type);
 
-        if (accessToken) {
-          // Exchange tokens for session
-          const { error: sessionError } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken || '',
-          });
+    if (errorDescription) {
+      setError(errorDescription);
+      return;
+    }
 
-          if (sessionError) throw sessionError;
+    let hasRedirected = false;
 
-          // Redirect based on auth type
-          switch (type) {
-            case 'recovery':
-              window.location.href = buildUrl('auth/reset-password');
-              return;
-            case 'signup':
-            case 'magiclink':
-            case 'invite':
-              window.location.href = buildUrl('admin');
-              return;
-            default:
-              window.location.href = buildUrl('admin');
-              return;
-          }
-        }
-
-        // Check URL query params (some Supabase flows use query params)
-        const urlParams = new URLSearchParams(window.location.search);
-        const errorDescription = urlParams.get('error_description');
+    // Use onAuthStateChange - Supabase will automatically process hash tokens with detectSessionInUrl: true
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('[AuthCallback] onAuthStateChange event:', event, 'hasSession:', !!session);
+      
+      if (hasRedirected) return;
+      
+      // Handle successful authentication
+      if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
+        hasRedirected = true;
+        subscription.unsubscribe();
         
-        if (errorDescription) {
-          throw new Error(errorDescription);
+        // Clear hash
+        if (hash) {
+          window.history.replaceState(null, '', window.location.pathname + window.location.search);
         }
+        
+        // Sync user details
+        await syncUserDetailsFromSupabase();
 
-        // No tokens found - check if there's an existing session
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          window.location.href = buildUrl('admin');
-          return;
+        // Handle redirect
+        await handleRedirect(nextUrl, type, session.user.id);
+      } else if (event === 'SIGNED_OUT') {
+        hasRedirected = true;
+        subscription.unsubscribe();
+        window.location.replace(buildUrl('/'));
+      }
+    });
+
+    // Also check for existing session immediately (fallback)
+    const checkSession = async () => {
+      // Small delay to let Supabase process hash tokens
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      if (hasRedirected) return;
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('[AuthCallback] Direct session check:', { hasSession: !!session });
+      
+      if (session?.user && !hasRedirected) {
+        hasRedirected = true;
+        subscription.unsubscribe();
+        
+        // Clear hash
+        if (hash) {
+          window.history.replaceState(null, '', window.location.pathname + window.location.search);
         }
-
-        // No tokens, no session - invalid callback
-        throw new Error('Invalid authentication callback');
-      } catch (err: any) {
-        console.error('Auth callback error:', err);
-        setError(err.message || 'Authentication failed. Please try again.');
+        
+        await syncUserDetailsFromSupabase();
+        await handleRedirect(nextUrl, type, session.user.id);
+      } else if (!session && !hash) {
+        // No session and no hash tokens - show error
+        setError('No active session found. Please sign in again.');
       }
     };
 
-    handleAuthCallback();
+    checkSession();
+
+    // Timeout fallback
+    const timeoutId = setTimeout(() => {
+      if (!hasRedirected) {
+        console.warn('[AuthCallback] Timeout reached, redirecting to home');
+        subscription.unsubscribe();
+        window.location.replace(buildUrl('/'));
+      }
+    }, 8000);
+
+    // Helper function to handle redirect
+    async function handleRedirect(nextUrl: string | null, type: AuthType, userId: string) {
+      // Small delay to ensure session is fully established
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Verify session is still valid
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (!session?.user) {
+        console.error('[AuthCallback] Session lost before redirect', sessionError);
+        setError('Authentication session expired. Please try again.');
+        return;
+      }
+
+      // If nextUrl is explicitly provided, use it
+      if (nextUrl) {
+        const decodedNext = decodeURIComponent(nextUrl);
+        const baseUrl = import.meta.env.BASE_URL || '/';
+        let redirectPath = decodedNext.startsWith(baseUrl) ? decodedNext : buildUrl(decodedNext);
+        
+        // Prevent redirect loops - don't redirect to auth pages
+        if (redirectPath.includes('/auth/')) {
+          redirectPath = buildUrl('/');
+        }
+        
+        // Construct absolute URL for reliable redirect
+        const redirectUrl = typeof window !== 'undefined' 
+          ? `${window.location.origin}${redirectPath}`
+          : redirectPath;
+        
+        console.log('[AuthCallback] Redirecting to nextUrl:', redirectUrl);
+        // Use window.location.href for more reliable navigation (works better with SPAs)
+        window.location.href = redirectUrl;
+        return;
+      }
+
+      if (type === 'recovery') {
+        window.location.replace(buildUrl('auth/reset-password'));
+        return;
+      }
+
+      // For magic link/signup, check for existing assessment or pending assessment
+      if (type === 'magiclink' || type === 'signup') {
+        try {
+          const { data: existingAssessment, error: assessmentError } = await supabase
+            .from('assessment_responses')
+            .select('id, assessment_type')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+
+          if (!assessmentError && existingAssessment) {
+            const resultsPath = buildUrl(`/practice/results?id=${existingAssessment.id}`);
+            const resultsUrl = typeof window !== 'undefined' 
+              ? `${window.location.origin}${resultsPath}`
+              : resultsPath;
+            console.log('[AuthCallback] Redirecting to results:', resultsUrl);
+            // Use window.location.href for more reliable navigation (works better with SPAs)
+            window.location.href = resultsUrl;
+            return;
+          }
+
+          // No existing assessment - check localStorage for pending assessment type
+          const userDetails = getUserDetails();
+          if (userDetails.pendingAssessmentType) {
+            const assessmentPath = buildUrl(`/practice/${userDetails.pendingAssessmentType}`);
+            const assessmentUrl = typeof window !== 'undefined' 
+              ? `${window.location.origin}${assessmentPath}`
+              : assessmentPath;
+            console.log('[AuthCallback] Redirecting to assessment:', assessmentUrl);
+            // Use window.location.href for more reliable navigation (works better with SPAs)
+            window.location.href = assessmentUrl;
+            return;
+          }
+        } catch (error) {
+          console.error('[AuthCallback] Error checking assessment:', error);
+        }
+      }
+
+      // Default redirect: Check user role for admin or home
+      try {
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('user_role')
+          .eq('id', userId)
+          .single();
+
+        const redirectPath = profile?.user_role === 'admin' ? buildUrl('admin') : buildUrl('/');
+        const redirectUrl = typeof window !== 'undefined' 
+          ? `${window.location.origin}${redirectPath}`
+          : redirectPath;
+        console.log('[AuthCallback] Redirecting to default:', redirectUrl);
+        // Use window.location.href for more reliable navigation (works better with SPAs)
+        window.location.href = redirectUrl;
+      } catch {
+        const redirectPath = buildUrl('/');
+        const redirectUrl = typeof window !== 'undefined' 
+          ? `${window.location.origin}${redirectPath}`
+          : redirectPath;
+        console.log('[AuthCallback] Redirecting to home (fallback):', redirectUrl);
+        // Use window.location.href for more reliable navigation (works better with SPAs)
+        window.location.href = redirectUrl;
+      }
+    }
+
+    // Cleanup subscription and timeout on unmount
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timeoutId);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (error) {
@@ -99,4 +244,3 @@ export default function AuthCallback() {
     </div>
   );
 }
-

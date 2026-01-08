@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabaseClient } from '../../lib/supabase';
-import { Mail, User, Building, Phone, MessageSquare, Loader2, CheckCircle } from 'lucide-react';
-import { getUserDetails, saveUserDetails } from '../../lib/userStorage';
+import { Mail, User, Building, Phone, MessageSquare, Loader2, CheckCircle, LogOut } from 'lucide-react';
+import { getUserDetails, saveUserDetails, clearUserDetails } from '../../lib/userStorage';
+import { clearAssessmentData } from '../../lib/assessmentStorage';
 
 export default function ContactForm() {
   const [formData, setFormData] = useState({
@@ -14,6 +15,40 @@ export default function ContactForm() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [magicLinkSent, setMagicLinkSent] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data: { session } } = await supabaseClient.supabase.auth.getSession();
+        if (session?.user) {
+          setIsAuthenticated(true);
+          setUserEmail(session.user.email || null);
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+      }
+    };
+    checkAuth();
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabaseClient.supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        setIsAuthenticated(true);
+        setUserEmail(session.user.email || null);
+      } else {
+        setIsAuthenticated(false);
+        setUserEmail(null);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   // Load user details after hydration to prevent SSR mismatch
   useEffect(() => {
@@ -45,10 +80,11 @@ export default function ContactForm() {
     saveUserDetails(formData);
 
     try {
-      await supabaseClient.entities.Lead.create({
-        ...formData,
-        source: 'contact_form',
-      });
+      // If user is not authenticated, send Magic Link
+      if (!isAuthenticated) {
+        await supabaseClient.auth.signInWithMagicLink(formData.email);
+        setMagicLinkSent(true);
+      }
 
       setIsSubmitted(true);
       setFormData({
@@ -59,11 +95,26 @@ export default function ContactForm() {
         phone: formData.phone,
         message: '',
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to submit form:', error);
-      alert('Failed to send message. Please try again.');
+      alert(error.message || 'Failed to send message. Please try again.');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      // Clear localStorage
+      clearUserDetails();
+      clearAssessmentData();
+      // Sign out
+      await supabaseClient.supabase.auth.signOut();
+      // Reload page to reset state
+      window.location.reload();
+    } catch (error) {
+      console.error('Sign out error:', error);
+      alert('Failed to sign out. Please try again.');
     }
   };
 
@@ -74,11 +125,22 @@ export default function ContactForm() {
           <CheckCircle className="w-10 h-10 text-green-600" />
         </div>
         <h2 className="text-3xl font-bold text-primary mb-4">Message Received!</h2>
+        {magicLinkSent && (
+          <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+            <p className="text-sm text-blue-800">
+              We've also sent a magic link to <strong>{formData.email}</strong>. 
+              Click the link in your email to create your account and access your assessment results.
+            </p>
+          </div>
+        )}
         <p className="text-lg text-slate-600 mb-8">
           Thank you for reaching out. We'll respond within 24 hours.
         </p>
         <button
-          onClick={() => setIsSubmitted(false)}
+          onClick={() => {
+            setIsSubmitted(false);
+            setMagicLinkSent(false);
+          }}
           className="btn-primary"
         >
           Send Another Message
@@ -89,6 +151,28 @@ export default function ContactForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {/* Auth Status Banner */}
+      {isAuthenticated && userEmail && (
+        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <User className="w-5 h-5 text-blue-600" />
+              <p className="text-sm text-blue-800">
+                Logged in as <strong>{userEmail}</strong>
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium"
+            >
+              <LogOut className="w-4 h-4" />
+              Sign Out
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="grid md:grid-cols-2 gap-5">
         <div>
           <label htmlFor="full_name" className="block text-slate-700 font-medium mb-1.5">
