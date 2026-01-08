@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabaseClient } from '../../lib/supabase';
 import { buildUrl } from '../../lib/utils';
 import { Mail, FileText, Calendar, Settings, Loader2, ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
@@ -96,10 +96,11 @@ function Pagination({ currentPage, totalItems, itemsPerPage, onPageChange }: Pag
 }
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<Tab>('leads');
+  const [activeTab, setActiveTab] = useState<Tab>('users');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingData, setIsLoadingData] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   
   // Users state
   const [users, setUsers] = useState<any[]>([]);
@@ -121,19 +122,109 @@ export default function AdminDashboard() {
   const debouncedAssessmentsSearch = useDebounce(assessmentsSearch, 300);
 
   useEffect(() => {
-    checkAuth();
+    console.log('[AdminDashboard] useEffect started');
+    let didAuthenticate = false;
+    let isUnmounted = false;
+    
+    const handleAuth = (userId: string) => {
+      if (didAuthenticate || isUnmounted) return;
+      didAuthenticate = true;
+      console.log('[AdminDashboard] Authenticated:', userId);
+      setCurrentUserId(userId);
+      setIsAuthenticated(true);
+      setIsLoading(false);
+    };
+
+    const redirectToLogin = () => {
+      if (isUnmounted || didAuthenticate) return;
+      console.log('[AdminDashboard] Redirecting to login');
+      window.location.href = `${buildUrl('auth/login')}?returnUrl=${buildUrl('admin')}`;
+    };
+
+    // Subscribe to auth changes first
+    const { data: { subscription } } = supabaseClient.supabase.auth.onAuthStateChange((event, session) => {
+      console.log('[AdminDashboard] onAuthStateChange:', event, 'session:', !!session, 'user:', session?.user?.id);
+      
+      if (isUnmounted) return;
+      
+      if (event === 'SIGNED_OUT') {
+        redirectToLogin();
+        return;
+      }
+      
+      // Accept session from any event
+      if (session?.user) {
+        handleAuth(session.user.id);
+      }
+    });
+
+    // Immediately check current session state from localStorage (sync)
+    // This handles the case where events fired before we subscribed
+    const checkStoredSession = () => {
+      try {
+        const storageKey = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
+        if (storageKey) {
+          const stored = localStorage.getItem(storageKey);
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (parsed?.user?.id) {
+              console.log('[AdminDashboard] Found session in localStorage:', parsed.user.id);
+              handleAuth(parsed.user.id);
+              return true;
+            }
+          }
+        }
+      } catch (e) {
+        console.error('[AdminDashboard] Error reading localStorage:', e);
+      }
+      return false;
+    };
+    
+    // Check localStorage immediately
+    const hasStoredSession = checkStoredSession();
+    
+    // Fallback: if no stored session and not authenticated after 3 seconds, redirect
+    const fallbackTimeout = setTimeout(() => {
+      if (!didAuthenticate && !isUnmounted) {
+        console.log('[AdminDashboard] Fallback timeout - no auth');
+        redirectToLogin();
+      }
+    }, 3000);
+
+    return () => {
+      isUnmounted = true;
+      subscription.unsubscribe();
+      clearTimeout(fallbackTimeout);
+    };
   }, []);
 
-  // Load data when tab, page, or search changes
+  // Load BOTH datasets on initial auth - this ensures quick tab switching
+  const initialLoadDone = useRef(false);
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !initialLoadDone.current) {
+      initialLoadDone.current = true;
+      console.log('[AdminDashboard] Initial load - loading both users and assessments');
+      // Small delay to let Supabase fully initialize after auth
+      const timeoutId = setTimeout(() => {
+        // Load both in parallel
+        loadUsers(1, '');
+        loadAssessments(1, '');
+      }, 200);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [isAuthenticated]);
+
+  // Load data when tab, page, or search changes (after initial load)
+  useEffect(() => {
+    if (isAuthenticated && initialLoadDone.current) {
+      console.log('[AdminDashboard] Loading data for tab:', activeTab);
       if (activeTab === 'users') {
         loadUsers(usersPage, debouncedUsersSearch);
       } else if (activeTab === 'assessments') {
         loadAssessments(assessmentsPage, debouncedAssessmentsSearch);
       }
     }
-  }, [isAuthenticated, activeTab, usersPage, assessmentsPage, debouncedUsersSearch, debouncedAssessmentsSearch]);
+  }, [activeTab, usersPage, assessmentsPage, debouncedUsersSearch, debouncedAssessmentsSearch]);
   
   // Reset to page 1 when search changes
   useEffect(() => {
@@ -144,23 +235,19 @@ export default function AdminDashboard() {
     setAssessmentsPage(1);
   }, [debouncedAssessmentsSearch]);
 
-  const checkAuth = async () => {
-    try {
-      await supabaseClient.auth.me();
-      setIsAuthenticated(true);
-    } catch (error) {
-      window.location.href = `${buildUrl('auth/login')}?returnUrl=${buildUrl('admin')}`;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const loadUsers = async (page: number, search: string) => {
+  const loadUsers = async (page: number, search: string, retryCount = 0) => {
+    console.log('[AdminDashboard] loadUsers called, retry:', retryCount);
     setIsLoadingData(true);
+    
+    // Create abort controller for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    
     try {
       let query = supabaseClient.supabase
         .from('user_profiles')
-        .select('*', { count: 'exact' });
+        .select('*', { count: 'exact' })
+        .abortSignal(controller.signal);
 
       if (search.trim()) {
         query = query.or(`full_name.ilike.%${search.trim()}%,email.ilike.%${search.trim()}%,company.ilike.%${search.trim()}%`);
@@ -173,12 +260,22 @@ export default function AdminDashboard() {
         .order('created_at', { ascending: false })
         .range(from, to);
 
+      clearTimeout(timeoutId);
+      console.log('[AdminDashboard] loadUsers result:', { count, error: error?.message });
+
       if (error) throw error;
 
       setUsers(data || []);
       setUsersTotal(count || 0);
-    } catch (error) {
-      console.error('Failed to load users:', error);
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      console.error('[AdminDashboard] Failed to load users:', error?.message || error?.name);
+      // Retry on error or abort
+      if (retryCount < 2) {
+        console.log('[AdminDashboard] Retrying loadUsers...');
+        setTimeout(() => loadUsers(page, search, retryCount + 1), 300);
+        return;
+      }
     } finally {
       setIsLoadingData(false);
     }
@@ -199,8 +296,14 @@ export default function AdminDashboard() {
     }
   };
 
-  const loadAssessments = async (page: number, search: string) => {
+  const loadAssessments = async (page: number, search: string, retryCount = 0) => {
+    console.log('[AdminDashboard] loadAssessments called, retry:', retryCount);
     setIsLoadingData(true);
+    
+    // Create abort controller for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    
     try {
       // For assessments, search by user info from user_profiles
       let allUsers: any[] | null = null;
@@ -211,7 +314,8 @@ export default function AdminDashboard() {
         const { data: usersData } = await supabaseClient.supabase
           .from('user_profiles')
           .select('*')
-          .or(`full_name.ilike.%${search.trim()}%,email.ilike.%${search.trim()}%,company.ilike.%${search.trim()}%`);
+          .or(`full_name.ilike.%${search.trim()}%,email.ilike.%${search.trim()}%,company.ilike.%${search.trim()}%`)
+          .abortSignal(controller.signal);
         
         allUsers = usersData || [];
         matchingUserIds = allUsers.map((user: any) => user.id);
@@ -220,7 +324,8 @@ export default function AdminDashboard() {
         // No search, just load all users for lookup
         const { data: usersData } = await supabaseClient.supabase
           .from('user_profiles')
-          .select('*');
+          .select('*')
+          .abortSignal(controller.signal);
         allUsers = usersData || [];
         setUsersMap(new Map(allUsers.map((user: any) => [user.id, user])));
       }
@@ -236,7 +341,8 @@ export default function AdminDashboard() {
         const { count } = await supabaseClient.supabase
           .from('assessment_responses')
           .select('*', { count: 'exact', head: true })
-          .in('user_id', matchingUserIds);
+          .in('user_id', matchingUserIds)
+          .abortSignal(controller.signal);
         
         // Get paginated data
         const { data } = await supabaseClient.supabase
@@ -244,7 +350,8 @@ export default function AdminDashboard() {
           .select('*')
           .in('user_id', matchingUserIds)
           .order('created_at', { ascending: false })
-          .range(from, to);
+          .range(from, to)
+          .abortSignal(controller.signal);
         
         assessmentResult = {
           data: data || [],
@@ -262,6 +369,8 @@ export default function AdminDashboard() {
         });
       }
       
+      clearTimeout(timeoutId);
+      
       // Use the current usersMap
       const currentUsersMap = allUsers 
         ? new Map(allUsers.map((user: any) => [user.id, user]))
@@ -275,8 +384,15 @@ export default function AdminDashboard() {
       
       setAssessments(assessmentsWithUsers);
       setAssessmentsTotal(assessmentResult.total);
-    } catch (error) {
-      console.error('Failed to load assessments:', error);
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      console.error('[AdminDashboard] Failed to load assessments:', error?.message || error?.name);
+      // Retry on error or abort
+      if (retryCount < 2) {
+        console.log('[AdminDashboard] Retrying loadAssessments...');
+        setTimeout(() => loadAssessments(page, search, retryCount + 1), 300);
+        return;
+      }
     } finally {
       setIsLoadingData(false);
     }
@@ -460,14 +576,20 @@ export default function AdminDashboard() {
                             {user.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}
                           </td>
                           <td className="py-3 px-4">
-                            <select
-                              value={user.user_role || 'user'}
-                              onChange={(e) => updateUserRole(user.id, e.target.value as 'user' | 'admin')}
-                              className="text-sm border border-slate-200 rounded-lg px-2 py-1 focus:ring-2 focus:ring-primary focus:border-primary"
-                            >
-                              <option value="user">User</option>
-                              <option value="admin">Admin</option>
-                            </select>
+                            {user.id === currentUserId ? (
+                              <span className="text-sm text-slate-400 italic" title="You cannot change your own role">
+                                {user.user_role || 'user'}
+                              </span>
+                            ) : (
+                              <select
+                                value={user.user_role || 'user'}
+                                onChange={(e) => updateUserRole(user.id, e.target.value as 'user' | 'admin')}
+                                className="text-sm border border-slate-200 rounded-lg px-2 py-1 focus:ring-2 focus:ring-primary focus:border-primary"
+                              >
+                                <option value="user">User</option>
+                                <option value="admin">Admin</option>
+                              </select>
+                            )}
                           </td>
                         </tr>
                       ))}
