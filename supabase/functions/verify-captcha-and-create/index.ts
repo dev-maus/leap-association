@@ -144,9 +144,10 @@ serve(async (req) => {
           });
       } else {
         // Create new auth user (first-time user)
+        // Auto-confirm email - they'll get a magic link when they log in next time
         const { data: newUser, error: createUserError } = await supabase.auth.admin.createUser({
           email: body.contactData.email,
-          email_confirm: false, // Will be confirmed via verification email
+          email_confirm: true, // Auto-confirm email - no confirmation needed
           user_metadata: {
             full_name: body.contactData.full_name,
             company: body.contactData.company,
@@ -172,31 +173,6 @@ serve(async (req) => {
             phone: body.contactData.phone,
             user_role: 'user',
           });
-
-        // Send verification email asynchronously (don't wait for it)
-        // Get site URL for redirect
-        const siteUrl = Deno.env.get('PUBLIC_SITE_URL') || supabaseUrl.replace('.supabase.co', '');
-        const baseUrl = Deno.env.get('BASE_URL') || '/';
-        const callbackUrl = `${siteUrl}${baseUrl}auth/callback?next=${encodeURIComponent('/practice/results')}`;
-        
-        // Generate verification link
-        const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
-          type: 'signup',
-          email: body.contactData.email,
-          options: {
-            emailRedirectTo: callbackUrl,
-          },
-        });
-
-        if (linkError) {
-          // Log error but don't fail the request - email can be sent later
-          console.error('Failed to generate verification link:', linkError);
-        } else if (linkData?.properties?.action_link) {
-          // Send verification email asynchronously (fire and forget)
-          // Note: Supabase automatically sends the email when generateLink is called with type 'signup'
-          // But we can also trigger it explicitly if needed
-          console.log('Verification link generated for:', body.contactData.email);
-        }
       }
     }
 
@@ -219,6 +195,9 @@ serve(async (req) => {
     if (responseError) {
       throw new Error(`Failed to create assessment response: ${responseError.message}`);
     }
+
+    // No confirmation email needed - email is auto-confirmed
+    // Users will get a magic link when they log in next time
 
     return new Response(JSON.stringify(response), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

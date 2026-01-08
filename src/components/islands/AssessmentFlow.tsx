@@ -608,6 +608,9 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
         saveAssessmentData(assessmentDataToSave);
       }
 
+      // No confirmation email needed - email is auto-confirmed
+      // Users will get a magic link when they log in next time
+
       // Reset captcha for next submission
       if (captchaRef.current) {
         captchaRef.current.resetCaptcha();
