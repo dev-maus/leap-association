@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import { buildUrl } from '../../lib/utils';
 import { Loader2, AlertCircle } from 'lucide-react';
-import { syncUserDetailsFromSupabase } from '../../lib/userStorage';
+import { syncUserDetailsFromSupabase, getUserDetails } from '../../lib/userStorage';
 
 type AuthType = 'recovery' | 'signup' | 'magiclink' | 'invite' | null;
 
@@ -36,18 +36,27 @@ export default function AuthCallback() {
       return;
     }
 
-    // Clear hash immediately - Supabase should have already captured it on client init
-    if (hash) {
-      window.history.replaceState(null, '', window.location.pathname + window.location.search);
-    }
+    // DON'T clear hash immediately - let Supabase process it first
+    let sessionEstablished = false;
+    let subscriptionCleanup: (() => void) | null = null;
 
     // Use onAuthStateChange to wait for Supabase to process the tokens
-    // This is the recommended approach - let Supabase handle token processing internally
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('[AuthCallback] onAuthStateChange event:', event, 'hasSession:', !!session);
+      
       // Only proceed on SIGNED_IN or INITIAL_SESSION events
       if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
+        if (sessionEstablished) return;
+        sessionEstablished = true;
+        
         // Unsubscribe to prevent multiple firings
         subscription.unsubscribe();
+        subscriptionCleanup = null;
+        
+        // Clear hash now that session is established
+        if (hash) {
+          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
         
         // Sync user details
         await syncUserDetailsFromSupabase();
@@ -57,40 +66,95 @@ export default function AuthCallback() {
       }
     });
 
-    // Also check immediately for existing session (in case auth already happened)
+    subscriptionCleanup = () => subscription.unsubscribe();
+
+    // If we have tokens in the hash, explicitly trigger Supabase to process them
+    if (hasTokens) {
+      console.log('[AuthCallback] Hash tokens detected, triggering session check...');
+      supabase.auth.getSession().then(({ data: { session }, error }) => {
+        console.log('[AuthCallback] Initial session check after token detection:', { hasSession: !!session, error });
+      });
+    }
+
+    // Also check for existing session with retries (in case auth already happened)
     const checkExistingSession = async () => {
-      // Small delay to let Supabase process hash tokens if present
-      await new Promise(resolve => setTimeout(resolve, 100));
+      const maxRetries = hasTokens ? 15 : 3;
+      const delayMs = hasTokens ? 400 : 200;
       
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session?.user) {
-        // Unsubscribe since we found session
-        subscription.unsubscribe();
+      for (let i = 0; i < maxRetries; i++) {
+        await new Promise(resolve => setTimeout(resolve, delayMs));
         
-        await syncUserDetailsFromSupabase();
-        await handleRedirect(nextUrl, type, session.user.id);
-      } else if (!hasTokens) {
-        // No tokens and no session - show error
-        setError('No active session found. Please sign in again.');
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        console.log('[AuthCallback] Session check attempt', i + 1, 'hasSession:', !!session, 'error:', sessionError);
+        
+        if (session?.user) {
+          if (sessionEstablished) return;
+          sessionEstablished = true;
+          
+          if (subscriptionCleanup) {
+            subscriptionCleanup();
+            subscriptionCleanup = null;
+          }
+          
+          // Clear hash now that session is established
+          if (hash) {
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+          }
+          
+          await syncUserDetailsFromSupabase();
+          await handleRedirect(nextUrl, type, session.user.id);
+          return;
+        }
       }
-      // If hasTokens but no session yet, wait for onAuthStateChange
+      
+      if (!hasTokens && !sessionEstablished) {
+        console.error('[AuthCallback] No tokens and no session after retries');
+        setError('No active session found. Please sign in again.');
+      } else if (hasTokens && !sessionEstablished) {
+        console.warn('[AuthCallback] Had tokens but no session after retries, waiting for onAuthStateChange...');
+      }
     };
 
     checkExistingSession();
 
-    // Timeout fallback - if nothing happens in 5 seconds, redirect to home
+    // Timeout fallback - if nothing happens in 10 seconds, redirect to home
     const timeoutId = setTimeout(() => {
-      subscription.unsubscribe();
-      window.location.replace(buildUrl('/'));
-    }, 5000);
+      if (subscriptionCleanup) {
+        subscriptionCleanup();
+      } else {
+        subscription.unsubscribe();
+      }
+      if (!sessionEstablished) {
+        console.warn('[AuthCallback] Timeout reached, redirecting to home');
+        window.location.replace(buildUrl('/'));
+      }
+    }, 10000);
 
     // Helper function to handle redirect
     async function handleRedirect(nextUrl: string | null, type: AuthType, userId: string) {
+      // Small delay to ensure session is fully established
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Verify session is still valid
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        console.error('[AuthCallback] Session lost before redirect');
+        setError('Authentication session expired. Please try again.');
+        return;
+      }
+
+      // If nextUrl is explicitly provided, use it
       if (nextUrl) {
         const decodedNext = decodeURIComponent(nextUrl);
         const baseUrl = import.meta.env.BASE_URL || '/';
-        const redirectUrl = decodedNext.startsWith(baseUrl) ? decodedNext : buildUrl(decodedNext);
+        let redirectUrl = decodedNext.startsWith(baseUrl) ? decodedNext : buildUrl(decodedNext);
+        
+        // Prevent redirect loops - don't redirect to auth pages
+        if (redirectUrl.includes('/auth/')) {
+          redirectUrl = buildUrl('/');
+        }
+        
+        console.log('[AuthCallback] Redirecting to nextUrl:', redirectUrl);
         window.location.replace(redirectUrl);
         return;
       }
@@ -100,7 +164,38 @@ export default function AuthCallback() {
         return;
       }
 
-      // Check user role for default redirect
+      // For magic link/signup, check for existing assessment or pending assessment
+      if (type === 'magiclink' || type === 'signup') {
+        try {
+          const { data: existingAssessment, error: assessmentError } = await supabase
+            .from('assessment_responses')
+            .select('id, assessment_type')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (!assessmentError && existingAssessment) {
+            const resultsUrl = buildUrl(`/practice/results?id=${existingAssessment.id}`);
+            console.log('[AuthCallback] Redirecting to results:', resultsUrl);
+            window.location.replace(resultsUrl);
+            return;
+          }
+
+          // No existing assessment - check localStorage for pending assessment type
+          const userDetails = getUserDetails();
+          if (userDetails.pendingAssessmentType) {
+            const assessmentUrl = buildUrl(`/practice/${userDetails.pendingAssessmentType}`);
+            console.log('[AuthCallback] Redirecting to assessment:', assessmentUrl);
+            window.location.replace(assessmentUrl);
+            return;
+          }
+        } catch (error) {
+          console.error('[AuthCallback] Error checking assessment:', error);
+        }
+      }
+
+      // Default redirect: Check user role for admin or home
       try {
         const { data: profile } = await supabase
           .from('user_profiles')
@@ -109,15 +204,22 @@ export default function AuthCallback() {
           .single();
 
         const redirectUrl = profile?.user_role === 'admin' ? buildUrl('admin') : buildUrl('/');
+        console.log('[AuthCallback] Redirecting to default:', redirectUrl);
         window.location.replace(redirectUrl);
       } catch {
-        window.location.replace(buildUrl('/'));
+        const redirectUrl = buildUrl('/');
+        console.log('[AuthCallback] Redirecting to home (fallback):', redirectUrl);
+        window.location.replace(redirectUrl);
       }
     }
 
     // Cleanup subscription and timeout on unmount
     return () => {
-      subscription.unsubscribe();
+      if (subscriptionCleanup) {
+        subscriptionCleanup();
+      } else {
+        subscription.unsubscribe();
+      }
       clearTimeout(timeoutId);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

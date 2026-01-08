@@ -75,25 +75,48 @@ export default function AuthStatusIndicator() {
 
   const handleSignOut = async () => {
     setIsSigningOut(true);
+    setIsOpen(false);
+    
     try {
-      // Clear localStorage
+      // Clear localStorage first
       clearUserDetails();
       clearAssessmentData();
+      
+      // Clear all localStorage to be sure
+      if (typeof window !== 'undefined') {
+        try {
+          // Get all keys
+          const keys = Object.keys(localStorage);
+          keys.forEach(key => {
+            if (key.startsWith('leap_') || key.startsWith('sb-')) {
+              localStorage.removeItem(key);
+            }
+          });
+        } catch (e) {
+          console.warn('Error clearing localStorage:', e);
+        }
+      }
+      
+      // Sign out from Supabase with timeout
+      const signOutPromise = supabaseClient.supabase.auth.signOut();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout')), 2000)
+      );
+      
+      try {
+        await Promise.race([signOutPromise, timeoutPromise]);
+      } catch (err) {
+        console.warn('Sign out timeout or error (proceeding anyway):', err);
+      }
 
-      // Sign out from Supabase
-      const { error } = await supabaseClient.supabase.auth.signOut();
-      if (error) throw error;
-
-      // Close dropdown
-      setIsOpen(false);
-
-      // Redirect to home page
+      // Force redirect with full page reload to clear all state
       const homeUrl = buildUrl('/');
       window.location.href = homeUrl;
     } catch (error) {
       console.error('Sign out error:', error);
-      alert('Failed to sign out. Please try again.');
-      setIsSigningOut(false);
+      // Force redirect even on error
+      const homeUrl = buildUrl('/');
+      window.location.href = homeUrl;
     }
   };
 
