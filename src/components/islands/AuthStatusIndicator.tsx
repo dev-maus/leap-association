@@ -103,18 +103,15 @@ export default function AuthStatusIndicator() {
     window.location.href = magicLinkUrl;
   };
 
-  if (isLoading) {
-    return null; // Don't show anything while loading
-  }
-
+  // Always show the icon, even while loading
   return (
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center justify-center w-10 h-10 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors"
-        aria-label={isAuthenticated ? 'User menu' : 'Sign in'}
+        aria-label={isLoading ? 'Loading...' : (isAuthenticated ? 'User menu' : 'Sign in')}
       >
-        <User className="w-5 h-5" />
+        <User className={`w-5 h-5 ${isLoading ? 'opacity-50' : ''}`} />
       </button>
 
       {isOpen && (
@@ -123,7 +120,7 @@ export default function AuthStatusIndicator() {
             <>
               <div className="px-4 py-3 border-b border-slate-200">
                 <p className="text-xs text-slate-500 mb-1">Signed in as</p>
-                <p className="text-sm font-medium text-slate-900 truncate">{userEmail}</p>
+                <p className="text-sm font-medium text-slate-900 truncate">{userEmail || 'User'}</p>
               </div>
               <button
                 onClick={handleSignOut}

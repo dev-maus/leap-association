@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabaseClient } from '../../lib/supabase';
 import { getUserDetails } from '../../lib/userStorage';
+import { saveAssessmentData } from '../../lib/assessmentStorage';
 import jsPDF from 'jspdf';
 import { Download, Loader2, Calendar } from 'lucide-react';
 
@@ -119,6 +120,14 @@ export default function AssessmentResults({ schedulingConfig }: AssessmentResult
 
         if (!foundResponse) {
           throw new Error('Assessment response is null or undefined');
+        }
+
+        // Check if user is authenticated and if this assessment belongs to them
+        const { data: { session } } = await supabaseClient.supabase.auth.getSession();
+        if (session?.user && foundResponse.user_id === session.user.id) {
+          // Assessment belongs to the authenticated user, save it to localStorage
+          console.log('[AssessmentResults] Assessment belongs to user, saving to localStorage');
+          saveAssessmentData({ responseId: foundResponse.id });
         }
 
         console.log('[AssessmentResults] Setting response and clearing loading state');

@@ -81,19 +81,30 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
           // Sync user details from Supabase to localStorage
           await syncUserDetailsFromSupabase();
 
-          // If authenticated, skip the contact form
+          // If authenticated, always skip the contact form
           const syncedDetails = getUserDetails();
-          if (syncedDetails.full_name && syncedDetails.email) {
+          // Pre-populate contact data if available, but always skip form when authenticated
+          if (syncedDetails.full_name || syncedDetails.email) {
             setContactData({
-              full_name: syncedDetails.full_name,
-              email: syncedDetails.email,
+              full_name: syncedDetails.full_name || '',
+              email: syncedDetails.email || session.user.email || '',
               company: syncedDetails.company || '',
               role: syncedDetails.role || '',
               phone: syncedDetails.phone || '',
             });
-            setHasStoredUserDetails(true);
-            setContactFormCompleted(true);
+          } else if (session.user.email) {
+            // Fallback to email from session if no stored details
+            setContactData({
+              full_name: session.user.user_metadata?.full_name || '',
+              email: session.user.email,
+              company: session.user.user_metadata?.company || '',
+              role: session.user.user_metadata?.role || '',
+              phone: '',
+            });
           }
+          // Always skip form when authenticated
+          setHasStoredUserDetails(true);
+          setContactFormCompleted(true);
 
           // Check if user already has an assessment
           const { data: existingAssessment, error: assessmentError } = await supabaseClient.supabase
@@ -106,6 +117,9 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
             .single();
 
           if (!assessmentError && existingAssessment) {
+            // Save assessment ID to localStorage since it belongs to this user
+            saveAssessmentData({ responseId: existingAssessment.id });
+            
             // User already has an assessment, redirect to results
             const resultsUrl = buildUrl(`/practice/results?id=${existingAssessment.id}`);
             window.location.href = resultsUrl;
@@ -150,9 +164,11 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
 
   // Show contact form if:
   // - We're on the first step (currentIndex === 0) AND
+  // - User is NOT authenticated AND
   // - Contact form has not been completed this session AND
   // - Either: no stored user details OR captcha is enabled (captcha must be re-verified every time)
-  const needsContactInfo = currentIndex === 0 && !contactFormCompleted && (!hasStoredUserDetails || captchaConfig?.enabled);
+  // Note: If user is authenticated, always skip the form (they've already provided their info)
+  const needsContactInfo = currentIndex === 0 && !isAuthenticated && !contactFormCompleted && (!hasStoredUserDetails || captchaConfig?.enabled);
   
   // Track previous needsContactInfo to detect transition
   const prevNeedsContactInfoRef = useRef(needsContactInfo);
