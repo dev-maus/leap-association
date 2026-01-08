@@ -81,6 +81,20 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
           // Sync user details from Supabase to localStorage
           await syncUserDetailsFromSupabase();
 
+          // If authenticated, skip the contact form
+          const syncedDetails = getUserDetails();
+          if (syncedDetails.full_name && syncedDetails.email) {
+            setContactData({
+              full_name: syncedDetails.full_name,
+              email: syncedDetails.email,
+              company: syncedDetails.company || '',
+              role: syncedDetails.role || '',
+              phone: syncedDetails.phone || '',
+            });
+            setHasStoredUserDetails(true);
+            setContactFormCompleted(true);
+          }
+
           // Check if user already has an assessment
           const { data: existingAssessment, error: assessmentError } = await supabaseClient.supabase
             .from('assessment_responses')
