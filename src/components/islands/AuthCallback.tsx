@@ -38,8 +38,6 @@ export default function AuthCallback() {
 
     // Use onAuthStateChange - Supabase will automatically process hash tokens with detectSessionInUrl: true
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('[AuthCallback] onAuthStateChange event:', event, 'hasSession:', !!session);
-      
       if (hasRedirected) return;
       
       // Handle successful authentication
@@ -72,7 +70,6 @@ export default function AuthCallback() {
       if (hasRedirected) return;
       
       const { data: { session } } = await supabase.auth.getSession();
-      console.log('[AuthCallback] Direct session check:', { hasSession: !!session });
       
       if (session?.user && !hasRedirected) {
         hasRedirected = true;
@@ -131,7 +128,6 @@ export default function AuthCallback() {
           ? `${window.location.origin}${redirectPath}`
           : redirectPath;
         
-        console.log('[AuthCallback] Redirecting to nextUrl:', redirectUrl);
         // Use window.location.href for more reliable navigation (works better with SPAs)
         window.location.href = redirectUrl;
         return;
@@ -159,7 +155,6 @@ export default function AuthCallback() {
             const resultsUrl = typeof window !== 'undefined' 
               ? `${window.location.origin}${resultsPath}`
               : resultsPath;
-            console.log('[AuthCallback] Redirecting to results:', resultsUrl);
             // Use window.location.href for more reliable navigation (works better with SPAs)
             window.location.href = resultsUrl;
             return;
@@ -172,7 +167,6 @@ export default function AuthCallback() {
             const assessmentUrl = typeof window !== 'undefined' 
               ? `${window.location.origin}${assessmentPath}`
               : assessmentPath;
-            console.log('[AuthCallback] Redirecting to assessment:', assessmentUrl);
             // Use window.location.href for more reliable navigation (works better with SPAs)
             window.location.href = assessmentUrl;
             return;
@@ -194,7 +188,6 @@ export default function AuthCallback() {
         const redirectUrl = typeof window !== 'undefined' 
           ? `${window.location.origin}${redirectPath}`
           : redirectPath;
-        console.log('[AuthCallback] Redirecting to default:', redirectUrl);
         // Use window.location.href for more reliable navigation (works better with SPAs)
         window.location.href = redirectUrl;
       } catch {
@@ -202,7 +195,6 @@ export default function AuthCallback() {
         const redirectUrl = typeof window !== 'undefined' 
           ? `${window.location.origin}${redirectPath}`
           : redirectPath;
-        console.log('[AuthCallback] Redirecting to home (fallback):', redirectUrl);
         // Use window.location.href for more reliable navigation (works better with SPAs)
         window.location.href = redirectUrl;
       }

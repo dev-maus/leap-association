@@ -122,14 +122,12 @@ export default function AdminDashboard() {
   const debouncedAssessmentsSearch = useDebounce(assessmentsSearch, 300);
 
   useEffect(() => {
-    console.log('[AdminDashboard] useEffect started');
     let didAuthenticate = false;
     let isUnmounted = false;
     
     const handleAuth = (userId: string) => {
       if (didAuthenticate || isUnmounted) return;
       didAuthenticate = true;
-      console.log('[AdminDashboard] Authenticated:', userId);
       setCurrentUserId(userId);
       setIsAuthenticated(true);
       setIsLoading(false);
@@ -137,14 +135,11 @@ export default function AdminDashboard() {
 
     const redirectToLogin = () => {
       if (isUnmounted || didAuthenticate) return;
-      console.log('[AdminDashboard] Redirecting to login');
       window.location.href = `${buildUrl('auth/login')}?returnUrl=${buildUrl('admin')}`;
     };
 
     // Subscribe to auth changes first
     const { data: { subscription } } = supabaseClient.supabase.auth.onAuthStateChange((event, session) => {
-      console.log('[AdminDashboard] onAuthStateChange:', event, 'session:', !!session, 'user:', session?.user?.id);
-      
       if (isUnmounted) return;
       
       if (event === 'SIGNED_OUT') {
@@ -168,7 +163,6 @@ export default function AdminDashboard() {
           if (stored) {
             const parsed = JSON.parse(stored);
             if (parsed?.user?.id) {
-              console.log('[AdminDashboard] Found session in localStorage:', parsed.user.id);
               handleAuth(parsed.user.id);
               return true;
             }
@@ -186,7 +180,6 @@ export default function AdminDashboard() {
     // Fallback: if no stored session and not authenticated after 3 seconds, redirect
     const fallbackTimeout = setTimeout(() => {
       if (!didAuthenticate && !isUnmounted) {
-        console.log('[AdminDashboard] Fallback timeout - no auth');
         redirectToLogin();
       }
     }, 3000);
@@ -203,7 +196,6 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (isAuthenticated && !initialLoadDone.current) {
       initialLoadDone.current = true;
-      console.log('[AdminDashboard] Initial load - loading both users and assessments');
       // Small delay to let Supabase fully initialize after auth
       const timeoutId = setTimeout(() => {
         // Load both in parallel
@@ -217,7 +209,6 @@ export default function AdminDashboard() {
   // Load data when tab, page, or search changes (after initial load)
   useEffect(() => {
     if (isAuthenticated && initialLoadDone.current) {
-      console.log('[AdminDashboard] Loading data for tab:', activeTab);
       if (activeTab === 'users') {
         loadUsers(usersPage, debouncedUsersSearch);
       } else if (activeTab === 'assessments') {
@@ -236,7 +227,6 @@ export default function AdminDashboard() {
   }, [debouncedAssessmentsSearch]);
 
   const loadUsers = async (page: number, search: string, retryCount = 0) => {
-    console.log('[AdminDashboard] loadUsers called, retry:', retryCount);
     setIsLoadingData(true);
     
     // Create abort controller for timeout
@@ -261,7 +251,6 @@ export default function AdminDashboard() {
         .range(from, to);
 
       clearTimeout(timeoutId);
-      console.log('[AdminDashboard] loadUsers result:', { count, error: error?.message });
 
       if (error) throw error;
 
@@ -272,7 +261,6 @@ export default function AdminDashboard() {
       console.error('[AdminDashboard] Failed to load users:', error?.message || error?.name);
       // Retry on error or abort
       if (retryCount < 2) {
-        console.log('[AdminDashboard] Retrying loadUsers...');
         setTimeout(() => loadUsers(page, search, retryCount + 1), 300);
         return;
       }
@@ -297,7 +285,6 @@ export default function AdminDashboard() {
   };
 
   const loadAssessments = async (page: number, search: string, retryCount = 0) => {
-    console.log('[AdminDashboard] loadAssessments called, retry:', retryCount);
     setIsLoadingData(true);
     
     // Create abort controller for timeout
@@ -389,7 +376,6 @@ export default function AdminDashboard() {
       console.error('[AdminDashboard] Failed to load assessments:', error?.message || error?.name);
       // Retry on error or abort
       if (retryCount < 2) {
-        console.log('[AdminDashboard] Retrying loadAssessments...');
         setTimeout(() => loadAssessments(page, search, retryCount + 1), 300);
         return;
       }

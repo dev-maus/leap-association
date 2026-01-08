@@ -507,7 +507,6 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
   };
 
   const handleSubmit = async () => {
-    console.log('handleSubmit called, userId:', userId);
     setIsSubmitting(true);
     setErrorMessage(null);
 
@@ -515,7 +514,6 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
       // Check localStorage to prevent duplicate submissions from same device
       const assessmentData = getAssessmentData();
       if (assessmentData.submittedEmail) {
-        console.log('Assessment already submitted with email:', assessmentData.submittedEmail);
         setAlreadySubmitted(true);
         setSubmittedEmail(assessmentData.submittedEmail);
         return;
@@ -539,7 +537,6 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
       }
 
       const { leapScores, habitScore, abilityScore, talentScore, skillScore } = calculateScores();
-      console.log('Calculated scores:', { leapScores, habitScore, abilityScore, talentScore, skillScore });
 
       const answersArray = Object.entries(answers).map(([questionId, answer]) => {
         const question = questions.find((q) => q._id === questionId);
@@ -550,14 +547,12 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
           question_text: question?.text,
         };
       });
-      console.log('Answers array length:', answersArray.length);
 
       let response;
 
       // For first-time users or when captcha is enabled, use Edge Function
       // Edge Function will handle user creation for first-time users
       if (isNewUser || (captchaConfig?.enabled && captchaToken)) {
-        console.log('Submitting via Edge Function', isNewUser ? '(first-time user)' : '(with captcha)');
         response = await supabaseClient.submitAssessmentWithCaptcha({
           contactData: {
             ...contactData,
@@ -573,13 +568,11 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
           answers: answersArray,
           captchaToken: captchaToken || '', // Optional - Edge Function will skip verification if empty
         });
-        console.log('Edge Function response:', response);
       } else {
         // Direct insert (authenticated user, no captcha)
         if (!userId) {
           throw new Error('User ID is required for direct submission');
         }
-        console.log('Creating assessment response with userId:', userId);
         response = await supabaseClient.entities.AssessmentResponse.create({
           user_id: userId,
           assessment_type: type,
@@ -590,7 +583,6 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
           skill_score: skillScore,
           answers: answersArray,
         });
-        console.log('Assessment response created:', response);
       }
 
       // Verify response has an ID
@@ -622,7 +614,6 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
       const resultsUrl = typeof window !== 'undefined' 
         ? `${window.location.origin}${resultsPath}`
         : resultsPath;
-      console.log('Redirecting to:', resultsUrl);
       window.location.href = resultsUrl;
     } catch (error: any) {
       console.error('Failed to submit assessment:', error);

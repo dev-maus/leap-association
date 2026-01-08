@@ -30,7 +30,6 @@ export default function AssessmentResults({ schedulingConfig }: AssessmentResult
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const id = params.get('id');
-    console.log('[AssessmentResults] Component mounted, responseId from URL:', id);
     setResponseId(id);
   }, []); // Run once on mount - component remounts on page refresh
 
@@ -39,7 +38,6 @@ export default function AssessmentResults({ schedulingConfig }: AssessmentResult
     const handlePopState = () => {
       const params = new URLSearchParams(window.location.search);
       const id = params.get('id');
-      console.log('[AssessmentResults] PopState event, new responseId:', id);
       setResponseId(id);
     };
 
@@ -52,12 +50,6 @@ export default function AssessmentResults({ schedulingConfig }: AssessmentResult
     const params = new URLSearchParams(window.location.search);
     const urlResponseId = params.get('id');
     const currentResponseId = responseId || urlResponseId;
-
-    console.log('[AssessmentResults] useEffect triggered', {
-      responseIdFromState: responseId,
-      responseIdFromURL: urlResponseId,
-      usingResponseId: currentResponseId
-    });
 
     if (!currentResponseId) {
       console.error('[AssessmentResults] No assessment ID provided in URL or state');
@@ -72,8 +64,6 @@ export default function AssessmentResults({ schedulingConfig }: AssessmentResult
     setResponse(null);
 
     const loadResults = async () => {
-      console.log('[AssessmentResults] loadResults called for ID:', currentResponseId);
-      
       const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || '';
       const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || '';
       
@@ -85,7 +75,6 @@ export default function AssessmentResults({ schedulingConfig }: AssessmentResult
       }
       
       const functionUrl = `${supabaseUrl}/functions/v1/get-assessment-results`;
-      console.log('[AssessmentResults] Calling Edge Function:', functionUrl, 'with responseId:', currentResponseId);
       
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
@@ -94,7 +83,6 @@ export default function AssessmentResults({ schedulingConfig }: AssessmentResult
       }, 10000); // 10 second timeout
       
       try {
-        console.log('[AssessmentResults] Starting fetch request...');
         const response = await fetch(functionUrl, {
           method: 'POST',
           headers: {
@@ -107,7 +95,6 @@ export default function AssessmentResults({ schedulingConfig }: AssessmentResult
         });
 
         clearTimeout(timeoutId);
-        console.log('[AssessmentResults] Fetch response received, status:', response.status);
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
@@ -116,7 +103,6 @@ export default function AssessmentResults({ schedulingConfig }: AssessmentResult
         }
 
         const foundResponse = await response.json();
-        console.log('[AssessmentResults] Successfully fetched response:', foundResponse?.id);
 
         if (!foundResponse) {
           throw new Error('Assessment response is null or undefined');
@@ -126,11 +112,9 @@ export default function AssessmentResults({ schedulingConfig }: AssessmentResult
         const { data: { session } } = await supabaseClient.supabase.auth.getSession();
         if (session?.user && foundResponse.user_id === session.user.id) {
           // Assessment belongs to the authenticated user, save it to localStorage
-          console.log('[AssessmentResults] Assessment belongs to user, saving to localStorage');
           saveAssessmentData({ responseId: foundResponse.id });
         }
 
-        console.log('[AssessmentResults] Setting response and clearing loading state');
         setResponse(foundResponse);
 
         // Get user details from localStorage
@@ -157,7 +141,6 @@ export default function AssessmentResults({ schedulingConfig }: AssessmentResult
           }
         }
       } finally {
-        console.log('[AssessmentResults] Finally block - setting isLoading to false');
         setIsLoading(false);
       }
     };

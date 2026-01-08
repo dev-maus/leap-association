@@ -18,8 +18,6 @@ export default function AuthStatusIndicator() {
 
     // Listen for auth state changes FIRST - this will fire INITIAL_SESSION if session exists
     const { data: { subscription } } = supabaseClient.supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('[AuthStatusIndicator] onAuthStateChange:', event, 'hasSession:', !!session, 'userEmail:', session?.user?.email);
-      
       if (!mounted) return;
       
       if (session?.user) {
@@ -45,7 +43,6 @@ export default function AuthStatusIndicator() {
         await new Promise(resolve => setTimeout(resolve, 100));
         
         const { data: { session }, error: sessionError } = await supabaseClient.supabase.auth.getSession();
-        console.log('[AuthStatusIndicator] Direct getSession check:', { hasSession: !!session, error: sessionError, userEmail: session?.user?.email });
         
         if (mounted) {
           if (session?.user) {
