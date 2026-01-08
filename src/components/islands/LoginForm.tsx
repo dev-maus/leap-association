@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabaseClient } from '../../lib/supabase';
 import { buildUrl } from '../../lib/utils';
 import { Mail, Lock, Loader2, Sparkles } from 'lucide-react';
