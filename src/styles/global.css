@@ -80,6 +80,7 @@ section[id] {
   transition: opacity 0.6s ease, transform 0.6s ease;
 }
 
+
 /* Gradient text */
 .gradient-text {
   background: linear-gradient(135deg, #D97706 0%, #F59E0B 100%);
@@ -88,3 +89,10 @@ section[id] {
   background-clip: text;
 }
 
+
+/* Hero image soft edges */
+.hero-image-wrapper img {
+  display: block;
+  mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(0, 0, 0, 1) 60%, rgba(0, 0, 0, 0) 100%);
+  -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(0, 0, 0, 1) 60%, rgba(0, 0, 0, 0) 100%);
+}

@@ -18,7 +18,7 @@ const heroData = await sanity.fetch(`*[_type == "hero" && page == "home"][0]{
   <div class="absolute bottom-20 left-20 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
 
   <!-- Two Column Layout -->
-  <div class="relative z-10 w-full min-h-screen flex">
+  <div class="relative z-10 w-full min-h-screen flex overflow-hidden">
     <!-- Left Column - Text Content -->
     <div class="w-full lg:w-1/2 flex items-center px-6 lg:px-12 xl:px-20 py-20 lg:py-32 relative z-20">
       <div class="max-w-xl lg:max-w-none">
@@ -41,13 +41,17 @@ const heroData = await sanity.fetch(`*[_type == "hero" && page == "home"][0]{
     </div>
 
     <!-- Right Column - Image -->
-    <div class="hidden lg:flex w-1/2 items-center justify-center relative z-10">
+    <div class="hidden lg:flex w-1/2 items-center justify-center relative z-10 overflow-hidden">
       {heroData?.image ? (
-        <img
-          src={urlFor(heroData.image)?.width(800).height(1000).url()}
-          alt="Leadership Coach"
-          class="h-full w-auto max-w-none object-contain"
-        />
+        <div class="relative h-full w-full flex items-center justify-end pr-8">
+          <div class="relative z-10 hero-image-wrapper">
+            <img
+              src={urlFor(heroData.image)?.width(600).height(800).url()}
+              alt="Leadership Coach"
+              class="h-[85%] w-auto object-contain"
+            />
+          </div>
+        </div>
       ) : (
         <div class="w-full h-full bg-white/5 rounded-lg" />
       )}
