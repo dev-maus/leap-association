@@ -2,7 +2,7 @@
 import { sanity } from '../../lib/sanity';
 import { urlFor } from '../../lib/sanity';
 
-const leapItems = await sanity.fetch(`*[_type == "leapFramework"] | order(letter asc)`).catch(() => []);
+const leapItems = await sanity.fetch(`*[_type == "leapFramework"] | order(order asc)`).catch(() => []);
 
 // Default LEAP items if none in Sanity
 const defaultItems = [
@@ -60,15 +60,14 @@ const displayItems = leapItems.length > 0 ? leapItems : defaultItems;
         <div class="bg-white rounded-2xl overflow-hidden h-full shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100 hover:border-slate-200 hover:-translate-y-1">
           <!-- Image Card -->
           <div class={`w-full aspect-[4/3] bg-gradient-to-br ${item.color || 'from-primary to-primary-dark'} flex items-center justify-center relative overflow-hidden`}>
-            {item.image ? (
+            {item.image && (
               <img
                 src={urlFor(item.image)?.width(400).height(300).url()}
                 alt={item.title}
-                class="w-full h-full object-cover"
+                class="w-full h-full object-cover absolute inset-0 z-0 opacity-60"
               />
-            ) : (
-              <span class="text-6xl font-bold text-white/80">{item.letter}</span>
             )}
+            <span class="text-6xl font-bold text-white drop-shadow-lg relative z-10">{item.letter || item.title?.[0] || '?'}</span>
           </div>
 
           <!-- Content -->
