@@ -88,28 +88,50 @@ export default function AssessmentResults({ schedulingConfig }: AssessmentResult
         apikey: supabaseAnonKey,
       };
       
-      // Only add Authorization header if user has a valid, non-empty access token
-      // This prevents Supabase gateway from rejecting requests with invalid/empty JWTs
-      // Use a timeout to prevent hanging after magic link redirects
-      try {
-        const sessionPromise = supabaseClient.supabase.auth.getSession();
-        const timeoutPromise = new Promise<{ data: { session: null } }>((resolve) => 
-          setTimeout(() => resolve({ data: { session: null } }), 2000)
-        );
+      // Wait for Supabase auth to be ready (important after magic link redirects)
+      // This gives Supabase time to process the auth token from localStorage
+      const getAuthToken = async (): Promise<string | null> => {
+        // First, try immediate session check
+        try {
+          const { data: { session } } = await supabaseClient.supabase.auth.getSession();
+          if (session?.access_token) {
+            const isExpired = session.expires_at ? (session.expires_at * 1000) < Date.now() : false;
+            if (!isExpired) {
+              return session.access_token;
+            }
+          }
+        } catch {
+          // Ignore and try waiting for auth state
+        }
         
-        // Race between session retrieval and timeout
-        const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]);
-        const authToken = session?.access_token;
+        // If no session, wait for auth state change (handles magic link redirects)
+        return new Promise<string | null>((resolve) => {
+          const timeoutId = setTimeout(() => {
+            subscription.unsubscribe();
+            resolve(null);
+          }, 5000); // 5 second max wait
+          
+          const { data: { subscription } } = supabaseClient.supabase.auth.onAuthStateChange((event, session) => {
+            if (session?.access_token) {
+              clearTimeout(timeoutId);
+              subscription.unsubscribe();
+              const isExpired = session.expires_at ? (session.expires_at * 1000) < Date.now() : false;
+              resolve(isExpired ? null : session.access_token);
+            } else if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+              clearTimeout(timeoutId);
+              subscription.unsubscribe();
+              resolve(null);
+            }
+          });
+        });
+      };
+      
+      try {
+        const authToken = await getAuthToken();
         
         // Validate token is a non-empty string before including it
         if (authToken && typeof authToken === 'string' && authToken.trim().length > 20) {
-          // Additionally verify the session is not expired
-          const expiresAt = session?.expires_at;
-          const isExpired = expiresAt ? (expiresAt * 1000) < Date.now() : false;
-          
-          if (!isExpired) {
-            headers.Authorization = `Bearer ${authToken}`;
-          }
+          headers.Authorization = `Bearer ${authToken}`;
         }
       } catch (authError) {
         // If we can't get the session, proceed without auth header
