@@ -29,25 +29,27 @@ export default function AssessmentResults({ schedulingConfig }: AssessmentResult
     let isMounted = true;
     const controller = new AbortController();
     
+    // Set a timeout for the fetch request (15 seconds)
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, 15000);
+    
     // Get ID from URL
     const params = new URLSearchParams(window.location.search);
     const currentResponseId = params.get('id');
 
     if (!currentResponseId) {
-      console.error('[AssessmentResults] No assessment ID in URL');
       setError('No assessment ID provided');
       setIsLoading(false);
+      clearTimeout(timeoutId);
       return;
     }
-
-    console.log('[AssessmentResults] Loading results for ID:', currentResponseId);
 
     const loadResults = async () => {
       const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || '';
       const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || '';
       
       if (!supabaseUrl || !supabaseAnonKey) {
-        console.error('[AssessmentResults] Supabase config missing');
         if (isMounted) {
           setError('Configuration error. Please contact support.');
           setIsLoading(false);
@@ -56,7 +58,6 @@ export default function AssessmentResults({ schedulingConfig }: AssessmentResult
       }
       
       const functionUrl = `${supabaseUrl}/functions/v1/get-assessment-results`;
-      console.log('[AssessmentResults] Function URL:', functionUrl);
       
       // Build headers
       const headers: Record<string, string> = {
@@ -64,20 +65,25 @@ export default function AssessmentResults({ schedulingConfig }: AssessmentResult
         apikey: supabaseAnonKey,
       };
       
-      // Try to get auth token (single attempt, no retries)
+      // Try to get auth token (with timeout)
       try {
-        const { data: { session } } = await supabaseClient.supabase.auth.getSession();
-        if (session?.access_token && session.expires_at && (session.expires_at * 1000) > Date.now()) {
-          headers.Authorization = `Bearer ${session.access_token}`;
-          console.log('[AssessmentResults] Added auth token');
+        const sessionPromise = supabaseClient.supabase.auth.getSession();
+        const timeoutPromise = new Promise<null>((_, reject) => 
+          setTimeout(() => reject(new Error('Session check timeout')), 3000)
+        );
+        
+        const result = await Promise.race([sessionPromise, timeoutPromise]);
+        if (result && 'data' in result) {
+          const session = result.data.session;
+          if (session?.access_token && session.expires_at && (session.expires_at * 1000) > Date.now()) {
+            headers.Authorization = `Bearer ${session.access_token}`;
+          }
         }
-      } catch (e) {
-        console.warn('[AssessmentResults] Could not get session:', e);
+      } catch {
+        // Continue without auth token - Edge Function allows public access
       }
       
       try {
-        console.log('[AssessmentResults] Making fetch request...');
-        
         const response = await fetch(functionUrl, {
           method: 'POST',
           headers,
@@ -85,30 +91,25 @@ export default function AssessmentResults({ schedulingConfig }: AssessmentResult
           signal: controller.signal,
         });
 
-        console.log('[AssessmentResults] Response status:', response.status);
-
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-          console.error('[AssessmentResults] Error response:', errorData);
           throw new Error(errorData.error || `Failed to fetch (${response.status})`);
         }
 
         const foundResponse = await response.json();
-        console.log('[AssessmentResults] Got response data');
 
         if (!isMounted) return;
 
         setResponse(foundResponse);
         
-        // Save to localStorage if user owns assessment
-        try {
-          const { data: { session } } = await supabaseClient.supabase.auth.getSession();
+        // Save to localStorage if user owns assessment (non-blocking)
+        supabaseClient.supabase.auth.getSession().then(({ data: { session } }) => {
           if (session?.user && foundResponse.user_id === session.user.id) {
             saveAssessmentData({ responseId: foundResponse.id });
           }
-        } catch {
+        }).catch(() => {
           // Ignore - we already have the results
-        }
+        });
 
         // Get user details from localStorage
         const storedUserDetails = getUserDetails();
@@ -116,8 +117,6 @@ export default function AssessmentResults({ schedulingConfig }: AssessmentResult
           setUserDetails(storedUserDetails);
         }
       } catch (fetchError: any) {
-        console.error('[AssessmentResults] Fetch error:', fetchError);
-        
         if (!isMounted) return;
         
         if (fetchError.name === 'AbortError') {
@@ -137,6 +136,7 @@ export default function AssessmentResults({ schedulingConfig }: AssessmentResult
     // Cleanup function
     return () => {
       isMounted = false;
+      clearTimeout(timeoutId);
       controller.abort();
     };
   }, []); // Run once on mount

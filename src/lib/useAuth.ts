@@ -26,55 +26,68 @@ export function useAuth(): UseAuthReturn {
 
   useEffect(() => {
     let mounted = true;
+    let hasResolved = false;
 
+    const resolveAuthState = (isAuthenticated: boolean, userEmail: string | null) => {
+      if (!mounted || hasResolved) return;
+      hasResolved = true;
+      setState(prev => ({
+        ...prev,
+        isAuthenticated,
+        userEmail,
+        isLoading: false,
+      }));
+    };
+
+    // Set up auth state change listener
     const { data: { subscription } } = supabaseClient.supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
       
       if (session?.user) {
-        setState(prev => ({
-          ...prev,
-          isAuthenticated: true,
-          userEmail: session.user.email || null,
-          isLoading: false,
-        }));
+        resolveAuthState(true, session.user.email || null);
+        // Sync user details in background (don't block)
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
-          await syncUserDetailsFromSupabase();
+          syncUserDetailsFromSupabase().catch(() => {});
         }
       } else {
-        setState(prev => ({
-          ...prev,
-          isAuthenticated: false,
-          userEmail: null,
-          isLoading: false,
-        }));
+        resolveAuthState(false, null);
       }
     });
 
+    // Also check session directly as a fallback
     const checkAuth = async () => {
       try {
-        await new Promise(resolve => setTimeout(resolve, 100));
-        const { data: { session } } = await supabaseClient.supabase.auth.getSession();
+        // Small delay to let onAuthStateChange potentially fire first
+        await new Promise(resolve => setTimeout(resolve, 50));
         
-        if (mounted) {
-          setState(prev => ({
-            ...prev,
-            isAuthenticated: !!session?.user,
-            userEmail: session?.user?.email || null,
-            isLoading: false,
-          }));
+        if (hasResolved) return; // Already resolved by onAuthStateChange
+        
+        const { data, error } = await supabaseClient.supabase.auth.getSession();
+        
+        if (error) {
+          resolveAuthState(false, null);
+          return;
         }
-      } catch (error) {
-        console.error('[useAuth] Auth check error:', error);
-        if (mounted) {
-          setState(prev => ({ ...prev, isLoading: false }));
-        }
+        
+        const session = data?.session;
+        resolveAuthState(!!session?.user, session?.user?.email || null);
+      } catch {
+        resolveAuthState(false, null);
       }
     };
 
     checkAuth();
 
+    // Timeout fallback - ensure we never stay in loading state forever
+    const timeoutId = setTimeout(() => {
+      if (!hasResolved && mounted) {
+        resolveAuthState(false, null);
+      }
+    }, 5000);
+
     return () => {
       mounted = false;
+      clearTimeout(timeoutId);
       subscription.unsubscribe();
     };
   }, []);
@@ -94,8 +107,8 @@ export function useAuth(): UseAuthReturn {
               localStorage.removeItem(key);
             }
           });
-        } catch (e) {
-          console.warn('Error clearing localStorage:', e);
+        } catch {
+          // Ignore localStorage errors
         }
       }
       
@@ -106,14 +119,13 @@ export function useAuth(): UseAuthReturn {
       
       try {
         await Promise.race([signOutPromise, timeoutPromise]);
-      } catch (err) {
-        console.warn('Sign out timeout or error (proceeding anyway):', err);
+      } catch {
+        // Proceed with redirect even if sign out fails
       }
 
       const homeUrl = buildUrl('/');
       window.location.href = homeUrl;
-    } catch (error) {
-      console.error('Sign out error:', error);
+    } catch {
       const homeUrl = buildUrl('/');
       window.location.href = homeUrl;
     }

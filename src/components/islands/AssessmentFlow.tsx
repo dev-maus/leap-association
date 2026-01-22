@@ -71,16 +71,31 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
 
   // Check authentication status and existing assessment
   useEffect(() => {
+    let isMounted = true;
+    
     const checkAuthAndAssessment = async () => {
       try {
-        const { data: { session } } = await supabaseClient.supabase.auth.getSession();
+        // Add timeout for auth check
+        const sessionPromise = supabaseClient.supabase.auth.getSession();
+        const timeoutPromise = new Promise<null>((_, reject) => 
+          setTimeout(() => reject(new Error('Auth check timeout')), 5000)
+        );
+        
+        const result = await Promise.race([sessionPromise, timeoutPromise]);
+        if (!result || !('data' in result)) {
+          throw new Error('Auth check failed');
+        }
+        
+        const session = result.data.session;
+        if (!isMounted) return;
+        
         if (session?.user) {
           setIsAuthenticated(true);
           setUserId(session.user.id);
           setUserEmail(session.user.email || null);
 
-          // Sync user details from Supabase to localStorage
-          await syncUserDetailsFromSupabase();
+          // Sync user details from Supabase to localStorage (non-blocking)
+          syncUserDetailsFromSupabase().catch(() => {});
 
           // If authenticated, always skip the contact form
           const syncedDetails = getUserDetails();
@@ -107,36 +122,67 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
           setHasStoredUserDetails(true);
           setContactFormCompleted(true);
 
-          // Check if user already has an assessment
-          const { data: existingAssessment, error: assessmentError } = await supabaseClient.supabase
-            .from('assessment_responses')
-            .select('id')
-            .eq('user_id', session.user.id)
-            .eq('assessment_type', type)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .single();
-
-          if (!assessmentError && existingAssessment) {
-            // Save assessment ID to localStorage since it belongs to this user
-            saveAssessmentData({ responseId: existingAssessment.id });
+          // Check if user already has an assessment (with timeout)
+          try {
+            const assessmentPromise = supabaseClient.supabase
+              .from('assessment_responses')
+              .select('id')
+              .eq('user_id', session.user.id)
+              .eq('assessment_type', type)
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .single();
             
-            // User already has an assessment, redirect to results
-            const resultsPath = buildUrl(`/practice/results?id=${existingAssessment.id}`);
-            const resultsUrl = typeof window !== 'undefined' 
-              ? `${window.location.origin}${resultsPath}`
-              : resultsPath;
-            window.location.href = resultsUrl;
-            return;
+            const assessmentTimeout = new Promise<null>((_, reject) => 
+              setTimeout(() => reject(new Error('Assessment check timeout')), 5000)
+            );
+            
+            const assessmentResult = await Promise.race([assessmentPromise, assessmentTimeout]);
+            
+            if (!isMounted) return;
+            
+            if (assessmentResult && 'data' in assessmentResult && !assessmentResult.error && assessmentResult.data) {
+              const existingAssessment = assessmentResult.data;
+              // Save assessment ID to localStorage since it belongs to this user
+              saveAssessmentData({ responseId: existingAssessment.id });
+              
+              // User already has an assessment, redirect to results
+              const resultsPath = buildUrl(`/practice/results?id=${existingAssessment.id}`);
+              const resultsUrl = typeof window !== 'undefined' 
+                ? `${window.location.origin}${resultsPath}`
+                : resultsPath;
+              window.location.href = resultsUrl;
+              return;
+            }
+          } catch (assessmentError) {
+            // No existing assessment or timeout - continue to show assessment form
+            console.log('No existing assessment found or check timed out');
           }
         }
       } catch (error) {
         console.error('Auth check error:', error);
+        // On error, allow user to proceed as unauthenticated
       } finally {
-        setIsCheckingAssessment(false);
+        if (isMounted) {
+          setIsCheckingAssessment(false);
+        }
       }
     };
+    
     checkAuthAndAssessment();
+    
+    // Fallback timeout - never stay in loading state forever
+    const fallbackTimeout = setTimeout(() => {
+      if (isMounted) {
+        console.warn('Assessment check fallback timeout reached');
+        setIsCheckingAssessment(false);
+      }
+    }, 8000);
+    
+    return () => {
+      isMounted = false;
+      clearTimeout(fallbackTimeout);
+    };
   }, [type]);
 
   // Countdown timer for rate limit
