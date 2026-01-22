@@ -24,121 +24,60 @@ export default function AssessmentResults({ schedulingConfig }: AssessmentResult
   const [userDetails, setUserDetails] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [responseId, setResponseId] = useState<string | null>(null);
 
-  // Extract responseId from URL on mount and track it
   useEffect(() => {
+    let isMounted = true;
+    const controller = new AbortController();
+    
+    // Get ID from URL
     const params = new URLSearchParams(window.location.search);
-    const id = params.get('id');
-    setResponseId(id);
-  }, []); // Run once on mount - component remounts on page refresh
-
-  // Listen for URL changes (e.g., browser back/forward)
-  useEffect(() => {
-    const handlePopState = () => {
-      const params = new URLSearchParams(window.location.search);
-      const id = params.get('id');
-      setResponseId(id);
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
-
-  useEffect(() => {
-    // Always check URL directly as fallback in case state is stale (e.g., on refresh)
-    const params = new URLSearchParams(window.location.search);
-    const urlResponseId = params.get('id');
-    const currentResponseId = responseId || urlResponseId;
+    const currentResponseId = params.get('id');
 
     if (!currentResponseId) {
-      console.error('[AssessmentResults] No assessment ID provided in URL or state');
+      console.error('[AssessmentResults] No assessment ID in URL');
       setError('No assessment ID provided');
       setIsLoading(false);
       return;
     }
 
-    // Reset state when responseId changes
-    setIsLoading(true);
-    setError(null);
-    setResponse(null);
+    console.log('[AssessmentResults] Loading results for ID:', currentResponseId);
 
     const loadResults = async () => {
       const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || '';
       const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || '';
       
       if (!supabaseUrl || !supabaseAnonKey) {
-        console.error('[AssessmentResults] Supabase configuration missing');
-        setError('Configuration error. Please contact support.');
-        setIsLoading(false);
+        console.error('[AssessmentResults] Supabase config missing');
+        if (isMounted) {
+          setError('Configuration error. Please contact support.');
+          setIsLoading(false);
+        }
         return;
       }
       
       const functionUrl = `${supabaseUrl}/functions/v1/get-assessment-results`;
+      console.log('[AssessmentResults] Function URL:', functionUrl);
       
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => {
-        console.warn('[AssessmentResults] Request timeout triggered, aborting...');
-        controller.abort();
-      }, 10000); // 10 second timeout
-      
-      // Build headers - start without Authorization
+      // Build headers
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
         apikey: supabaseAnonKey,
       };
       
-      // Wait for Supabase auth to be ready (important after magic link redirects)
-      // This gives Supabase time to process the auth token from localStorage
-      const getAuthToken = async (): Promise<string | null> => {
-        // First, try immediate session check
-        try {
-          const { data: { session } } = await supabaseClient.supabase.auth.getSession();
-          if (session?.access_token) {
-            const isExpired = session.expires_at ? (session.expires_at * 1000) < Date.now() : false;
-            if (!isExpired) {
-              return session.access_token;
-            }
-          }
-        } catch {
-          // Ignore and try waiting for auth state
-        }
-        
-        // If no session, wait for auth state change (handles magic link redirects)
-        return new Promise<string | null>((resolve) => {
-          const timeoutId = setTimeout(() => {
-            subscription.unsubscribe();
-            resolve(null);
-          }, 5000); // 5 second max wait
-          
-          const { data: { subscription } } = supabaseClient.supabase.auth.onAuthStateChange((event, session) => {
-            if (session?.access_token) {
-              clearTimeout(timeoutId);
-              subscription.unsubscribe();
-              const isExpired = session.expires_at ? (session.expires_at * 1000) < Date.now() : false;
-              resolve(isExpired ? null : session.access_token);
-            } else if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
-              clearTimeout(timeoutId);
-              subscription.unsubscribe();
-              resolve(null);
-            }
-          });
-        });
-      };
-      
+      // Try to get auth token (single attempt, no retries)
       try {
-        const authToken = await getAuthToken();
-        
-        // Validate token is a non-empty string before including it
-        if (authToken && typeof authToken === 'string' && authToken.trim().length > 20) {
-          headers.Authorization = `Bearer ${authToken}`;
+        const { data: { session } } = await supabaseClient.supabase.auth.getSession();
+        if (session?.access_token && session.expires_at && (session.expires_at * 1000) > Date.now()) {
+          headers.Authorization = `Bearer ${session.access_token}`;
+          console.log('[AssessmentResults] Added auth token');
         }
-      } catch (authError) {
-        // If we can't get the session, proceed without auth header
-        console.warn('[AssessmentResults] Could not get auth session:', authError);
+      } catch (e) {
+        console.warn('[AssessmentResults] Could not get session:', e);
       }
       
       try {
+        console.log('[AssessmentResults] Making fetch request...');
+        
         const response = await fetch(functionUrl, {
           method: 'POST',
           headers,
@@ -146,39 +85,29 @@ export default function AssessmentResults({ schedulingConfig }: AssessmentResult
           signal: controller.signal,
         });
 
-        clearTimeout(timeoutId);
+        console.log('[AssessmentResults] Response status:', response.status);
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-          console.error('[AssessmentResults] Edge Function error response:', errorData);
-          throw new Error(errorData.error || `Failed to fetch assessment results (${response.status})`);
+          console.error('[AssessmentResults] Error response:', errorData);
+          throw new Error(errorData.error || `Failed to fetch (${response.status})`);
         }
 
         const foundResponse = await response.json();
+        console.log('[AssessmentResults] Got response data');
 
-        if (!foundResponse) {
-          throw new Error('Assessment response is null or undefined');
-        }
+        if (!isMounted) return;
 
-        // Set response immediately so UI renders
         setResponse(foundResponse);
-
-        // Check if user is authenticated and save to localStorage (non-blocking)
-        // Use a timeout to prevent hanging after magic link redirects
+        
+        // Save to localStorage if user owns assessment
         try {
-          const sessionPromise = supabaseClient.supabase.auth.getSession();
-          const timeoutPromise = new Promise<{ data: { session: null } }>((resolve) => 
-            setTimeout(() => resolve({ data: { session: null } }), 1000)
-          );
-          const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]);
-          
+          const { data: { session } } = await supabaseClient.supabase.auth.getSession();
           if (session?.user && foundResponse.user_id === session.user.id) {
-            // Assessment belongs to the authenticated user, save it to localStorage
             saveAssessmentData({ responseId: foundResponse.id });
           }
         } catch {
-          // Session check failed, but we already have results - continue
-          console.warn('[AssessmentResults] Could not verify session ownership');
+          // Ignore - we already have the results
         }
 
         // Get user details from localStorage
@@ -187,35 +116,30 @@ export default function AssessmentResults({ schedulingConfig }: AssessmentResult
           setUserDetails(storedUserDetails);
         }
       } catch (fetchError: any) {
-        clearTimeout(timeoutId);
-        console.error('[AssessmentResults] Error in fetch:', fetchError);
+        console.error('[AssessmentResults] Fetch error:', fetchError);
+        
+        if (!isMounted) return;
         
         if (fetchError.name === 'AbortError') {
           setError('Request timed out. Please try again.');
         } else {
-          // Provide more specific error messages
-          if (fetchError?.code === 'PGRST116' || fetchError?.status === 404) {
-            setError('Assessment results not found. Please check the link and try again.');
-          } else if (fetchError?.status === 406) {
-            setError('Unable to load assessment results. Please contact support if this issue persists.');
-          } else if (fetchError?.message?.includes('JWT')) {
-            setError('Authentication error. Please refresh the page and try again.');
-          } else {
-            setError(fetchError?.message || 'Failed to load assessment results. Please try again.');
-          }
+          setError(fetchError?.message || 'Failed to load assessment results.');
         }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
-    // Always call loadResults, even if there were previous errors
-    loadResults().catch((err) => {
-      console.error('[AssessmentResults] Unhandled error in loadResults:', err);
-      setError('An unexpected error occurred. Please try again.');
-      setIsLoading(false);
-    });
-  }, [responseId]); // Re-run when responseId changes
+    loadResults();
+    
+    // Cleanup function
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, []); // Run once on mount
 
   if (isLoading) {
     return (

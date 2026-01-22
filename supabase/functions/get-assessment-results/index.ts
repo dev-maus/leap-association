@@ -1,29 +1,11 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-// Get allowed origins from environment or use defaults
-const getAllowedOrigins = (): string[] => {
-  const envOrigins = Deno.env.get('ALLOWED_ORIGINS');
-  if (envOrigins) {
-    return envOrigins.split(',').map(origin => origin.trim());
-  }
-  // Default to Supabase project URL if available
-  const supabaseUrl = Deno.env.get('SUPABASE_URL');
-  if (supabaseUrl) {
-    return [supabaseUrl];
-  }
-  return [];
-};
-
+// CORS headers - allow all origins for this public API
+// The function has its own authentication and rate limiting
 const getCorsHeaders = (origin: string | null): Record<string, string> => {
-  const allowedOrigins = getAllowedOrigins();
-  const requestOrigin = origin || '';
-  const allowedOrigin = allowedOrigins.length > 0 && allowedOrigins.includes(requestOrigin)
-    ? requestOrigin
-    : (allowedOrigins[0] || '*');
-  
   return {
-    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Origin': origin || '*',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
   };
@@ -64,11 +46,16 @@ interface RequestBody {
 }
 
 serve(async (req) => {
+  console.log('Request received:', req.method, req.url);
+  
   const origin = req.headers.get('origin');
   const corsHeaders = getCorsHeaders(origin);
   
+  console.log('Origin:', origin, 'CORS headers:', corsHeaders);
+  
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
+    console.log('Handling CORS preflight');
     return new Response('ok', { headers: corsHeaders });
   }
 
@@ -169,10 +156,23 @@ serve(async (req) => {
     const isRecentlyCreated = minutesSinceCreation <= 10;
 
     // Access control logic:
-    // 1. If authenticated and owns the assessment -> allow
-    // 2. If authenticated and is admin -> allow
-    // 3. If not authenticated but assessment was created < 10 minutes ago -> allow (for immediate viewing)
+    // 1. If assessment was created < 10 minutes ago -> allow (for immediate viewing after submission)
+    // 2. If authenticated and owns the assessment -> allow
+    // 3. If authenticated and is admin -> allow
     // 4. Otherwise -> deny
+    
+    // Allow access to recently created assessments (for immediate viewing after submission)
+    // This takes priority to handle the case where user just submitted and auth state is still syncing
+    if (isRecentlyCreated) {
+      console.log('Allowing access to recently created assessment:', responseId);
+      return new Response(
+        JSON.stringify(assessment),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+    
     if (isAuthenticated && userId) {
       if (assessment.user_id === userId) {
         // User owns the assessment
@@ -200,16 +200,6 @@ serve(async (req) => {
           }
         );
       }
-    }
-
-    // Allow access to recently created assessments (for immediate viewing after submission)
-    if (!isAuthenticated && isRecentlyCreated) {
-      return new Response(
-        JSON.stringify(assessment),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
     }
 
     // All other cases: deny access
