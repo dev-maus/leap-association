@@ -138,7 +138,39 @@ export default function AdminDashboard() {
       window.location.href = `${buildUrl('auth/login')}?returnUrl=${buildUrl('admin')}`;
     };
 
-    // Subscribe to auth changes first
+    // Check localStorage for stored Supabase session
+    const getStoredUserId = (): string | null => {
+      try {
+        const storageKey = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
+        if (storageKey) {
+          const stored = localStorage.getItem(storageKey);
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            return parsed?.user?.id || parsed?.session?.user?.id || parsed?.currentSession?.user?.id || null;
+          }
+        }
+      } catch {
+        // Ignore parse errors
+      }
+      return null;
+    };
+
+    // Try to get stored user ID, with retries for timing issues
+    const tryAuthFromStorage = async (attempt = 0): Promise<boolean> => {
+      const storedUserId = getStoredUserId();
+      if (storedUserId) {
+        handleAuth(storedUserId);
+        return true;
+      }
+      // Retry a few times with small delays (localStorage might not be ready immediately)
+      if (attempt < 5) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        return tryAuthFromStorage(attempt + 1);
+      }
+      return false;
+    };
+
+    // Subscribe to auth changes for sign out handling
     const { data: { subscription } } = supabaseClient.supabase.auth.onAuthStateChange((event, session) => {
       if (isUnmounted) return;
       
@@ -147,42 +179,25 @@ export default function AdminDashboard() {
         return;
       }
       
-      // Accept session from any event
       if (session?.user) {
         handleAuth(session.user.id);
       }
     });
 
-    // Immediately check current session state from localStorage (sync)
-    // This handles the case where events fired before we subscribed
-    const checkStoredSession = () => {
-      try {
-        const storageKey = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
-        if (storageKey) {
-          const stored = localStorage.getItem(storageKey);
-          if (stored) {
-            const parsed = JSON.parse(stored);
-            if (parsed?.user?.id) {
-              handleAuth(parsed.user.id);
-              return true;
-            }
-          }
-        }
-      } catch (e) {
-        console.error('[AdminDashboard] Error reading localStorage:', e);
+    // Try to authenticate from localStorage first
+    tryAuthFromStorage().then(authenticated => {
+      if (!authenticated && !isUnmounted) {
+        // No stored session found after retries - redirect to login
+        redirectToLogin();
       }
-      return false;
-    };
+    });
     
-    // Check localStorage immediately
-    const hasStoredSession = checkStoredSession();
-    
-    // Fallback: if no stored session and not authenticated after 3 seconds, redirect
+    // Ultimate fallback: redirect after 5 seconds if still loading
     const fallbackTimeout = setTimeout(() => {
       if (!didAuthenticate && !isUnmounted) {
         redirectToLogin();
       }
-    }, 3000);
+    }, 5000);
 
     return () => {
       isUnmounted = true;
@@ -196,13 +211,15 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (isAuthenticated && !initialLoadDone.current) {
       initialLoadDone.current = true;
-      // Small delay to let Supabase fully initialize after auth
-      const timeoutId = setTimeout(() => {
-        // Load both in parallel
+      
+      // Give Supabase a moment to initialize, then load data
+      const loadDataWithDelay = async () => {
+        await new Promise(resolve => setTimeout(resolve, 300));
         loadUsers(1, '');
         loadAssessments(1, '');
-      }, 200);
-      return () => clearTimeout(timeoutId);
+      };
+      
+      loadDataWithDelay();
     }
   }, [isAuthenticated]);
 
@@ -234,19 +251,18 @@ export default function AdminDashboard() {
     const timeoutId = setTimeout(() => controller.abort(), 5000);
     
     try {
-      let query = supabaseClient.supabase
-        .from('user_profiles')
-        .select('*', { count: 'exact' })
-        .abortSignal(controller.signal);
-
-      if (search.trim()) {
-        query = query.or(`full_name.ilike.%${search.trim()}%,email.ilike.%${search.trim()}%,company.ilike.%${search.trim()}%`);
-      }
-
       const from = (page - 1) * ITEMS_PER_PAGE;
       const to = from + ITEMS_PER_PAGE - 1;
 
-      const { data, count, error } = await query
+      let queryBuilder = supabaseClient.supabase
+        .from('user_profiles')
+        .select('*', { count: 'exact' });
+
+      if (search.trim()) {
+        queryBuilder = queryBuilder.or(`full_name.ilike.%${search.trim()}%,email.ilike.%${search.trim()}%,company.ilike.%${search.trim()}%`);
+      }
+      
+      const { data, count, error } = await queryBuilder
         .order('created_at', { ascending: false })
         .range(from, to);
 
@@ -258,12 +274,13 @@ export default function AdminDashboard() {
       setUsersTotal(count || 0);
     } catch (error: any) {
       clearTimeout(timeoutId);
-      console.error('[AdminDashboard] Failed to load users:', error?.message || error?.name);
-      // Retry on error or abort
+      // Retry on error
       if (retryCount < 2) {
-        setTimeout(() => loadUsers(page, search, retryCount + 1), 300);
+        setTimeout(() => loadUsers(page, search, retryCount + 1), 500);
         return;
       }
+      setUsers([]);
+      setUsersTotal(0);
     } finally {
       setIsLoadingData(false);
     }
@@ -373,12 +390,13 @@ export default function AdminDashboard() {
       setAssessmentsTotal(assessmentResult.total);
     } catch (error: any) {
       clearTimeout(timeoutId);
-      console.error('[AdminDashboard] Failed to load assessments:', error?.message || error?.name);
-      // Retry on error or abort
+      // Retry on error
       if (retryCount < 2) {
-        setTimeout(() => loadAssessments(page, search, retryCount + 1), 300);
+        setTimeout(() => loadAssessments(page, search, retryCount + 1), 500);
         return;
       }
+      setAssessments([]);
+      setAssessmentsTotal(0);
     } finally {
       setIsLoadingData(false);
     }

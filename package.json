@@ -13,7 +13,7 @@
     "@sanity/client": "^7.13.2",
     "@sanity/image-url": "^2.0.2",
     "@supabase/supabase-js": "^2.89.0",
-    "astro": "^5.16.6",
+    "astro": "^5.16.12",
     "date-fns": "^4.1.0",
     "jspdf": "^3.0.4",
     "lucide-react": "^0.562.0",
@@ -21,7 +21,7 @@
   },
   "devDependencies": {
     "@astrojs/react": "^4.4.2",
-    "@astrojs/sitemap": "^3.6.0",
+    "@astrojs/sitemap": "^3.7.0",
     "@astrojs/tailwind": "^6.0.2",
     "astro-compress": "^2.3.8",
     "autoprefixer": "^10.4.23",
