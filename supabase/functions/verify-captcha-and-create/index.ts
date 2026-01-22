@@ -1,10 +1,63 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+// Get allowed origins from environment or use defaults
+const getAllowedOrigins = (): string[] => {
+  const envOrigins = Deno.env.get('ALLOWED_ORIGINS');
+  if (envOrigins) {
+    return envOrigins.split(',').map(origin => origin.trim());
+  }
+  // Default to Supabase project URL if available
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  if (supabaseUrl) {
+    return [supabaseUrl];
+  }
+  return [];
 };
+
+const getCorsHeaders = (origin: string | null): Record<string, string> => {
+  const allowedOrigins = getAllowedOrigins();
+  const requestOrigin = origin || '';
+  const allowedOrigin = allowedOrigins.length > 0 && allowedOrigins.includes(requestOrigin)
+    ? requestOrigin
+    : (allowedOrigins[0] || '*');
+  
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  };
+};
+
+// Simple in-memory rate limiting (use Redis for production scale)
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT = 20; // 20 requests per window (higher for assessment submissions)
+const WINDOW_MS = 60000; // 1 minute window
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const record = rateLimitMap.get(ip);
+  
+  if (!record || record.resetAt < now) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + WINDOW_MS });
+    return true;
+  }
+  
+  if (record.count >= RATE_LIMIT) return false;
+  record.count++;
+  return true;
+}
+
+function getClientIP(req: Request): string {
+  // Try to get real IP from various headers
+  const forwarded = req.headers.get('x-forwarded-for');
+  if (forwarded) {
+    return forwarded.split(',')[0].trim();
+  }
+  const realIP = req.headers.get('x-real-ip');
+  if (realIP) return realIP;
+  return 'unknown';
+}
 
 interface RequestBody {
   contactData: {
@@ -37,16 +90,43 @@ interface RequestBody {
 }
 
 serve(async (req) => {
+  const origin = req.headers.get('origin');
+  const corsHeaders = getCorsHeaders(origin);
+  
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
+  }
+
+  // Rate limiting
+  const clientIP = getClientIP(req);
+  if (!checkRateLimit(clientIP)) {
+    return new Response(
+      JSON.stringify({
+        error: 'Rate limit exceeded. Please try again later.',
+      }),
+      {
+        status: 429,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
   }
 
   try {
     // Parse request body
     const body: RequestBody = await req.json();
 
-    // Verify hCaptcha token if provided (captcha may be optional for first-time users)
+    // Require captcha for unauthenticated submissions
+    if (!body.userId) {
+      if (!body.captchaToken || body.captchaToken.trim() === '') {
+        return new Response(
+          JSON.stringify({ error: 'Captcha verification required for unauthenticated submissions' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    // Verify hCaptcha token if provided
     if (body.captchaToken && body.captchaToken.trim() !== '') {
       const hcaptchaSecretKey = Deno.env.get('HCAPTCHA_SECRET_KEY');
       if (!hcaptchaSecretKey) {
@@ -123,17 +203,9 @@ serve(async (req) => {
       if (existingUser) {
         finalUserId = existingUser.id;
         
-        // Update profile
+        // Update or create profile using upsert
         await supabase
           .from('user_profiles')
-          .update({
-            full_name: body.contactData.full_name,
-            company: body.contactData.company,
-            role: body.contactData.role,
-            phone: body.contactData.phone,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', finalUserId)
           .upsert({
             id: finalUserId,
             email: body.contactData.email,
@@ -141,6 +213,9 @@ serve(async (req) => {
             company: body.contactData.company,
             role: body.contactData.role,
             phone: body.contactData.phone,
+            updated_at: new Date().toISOString(),
+          }, {
+            onConflict: 'id'
           });
       } else {
         // Create new auth user (first-time user)
@@ -172,6 +247,8 @@ serve(async (req) => {
             role: body.contactData.role,
             phone: body.contactData.phone,
             user_role: 'user',
+          }, {
+            onConflict: 'id'
           });
       }
     }

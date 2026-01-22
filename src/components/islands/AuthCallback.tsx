@@ -99,6 +99,30 @@ export default function AuthCallback() {
       }
     }, 8000);
 
+    // Allowed redirect patterns for security
+    const ALLOWED_REDIRECT_PATTERNS = [
+      /^\/practice\//,
+      /^\/practice\/results/,
+      /^\/admin$/,
+      /^\/resources\//,
+      /^\/$/,
+      /^\/about$/,
+      /^\/contact$/,
+      /^\/faq$/,
+      /^\/schedule$/,
+      /^\/solutions$/,
+    ];
+
+    function isValidRedirect(url: string): boolean {
+      // Prevent protocol-relative URLs and external redirects
+      if (url.startsWith('//') || /^https?:\/\//i.test(url)) {
+        return false;
+      }
+      // Remove query string and hash for pattern matching
+      const pathOnly = url.split('?')[0].split('#')[0];
+      return ALLOWED_REDIRECT_PATTERNS.some(pattern => pattern.test(pathOnly));
+    }
+
     // Helper function to handle redirect
     async function handleRedirect(nextUrl: string | null, type: AuthType, userId: string) {
       // Small delay to ensure session is fully established
@@ -112,9 +136,21 @@ export default function AuthCallback() {
         return;
       }
 
-      // If nextUrl is explicitly provided, use it
+      // If nextUrl is explicitly provided, validate it
       if (nextUrl) {
         const decodedNext = decodeURIComponent(nextUrl);
+        
+        // Validate redirect URL against allowlist
+        if (!isValidRedirect(decodedNext)) {
+          console.warn('[AuthCallback] Invalid redirect URL, redirecting to home:', decodedNext);
+          const redirectPath = buildUrl('/');
+          const redirectUrl = typeof window !== 'undefined' 
+            ? `${window.location.origin}${redirectPath}`
+            : redirectPath;
+          window.location.href = redirectUrl;
+          return;
+        }
+        
         const baseUrl = import.meta.env.BASE_URL || '/';
         let redirectPath = decodedNext.startsWith(baseUrl) ? decodedNext : buildUrl(decodedNext);
         

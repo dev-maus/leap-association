@@ -77,7 +77,9 @@ const bookingUrl = siteSettings?.bookingUrl;
         
         function redirect() {
           const finalUrl = buildUrl();
-          console.log('Redirecting to:', finalUrl);
+          if (import.meta.env.DEV) {
+            console.log('Redirecting to:', finalUrl);
+          }
           window.location.replace(finalUrl);
           
           // Update fallback link

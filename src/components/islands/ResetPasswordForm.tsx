@@ -55,6 +55,16 @@ export default function ResetPasswordForm() {
     handleTokenExchange();
   }, []);
 
+  const validatePassword = (pwd: string): { valid: boolean; errors: string[] } => {
+    const errors: string[] = [];
+    if (pwd.length < 12) errors.push('At least 12 characters');
+    if (!/[A-Z]/.test(pwd)) errors.push('At least one uppercase letter');
+    if (!/[a-z]/.test(pwd)) errors.push('At least one lowercase letter');
+    if (!/[0-9]/.test(pwd)) errors.push('At least one number');
+    if (!/[^A-Za-z0-9]/.test(pwd)) errors.push('At least one special character');
+    return { valid: errors.length === 0, errors };
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -64,8 +74,9 @@ export default function ResetPasswordForm() {
       return;
     }
 
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters');
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+      setError(`Password requirements: ${passwordValidation.errors.join(', ')}`);
       return;
     }
 
@@ -158,12 +169,14 @@ export default function ResetPasswordForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              minLength={8}
-              placeholder="••••••••"
+              minLength={12}
+              placeholder="••••••••••••"
               className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
-          <p className="text-xs text-slate-500 mt-1">Must be at least 8 characters</p>
+          <p className="text-xs text-slate-500 mt-1">
+            Must be at least 12 characters with uppercase, lowercase, number, and special character
+          </p>
         </div>
 
         <div>

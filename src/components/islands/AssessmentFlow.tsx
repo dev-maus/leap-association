@@ -56,7 +56,7 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
   const [userId, setUserId] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [magicLinkSent, setMagicLinkSent] = useState(false);
+  // Removed magicLinkSent - no longer sending magic links during contact form
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const captchaRef = useRef<HCaptcha>(null);
   
@@ -379,84 +379,20 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
         return;
       }
 
-      // If user is already authenticated, continue with assessment
-      if (isAuthenticated && userId) {
-        // Save user details and continue
-        saveUserDetails(contactData);
-        setHasStoredUserDetails(true);
-        setContactFormCompleted(true);
-        return;
-      }
-
-      // User is not authenticated - check if they're a returning user
-      setIsSubmitting(true);
-      try {
-        const userCheck = await supabaseClient.checkUserExists(contactData.email);
-        
-        if (userCheck.exists) {
-          // Returning user - send magic link
-          // Redirect back to the current assessment page after authentication
-          let currentPath = typeof window !== 'undefined' ? window.location.pathname : `/practice/${type}`;
-          const baseUrl = import.meta.env.BASE_URL || '/';
-          if (currentPath.startsWith(baseUrl)) {
-            currentPath = currentPath.slice(baseUrl.length);
-          }
-          // Ensure path starts with /
-          if (!currentPath.startsWith('/')) {
-            currentPath = '/' + currentPath;
-          }
-          try {
-            await supabaseClient.auth.signInWithMagicLink(contactData.email, currentPath);
-            setMagicLinkSent(true);
-            setErrorMessage(null);
-            setIsSubmitting(false);
-            return; // Wait for user to click Magic Link
-          } catch (err: any) {
-            // Handle rate limit error
-            if (err?.code === 'over_email_send_rate_limit') {
-              setRateLimitCountdown(30);
-              setErrorMessage('Too many requests. Please try again in 30 seconds.');
-              setIsSubmitting(false);
-              return;
-            }
-            // Other errors
-            setErrorMessage(err?.message || 'Failed to send magic link. Please try again.');
-            setIsSubmitting(false);
-            return;
-          }
-        } else {
-          // First-time user - save to localStorage and continue with assessment
-          const userDetailsToSave = {
-            ...contactData,
-            isNewUser: true,
-            pendingAssessmentType: type,
-          };
-          saveUserDetails(userDetailsToSave);
-          setHasStoredUserDetails(true);
-          setContactFormCompleted(true);
-          // Ensure we're at the first question
-          setCurrentIndex(0);
-          // Make sure loading states are cleared
-          setIsCheckingAssessment(false);
-          setIsSubmitting(false);
-          return;
-        }
-      } catch (checkError: any) {
-        console.error('Failed to check user existence:', checkError);
-        setIsSubmitting(false);
-        
-        // If the check fails, default to treating as new user to avoid blocking the flow
-        // This is a fallback - the Edge Function should work, but if it doesn't, we don't want to block users
-        console.warn('User check failed, defaulting to new user flow:', checkError);
-        saveUserDetails({
-          ...contactData,
-          isNewUser: true,
-          pendingAssessmentType: type,
-        });
-        setHasStoredUserDetails(true);
-        setContactFormCompleted(true);
-        return;
-      }
+      // Save user details and allow them to proceed with assessment
+      // Authentication will be handled on submission
+      const userDetailsToSave = {
+        ...contactData,
+        isNewUser: true, // Mark as new user - will be handled on submission
+        pendingAssessmentType: type,
+      };
+      saveUserDetails(userDetailsToSave);
+      setHasStoredUserDetails(true);
+      setContactFormCompleted(true);
+      setCurrentIndex(0);
+      setIsCheckingAssessment(false);
+      setIsSubmitting(false);
+      return; // Continue to assessment questions
     }
 
     // Only increment if we're moving between questions (not from contact form)
@@ -519,22 +455,19 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
         return;
       }
 
-      // Get user details from localStorage to check if this is a first-time user
+      // Get user details from localStorage
       const userDetails = getUserDetails();
       const isNewUser = userDetails.isNewUser === true;
-
-      // For returning users, require authentication
-      if (!isNewUser && (!isAuthenticated || !userId)) {
-        setErrorMessage('Please authenticate first by clicking the magic link sent to your email.');
-        setIsSubmitting(false);
-        return;
-      }
 
       // If captcha is enabled, ensure we have a token
       if (captchaConfig?.enabled && !captchaToken) {
         setErrorMessage('Please complete the captcha verification before submitting.');
         return;
       }
+
+      // Note: Authentication is not required before submission
+      // The Edge Function will handle user creation/lookup automatically
+      // Users can complete the assessment without logging in first
 
       const { leapScores, habitScore, abilityScore, talentScore, skillScore } = calculateScores();
 
@@ -548,42 +481,24 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
         };
       });
 
-      let response;
-
-      // For first-time users or when captcha is enabled, use Edge Function
-      // Edge Function will handle user creation for first-time users
-      if (isNewUser || (captchaConfig?.enabled && captchaToken)) {
-        response = await supabaseClient.submitAssessmentWithCaptcha({
-          contactData: {
-            ...contactData,
-            source: type === 'team' ? 'team_assessment' : 'individual_assessment',
-          },
-          userId: userId || undefined, // Pass authenticated user ID if available
-          assessmentType: type,
-          scores: leapScores,
-          habitScore,
-          abilityScore,
-          talentScore,
-          skillScore,
-          answers: answersArray,
-          captchaToken: captchaToken || '', // Optional - Edge Function will skip verification if empty
-        });
-      } else {
-        // Direct insert (authenticated user, no captcha)
-        if (!userId) {
-          throw new Error('User ID is required for direct submission');
-        }
-        response = await supabaseClient.entities.AssessmentResponse.create({
-          user_id: userId,
-          assessment_type: type,
-          scores: leapScores,
-          habit_score: habitScore,
-          ability_score: abilityScore,
-          talent_score: talentScore,
-          skill_score: skillScore,
-          answers: answersArray,
-        });
-      }
+      // Always use Edge Function for submission
+      // It handles user creation, authentication, and captcha verification
+      // This allows users to submit without logging in first
+      const response = await supabaseClient.submitAssessmentWithCaptcha({
+        contactData: {
+          ...contactData,
+          source: type === 'team' ? 'team_assessment' : 'individual_assessment',
+        },
+        userId: userId || undefined, // Pass authenticated user ID if available (optional)
+        assessmentType: type,
+        scores: leapScores,
+        habitScore,
+        abilityScore,
+        talentScore,
+        skillScore,
+        answers: answersArray,
+        captchaToken: captchaToken || '', // Required for unauthenticated users, optional for authenticated
+      });
 
       // Verify response has an ID
       if (!response || !response.id) {
@@ -666,29 +581,6 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
   const progress = questions.length > 0 ? ((currentIndex + 1) / questions.length) * 100 : 0;
 
   if (needsContactInfo) {
-    // Show Magic Link sent message
-    if (magicLinkSent) {
-      return (
-        <div className="max-w-xl mx-auto">
-          <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 lg:p-10 text-center">
-            <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
-              <CheckCircle className="w-10 h-10 text-green-600" />
-            </div>
-            <h2 className="text-2xl font-bold text-primary mb-4">Check Your Email</h2>
-            <p className="text-slate-600 mb-2">
-              We've sent a magic link to <strong>{contactData.email}</strong>
-            </p>
-            <p className="text-slate-500 text-sm mb-6">
-              Click the link in the email to continue with your assessment. The link will expire in 1 hour.
-            </p>
-            <p className="text-slate-400 text-xs">
-              Once you click the link, you'll be redirected back to continue your assessment.
-            </p>
-          </div>
-        </div>
-      );
-    }
-
     return (
       <div className="max-w-xl mx-auto">
         <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 lg:p-10">

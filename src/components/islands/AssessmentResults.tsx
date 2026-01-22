@@ -82,14 +82,44 @@ export default function AssessmentResults({ schedulingConfig }: AssessmentResult
         controller.abort();
       }, 10000); // 10 second timeout
       
+      // Build headers - start without Authorization
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        apikey: supabaseAnonKey,
+      };
+      
+      // Only add Authorization header if user has a valid, non-empty access token
+      // This prevents Supabase gateway from rejecting requests with invalid/empty JWTs
+      // Use a timeout to prevent hanging after magic link redirects
+      try {
+        const sessionPromise = supabaseClient.supabase.auth.getSession();
+        const timeoutPromise = new Promise<{ data: { session: null } }>((resolve) => 
+          setTimeout(() => resolve({ data: { session: null } }), 2000)
+        );
+        
+        // Race between session retrieval and timeout
+        const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]);
+        const authToken = session?.access_token;
+        
+        // Validate token is a non-empty string before including it
+        if (authToken && typeof authToken === 'string' && authToken.trim().length > 20) {
+          // Additionally verify the session is not expired
+          const expiresAt = session?.expires_at;
+          const isExpired = expiresAt ? (expiresAt * 1000) < Date.now() : false;
+          
+          if (!isExpired) {
+            headers.Authorization = `Bearer ${authToken}`;
+          }
+        }
+      } catch (authError) {
+        // If we can't get the session, proceed without auth header
+        console.warn('[AssessmentResults] Could not get auth session:', authError);
+      }
+      
       try {
         const response = await fetch(functionUrl, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${supabaseAnonKey}`,
-            apikey: supabaseAnonKey,
-          },
+          headers,
           body: JSON.stringify({ responseId: currentResponseId }),
           signal: controller.signal,
         });
@@ -108,14 +138,26 @@ export default function AssessmentResults({ schedulingConfig }: AssessmentResult
           throw new Error('Assessment response is null or undefined');
         }
 
-        // Check if user is authenticated and if this assessment belongs to them
-        const { data: { session } } = await supabaseClient.supabase.auth.getSession();
-        if (session?.user && foundResponse.user_id === session.user.id) {
-          // Assessment belongs to the authenticated user, save it to localStorage
-          saveAssessmentData({ responseId: foundResponse.id });
-        }
-
+        // Set response immediately so UI renders
         setResponse(foundResponse);
+
+        // Check if user is authenticated and save to localStorage (non-blocking)
+        // Use a timeout to prevent hanging after magic link redirects
+        try {
+          const sessionPromise = supabaseClient.supabase.auth.getSession();
+          const timeoutPromise = new Promise<{ data: { session: null } }>((resolve) => 
+            setTimeout(() => resolve({ data: { session: null } }), 1000)
+          );
+          const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]);
+          
+          if (session?.user && foundResponse.user_id === session.user.id) {
+            // Assessment belongs to the authenticated user, save it to localStorage
+            saveAssessmentData({ responseId: foundResponse.id });
+          }
+        } catch {
+          // Session check failed, but we already have results - continue
+          console.warn('[AssessmentResults] Could not verify session ownership');
+        }
 
         // Get user details from localStorage
         const storedUserDetails = getUserDetails();

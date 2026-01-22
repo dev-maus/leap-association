@@ -98,9 +98,11 @@ function Pagination({ currentPage, totalItems, itemsPerPage, onPageChange }: Pag
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<Tab>('users');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   
   // Users state
   const [users, setUsers] = useState<any[]>([]);
@@ -206,10 +208,165 @@ export default function AdminDashboard() {
     };
   }, []);
 
+  // Verify admin role after authentication
+  useEffect(() => {
+    let isMounted = true;
+    let timeoutId: NodeJS.Timeout;
+    
+    const verifyAdmin = async () => {
+      if (!isAuthenticated || !currentUserId) return;
+      
+      // Set a timeout to prevent hanging
+      timeoutId = setTimeout(() => {
+        if (isMounted) {
+          console.error('Admin verification timeout');
+          setError('Verification timed out. Please check your connection and try again.');
+        }
+      }, 10000); // 10 second timeout
+      
+      try {
+        console.log('Verifying admin role for user:', currentUserId);
+        
+        // First verify the session is still valid
+        const { data: { session }, error: sessionError } = await supabaseClient.supabase.auth.getSession();
+        if (!session || sessionError) {
+          console.error('Session invalid:', sessionError);
+          setError('Your session has expired. Please log in again.');
+          return;
+        }
+        
+        console.log('Session valid, querying user profile...');
+        console.log('Current auth.uid() should be:', session.user.id);
+        console.log('Querying user_profiles table for id:', currentUserId);
+        
+        // Check if user role is in auth metadata as a fallback
+        const metadataRole = session.user.user_metadata?.role || session.user.user_metadata?.user_role;
+        if (metadataRole === 'admin') {
+          console.log('Admin role found in auth metadata, granting access');
+          setIsAuthorized(true);
+          clearTimeout(timeoutId);
+          return;
+        }
+        
+        // Try using the entities API first (might handle RLS differently)
+        let profile: any = null;
+        let error: any = null;
+        
+        try {
+          console.log('Attempting to fetch profile via entities API...');
+          profile = await supabaseClient.entities.UserProfile.get(currentUserId);
+          console.log('Profile fetched successfully:', profile);
+        } catch (entityError: any) {
+          console.warn('Entities API failed, trying direct query:', entityError);
+          
+          // Fallback to direct query with timeout
+          const queryPromise = supabaseClient.supabase
+            .from('user_profiles')
+            .select('user_role')
+            .eq('id', currentUserId)
+            .maybeSingle();
+          
+          // Add a race condition with timeout (5 seconds)
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Query timeout')), 5000)
+          );
+          
+          try {
+            const result = await Promise.race([queryPromise, timeoutPromise]) as any;
+            profile = result.data;
+            error = result.error;
+          } catch (raceError: any) {
+            if (raceError?.message === 'Query timeout') {
+              console.error('Query timed out - this might indicate:');
+              console.error('1. RLS policy is blocking the query');
+              console.error('2. Network connectivity issues');
+              console.error('3. Supabase service is slow or unavailable');
+              console.error('4. The user_profiles table might not be accessible');
+              throw raceError;
+            }
+            throw raceError;
+          }
+        }
+        
+        clearTimeout(timeoutId);
+        
+        if (!isMounted) return;
+        
+        if (error) {
+          console.error('Failed to verify admin role:', error);
+          console.error('Error details:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code,
+          });
+          
+          // Check if it's a permission error
+          if (error.code === 'PGRST301' || error.message?.includes('permission') || error.message?.includes('policy')) {
+            setError('Permission denied. Your user profile may not exist or RLS policies may be blocking access. Check the browser console for details.');
+          } else {
+            setError(`Failed to verify admin access: ${error.message}. Please check the browser console for details.`);
+          }
+          return;
+        }
+        
+        // If profile doesn't exist, user might not have completed signup
+        if (!profile) {
+          console.warn('User profile not found for user:', currentUserId);
+          console.warn('This might mean:');
+          console.warn('1. The profile was not created when the user signed up');
+          console.warn('2. The RLS policy is blocking the query');
+          console.warn('3. The user ID does not match any profile');
+          setError('User profile not found. The profile may not have been created yet. Please try logging out and back in, or contact support.');
+          return;
+        }
+        
+        // Handle both entity API response format and direct query format
+        const userRole = profile.user_role || (profile as any)?.user_role;
+        console.log('User role:', userRole);
+        
+        if (userRole !== 'admin') {
+          // Not an admin - redirect to home after a brief delay
+          console.log('User is not an admin, redirecting...');
+          setTimeout(() => {
+            if (isMounted) {
+              window.location.href = buildUrl('/');
+            }
+          }, 1000);
+          return;
+        }
+        
+        // User is admin - authorize access
+        console.log('Admin access granted');
+        setIsAuthorized(true);
+      } catch (error: any) {
+        clearTimeout(timeoutId);
+        if (!isMounted) return;
+        
+        console.error('Error verifying admin role:', error);
+        
+        if (error?.message === 'Query timeout') {
+          setError('The verification query timed out. This might indicate a network issue or RLS policy problem. Please check your connection and try again.');
+        } else {
+          setError(`An error occurred: ${error?.message || 'Unknown error'}. Please check the browser console.`);
+        }
+      }
+    };
+    
+    if (isAuthenticated && currentUserId) {
+      verifyAdmin();
+    }
+    
+    return () => {
+      isMounted = false;
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [isAuthenticated, currentUserId]);
+
   // Load BOTH datasets on initial auth - this ensures quick tab switching
   const initialLoadDone = useRef(false);
   useEffect(() => {
-    if (isAuthenticated && !initialLoadDone.current) {
+    if (isAuthorized && !initialLoadDone.current) {
       initialLoadDone.current = true;
       
       // Give Supabase a moment to initialize, then load data
@@ -221,18 +378,18 @@ export default function AdminDashboard() {
       
       loadDataWithDelay();
     }
-  }, [isAuthenticated]);
+  }, [isAuthorized]);
 
   // Load data when tab, page, or search changes (after initial load)
   useEffect(() => {
-    if (isAuthenticated && initialLoadDone.current) {
+    if (isAuthorized && initialLoadDone.current) {
       if (activeTab === 'users') {
         loadUsers(usersPage, debouncedUsersSearch);
       } else if (activeTab === 'assessments') {
         loadAssessments(assessmentsPage, debouncedAssessmentsSearch);
       }
     }
-  }, [activeTab, usersPage, assessmentsPage, debouncedUsersSearch, debouncedAssessmentsSearch]);
+  }, [activeTab, usersPage, assessmentsPage, debouncedUsersSearch, debouncedAssessmentsSearch, isAuthorized]);
   
   // Reset to page 1 when search changes
   useEffect(() => {
@@ -259,7 +416,15 @@ export default function AdminDashboard() {
         .select('*', { count: 'exact' });
 
       if (search.trim()) {
-        queryBuilder = queryBuilder.or(`full_name.ilike.%${search.trim()}%,email.ilike.%${search.trim()}%,company.ilike.%${search.trim()}%`);
+        // Sanitize search input - escape special characters for ilike pattern matching
+        const sanitizedSearch = search.trim().replace(/[%_\\]/g, '\\$&');
+        const searchPattern = `%${sanitizedSearch}%`;
+        
+        // Use Supabase's or() with properly escaped patterns
+        // PostgREST will handle the escaping, but we escape % and _ to prevent pattern injection
+        queryBuilder = queryBuilder.or(
+          `full_name.ilike.${searchPattern},email.ilike.${searchPattern},company.ilike.${searchPattern}`
+        );
       }
       
       const { data, count, error } = await queryBuilder
@@ -314,11 +479,16 @@ export default function AdminDashboard() {
       let matchingUserIds: string[] = [];
       
       if (search.trim()) {
+        // Sanitize search input - escape special characters for ilike
+        const sanitizedSearch = search.trim().replace(/[%_\\]/g, '\\$&');
+        const searchPattern = `%${sanitizedSearch}%`;
+        
         // Search user_profiles first to get matching user IDs
+        // Use sanitized pattern to prevent SQL injection
         const { data: usersData } = await supabaseClient.supabase
           .from('user_profiles')
           .select('*')
-          .or(`full_name.ilike.%${search.trim()}%,email.ilike.%${search.trim()}%,company.ilike.%${search.trim()}%`)
+          .or(`full_name.ilike.${searchPattern},email.ilike.${searchPattern},company.ilike.${searchPattern}`)
           .abortSignal(controller.signal);
         
         allUsers = usersData || [];
@@ -460,8 +630,52 @@ export default function AdminDashboard() {
     );
   }
 
+  // Show error if authorization check failed
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl max-w-md">
+          <p className="font-semibold mb-2">Access Error</p>
+          <p className="text-sm">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Refresh Page
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading while checking authorization
+  if (isAuthenticated && !isAuthorized && currentUserId) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <p className="ml-3 text-slate-600">Verifying admin access...</p>
+      </div>
+    );
+  }
+
+  // Not authenticated - will redirect via useEffect
   if (!isAuthenticated) {
-    return null;
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <p className="ml-3 text-slate-600">Redirecting to login...</p>
+      </div>
+    );
+  }
+
+  // Not authorized (will redirect via useEffect)
+  if (!isAuthorized) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <p className="ml-3 text-slate-600">Redirecting...</p>
+      </div>
+    );
   }
 
   const handleTabChange = (tab: Tab) => {

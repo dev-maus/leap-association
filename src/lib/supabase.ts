@@ -32,13 +32,28 @@ const entityToTable = (entityName: string): string => {
   return mapping[entityName] || entityName.toLowerCase() + 's';
 };
 
-// Generate UUID v4 client-side
+// Generate UUID v4 client-side using cryptographically secure random generation
 function generateUUID(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
+  // Use crypto.randomUUID if available (modern browsers and Node.js 16+)
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  
+  // Fallback with crypto.getRandomValues for older environments
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    const arr = new Uint8Array(16);
+    crypto.getRandomValues(arr);
+    // Set version (4) and variant bits according to RFC 4122
+    arr[6] = (arr[6] & 0x0f) | 0x40; // Version 4
+    arr[8] = (arr[8] & 0x3f) | 0x80; // Variant 10
+    return [...arr].map((b, i) => 
+      (i === 4 || i === 6 || i === 8 || i === 10 ? '-' : '') + 
+      b.toString(16).padStart(2, '0')
+    ).join('');
+  }
+  
+  // Last resort fallback (should not be reached in modern environments)
+  throw new Error('Cryptographically secure random number generation not available');
 }
 
 // Create entity API that mimics Base44's API
@@ -369,7 +384,9 @@ export const auth = {
       callbackUrl += `?next=${encodeURIComponent(cleanRedirectTo)}`;
     }
 
-    console.log('Magic Link redirect URL:', callbackUrl); // Debug log
+    if (import.meta.env.DEV) {
+      console.log('Magic Link redirect URL:', callbackUrl);
+    }
 
     try {
       const { data, error } = await supabase.auth.signInWithOtp({
@@ -384,7 +401,9 @@ export const auth = {
         throw error;
       }
       
-      console.log('Magic Link sent successfully:', data);
+      if (import.meta.env.DEV) {
+        console.log('Magic Link sent successfully:', data);
+      }
       return data;
     } catch (err: any) {
       console.error('Failed to send Magic Link:', err);
