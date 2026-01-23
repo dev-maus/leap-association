@@ -42,20 +42,20 @@ const heroData = await sanity.fetch(`*[_type == "hero" && page == "home"][0]{
 
     <!-- Right Column - Image -->
     <div class="hidden lg:flex w-1/2 items-center justify-center relative z-10 overflow-hidden">
-      {heroData?.image ? (
-        <div class="relative h-full w-full flex items-center justify-end pr-8">
-          <div class="relative z-10 hero-image-wrapper">
-            <img
-              src={urlFor(heroData.image)?.width(600).height(800).url()}
-              alt="Leadership Coach"
-              class="h-[85%] w-auto object-contain"
-            />
-          </div>
+      <div class="relative h-full w-full flex items-center justify-end pr-8">
+        <div class="relative z-10 hero-image-wrapper">
+          <img
+            src={heroData?.image
+              ? urlFor(heroData.image)?.width(600).height(800).url()
+              : "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/694200055fe4955e89271fbb/0d4eae03a_whiteshirtwithJacket2.png"}
+            alt="Leadership Coach"
+            class="h-full w-auto max-w-none object-contain"
+            style="mask-image: linear-gradient(to bottom, black 70%, transparent 100%), linear-gradient(to left, black 70%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent 100%), linear-gradient(to left, black 70%, transparent 100%); mask-composite: intersect; -webkit-mask-composite: source-in;"
+          />
         </div>
-      ) : (
-        <div class="w-full h-full bg-white/5 rounded-lg" />
-      )}
+      </div>
     </div>
   </div>
 </section>
+
 
