@@ -30,6 +30,23 @@ const downloads = await sanity.fetch(`*[_type == "download" && status == "publis
   }
 }`).catch(() => []);
 const books = await sanity.fetch(`*[_type == "book" && status == "published"] | order(_createdAt desc)[0...6]`).catch(() => []);
+
+// Extract unique categories from blog posts
+const categories = [...new Set(blogPosts.map((post: any) => post.category).filter(Boolean))];
+
+// Default books if none in CMS
+const defaultBooks = [
+  {
+    title: 'The Practice of Excellence',
+    subtitle: 'Building Repeatable Success Through Intentional Action',
+    description: 'Discover how to transform your daily actions into powerful patterns that create lasting excellence. This comprehensive guide walks you through the LEAP methodology with practical exercises and real-world examples.',
+    coverUrl: null,
+    price: '$24.99',
+    purchaseLink: '#'
+  }
+];
+
+const displayBooks = books.length > 0 ? books : defaultBooks;
 ---
 
 <Layout>
@@ -73,6 +90,20 @@ const books = await sanity.fetch(`*[_type == "book" && status == "published"] | 
             <p class="text-slate-600">Insights and strategies for leadership excellence</p>
           </div>
         </div>
+
+        <!-- Category Filter Buttons -->
+        {categories.length > 0 && (
+          <div class="flex flex-wrap gap-3 mb-8">
+            <button class="px-4 py-2 bg-primary text-white rounded-full text-sm font-medium hover:bg-primary-dark transition-colors">
+              All Articles
+            </button>
+            {categories.map((category: string) => (
+              <button class="px-4 py-2 bg-slate-100 text-slate-700 rounded-full text-sm font-medium hover:bg-slate-200 transition-colors">
+                {category}
+              </button>
+            ))}
+          </div>
+        )}
 
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {blogPosts.map((post: any) => (
@@ -208,6 +239,82 @@ const books = await sanity.fetch(`*[_type == "book" && status == "published"] | 
               )}
             </Card>
           ))}
+        </div>
+      </section>
+
+      <!-- Books Section -->
+      <section class="mb-20">
+        <div class="flex items-center gap-4 mb-8">
+          <div class="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center">
+            <svg class="w-7 h-7 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-3xl font-bold text-primary">Books</h2>
+            <p class="text-slate-600">Deepen your understanding with these essential reads</p>
+          </div>
+        </div>
+
+        <div class="space-y-8">
+          {displayBooks.map((book: any) => (
+            <Card class="p-8 lg:p-10">
+              <div class="grid lg:grid-cols-3 gap-8 items-center">
+                <!-- Book Cover -->
+                <div class="lg:col-span-1">
+                  {book.coverUrl || book.cover ? (
+                    <img
+                      src={book.cover ? urlFor(book.cover)?.width(300).height(450).url() : book.coverUrl}
+                      alt={book.title}
+                      class="w-full max-w-xs mx-auto rounded-xl shadow-xl"
+                    />
+                  ) : (
+                    <div class="w-full max-w-xs mx-auto aspect-[2/3] bg-gradient-to-br from-primary to-primary-dark rounded-xl shadow-xl flex items-center justify-center p-8">
+                      <div class="text-center text-white">
+                        <svg class="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                        <p class="font-bold text-lg">{book.title}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <!-- Book Details -->
+                <div class="lg:col-span-2">
+                  <h3 class="text-2xl lg:text-3xl font-bold text-primary mb-2">{book.title}</h3>
+                  {book.subtitle && (
+                    <p class="text-lg text-accent font-semibold mb-4">{book.subtitle}</p>
+                  )}
+                  <p class="text-slate-600 leading-relaxed mb-6">{book.description}</p>
+
+                  {book.price && (
+                    <p class="text-2xl font-bold text-slate-900 mb-6">{book.price}</p>
+                  )}
+
+                  <a
+                    href={book.purchaseLink || '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex items-center gap-2 px-6 py-3 bg-accent hover:bg-accent-light text-white font-semibold rounded-xl transition-colors"
+                  >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    </svg>
+                    Purchase Book
+                  </a>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+
+        <!-- Inspirational Quote -->
+        <div class="mt-12 text-center">
+          <blockquote class="text-2xl lg:text-3xl font-medium text-primary italic max-w-3xl mx-auto">
+            "Create a GREAT day and keep making GREAT even better!"
+          </blockquote>
+          <p class="mt-4 text-slate-500">— Coach Aaron</p>
         </div>
       </section>
 
