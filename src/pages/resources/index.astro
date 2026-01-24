@@ -93,21 +93,27 @@ const displayBooks = books.length > 0 ? books : defaultBooks;
 
         <!-- Category Filter Buttons -->
         {categories.length > 0 && (
-          <div class="flex flex-wrap gap-3 mb-8">
-            <button class="px-4 py-2 bg-primary text-white rounded-full text-sm font-medium hover:bg-primary-dark transition-colors">
+          <div class="flex flex-wrap gap-3 mb-8" id="category-filters">
+            <button
+              data-category="all"
+              class="category-btn px-4 py-2 bg-primary text-white rounded-full text-sm font-medium hover:bg-primary-dark transition-colors"
+            >
               All Articles
             </button>
             {categories.map((category: string) => (
-              <button class="px-4 py-2 bg-slate-100 text-slate-700 rounded-full text-sm font-medium hover:bg-slate-200 transition-colors">
+              <button
+                data-category={category}
+                class="category-btn px-4 py-2 bg-slate-100 text-slate-700 rounded-full text-sm font-medium hover:bg-slate-200 transition-colors"
+              >
                 {category}
               </button>
             ))}
           </div>
         )}
 
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div id="blog-posts-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {blogPosts.map((post: any) => (
-            <a href={`/resources/blog/${post.slug}`}>
+            <a href={`/resources/blog/${post.slug}`} class="blog-post-card" data-category={post.category || 'uncategorized'}>
               <Card class="p-6 hover:border-primary hover:shadow-lg transition-all cursor-pointer group h-full">
                 {post.category && (
                   <Badge variant="primary" class="mb-3">
@@ -292,17 +298,29 @@ const displayBooks = books.length > 0 ? books : defaultBooks;
                     <p class="text-2xl font-bold text-slate-900 mb-6">{book.price}</p>
                   )}
 
-                  <a
-                    href={book.purchaseLink || '#'}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="inline-flex items-center gap-2 px-6 py-3 bg-accent hover:bg-accent-light text-white font-semibold rounded-xl transition-colors"
-                  >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                    </svg>
-                    Purchase Book
-                  </a>
+                  {book.purchaseLink && book.purchaseLink !== '#' ? (
+                    <a
+                      href={book.purchaseLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="inline-flex items-center gap-2 px-6 py-3 bg-accent hover:bg-accent-light text-white font-semibold rounded-xl transition-colors"
+                    >
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                      </svg>
+                      Purchase Book
+                    </a>
+                  ) : (
+                    <a
+                      href={createPageUrl('Contact')}
+                      class="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary-dark text-white font-semibold rounded-xl transition-colors"
+                    >
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                      Inquire About Book
+                    </a>
+                  )}
                 </div>
               </div>
             </Card>
@@ -345,4 +363,36 @@ const displayBooks = books.length > 0 ? books : defaultBooks;
   </main>
   <Footer />
 </Layout>
+
+<script>
+  // Category filter functionality
+  document.addEventListener('DOMContentLoaded', () => {
+    const filterButtons = document.querySelectorAll('.category-btn');
+    const blogPosts = document.querySelectorAll('.blog-post-card');
+
+    filterButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const category = button.getAttribute('data-category');
+
+        // Update button styles
+        filterButtons.forEach(btn => {
+          btn.classList.remove('bg-primary', 'text-white');
+          btn.classList.add('bg-slate-100', 'text-slate-700');
+        });
+        button.classList.remove('bg-slate-100', 'text-slate-700');
+        button.classList.add('bg-primary', 'text-white');
+
+        // Filter posts
+        blogPosts.forEach(post => {
+          const postCategory = post.getAttribute('data-category');
+          if (category === 'all' || postCategory === category) {
+            (post as HTMLElement).style.display = '';
+          } else {
+            (post as HTMLElement).style.display = 'none';
+          }
+        });
+      });
+    });
+  });
+</script>
 
