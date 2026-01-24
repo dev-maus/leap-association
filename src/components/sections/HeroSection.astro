@@ -3,13 +3,13 @@ import { sanity } from '../../lib/sanity';
 import { urlFor } from '../../lib/sanity';
 import CTAButtons from '../common/CTAButtons';
 
-const heroData = await sanity.fetch(`*[_type == "hero" && page == "home"][0]{
+const heroData = sanity ? await sanity.fetch(`*[_type == "hero" && page == "home"][0]{
   heading,
   subheading,
   ctaLabel,
   mediaUrl,
   image
-}`).catch(() => null);
+}`).catch(() => null) : null;
 ---
 
 <section class="relative min-h-screen flex items-center overflow-hidden bg-gradient-to-br from-primary via-primary-dark to-primary-dark">

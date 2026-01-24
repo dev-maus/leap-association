@@ -2,7 +2,7 @@
 import { sanity } from '../../lib/sanity';
 import { urlFor } from '../../lib/sanity';
 
-const leapItems = await sanity.fetch(`*[_type == "leapFramework"] | order(order asc)`).catch(() => []);
+const leapItems = sanity ? await sanity.fetch(`*[_type == "leapFramework"] | order(order asc)`).catch(() => []) : [];
 
 // Default LEAP items if none in Sanity
 const defaultItems = [

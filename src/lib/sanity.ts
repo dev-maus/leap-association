@@ -1,21 +1,24 @@
-import { createClient } from '@sanity/client';
+import { createClient, type SanityClient } from '@sanity/client';
 import imageUrlBuilder from '@sanity/image-url';
 
 const projectId = import.meta.env.SANITY_PROJECT_ID;
 const dataset = import.meta.env.SANITY_DATASET || 'production';
 const apiVersion = import.meta.env.SANITY_API_VERSION || new Date().toISOString().slice(0, 10);
 
-export const sanity = createClient({
-  projectId,
-  dataset,
-  apiVersion,
-  useCdn: true,
-});
+// Only create the client if projectId is configured
+export const sanity: SanityClient | null = projectId
+  ? createClient({
+      projectId,
+      dataset,
+      apiVersion,
+      useCdn: true,
+    })
+  : null;
 
-const builder = imageUrlBuilder(sanity);
+const builder = sanity ? imageUrlBuilder(sanity) : null;
 
 export const urlFor = (source: any) => {
-  if (!source) return null;
+  if (!source || !builder) return null;
   return builder.image(source);
 };
 

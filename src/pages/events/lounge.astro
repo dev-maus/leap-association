@@ -10,8 +10,8 @@ import { urlFor } from '../../lib/sanity';
 import { createPageUrl } from '../../lib/utils';
 
 // Fetch upcoming events from Sanity
-const leapLunchSessions = await sanity.fetch(`*[_type == "leapLunchSession" && isActive == true] | order(date asc)[0...5]`).catch(() => []);
-const signatureEventSessions = await sanity.fetch(`*[_type == "signatureEventSession"] | order(date asc)[0...5]`).catch(() => []);
+const leapLunchSessions = sanity ? await sanity.fetch(`*[_type == "leapLunchSession" && isActive == true] | order(date asc)[0...5]`).catch(() => []) : [];
+const signatureEventSessions = sanity ? await sanity.fetch(`*[_type == "signatureEventSession"] | order(date asc)[0...5]`).catch(() => []) : [];
 
 // Overview cards data
 const overviewCards = [

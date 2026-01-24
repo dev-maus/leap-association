@@ -10,7 +10,7 @@ import Button from '../../components/ui/Button.astro';
 import { sanity } from '../../lib/sanity';
 import { createPageUrl } from '../../lib/utils';
 
-const events = await sanity.fetch(`*[_type == "signatureEvent"] | order(_createdAt desc)`).catch(() => []);
+const events = sanity ? await sanity.fetch(`*[_type == "signatureEvent"] | order(_createdAt desc)`).catch(() => []) : [];
 
 // Default signature events per documentation
 const defaultEvents = [

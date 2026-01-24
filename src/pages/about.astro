@@ -8,9 +8,9 @@ import { urlFor } from '../lib/sanity';
 import { createPageUrl } from '../lib/utils';
 import CTAButtons from '../components/common/CTAButtons';
 
-const teamMember = await sanity.fetch(`*[_type == "teamMember"][0]`).catch(() => null);
-const testimonials = await sanity.fetch(`*[_type == "testimonial" && featured == true] | order(_createdAt desc)[0...6]`).catch(() => []);
-const caseStudies = await sanity.fetch(`*[_type == "caseStudy"] | order(_createdAt desc)[0...3]`).catch(() => []);
+const teamMember = sanity ? await sanity.fetch(`*[_type == "teamMember"][0]`).catch(() => null) : null;
+const testimonials = sanity ? await sanity.fetch(`*[_type == "testimonial" && featured == true] | order(_createdAt desc)[0...6]`).catch(() => []) : [];
+const caseStudies = sanity ? await sanity.fetch(`*[_type == "caseStudy"] | order(_createdAt desc)[0...3]`).catch(() => []) : [];
 
 // Default case studies if none in CMS
 const defaultCaseStudies = [

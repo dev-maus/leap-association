@@ -12,7 +12,7 @@ interface SchedulingConfig {
   url?: string;
 }
 
-const settings = await sanity.fetch<{
+const settings = sanity ? await sanity.fetch<{
   scheduling?: {
     individualScheduling?: SchedulingConfig;
     teamScheduling?: SchedulingConfig;
@@ -30,7 +30,7 @@ const settings = await sanity.fetch<{
       }
     }
   }`
-).catch(() => null);
+).catch(() => null) : null;
 
 const schedulingConfig = {
   individual: {

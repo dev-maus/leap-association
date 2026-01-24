@@ -9,7 +9,7 @@ import Card from '../components/ui/Card.astro';
 import { sanity } from '../lib/sanity';
 import { createPageUrl } from '../lib/utils';
 
-const services = await sanity.fetch(`*[_type == "service"] | order(_createdAt asc)`).catch(() => []);
+const services = sanity ? await sanity.fetch(`*[_type == "service"] | order(_createdAt asc)`).catch(() => []) : [];
 
 // Default services with full details per documentation
 const defaultServices = [

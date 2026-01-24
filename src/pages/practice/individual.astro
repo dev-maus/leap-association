@@ -8,16 +8,16 @@ import type { AssessmentQuestion, CaptchaConfig } from '../../components/islands
 import { createPageUrl } from '../../lib/utils';
 import { sanity } from '../../lib/sanity';
 
-const questions = await sanity.fetch<AssessmentQuestion[]>(
+const questions = sanity ? await sanity.fetch<AssessmentQuestion[]>(
   `*[_type == "assessmentQuestion" && assessmentType == "individual"] | order(order asc) {
     _id,
     category,
     text,
     ratingOptions
   }`
-);
+).catch(() => []) : [];
 
-const settings = await sanity.fetch<{
+const settings = sanity ? await sanity.fetch<{
   captchaEnabled?: boolean;
   hcaptchaSiteKey?: string;
 } | null>(
@@ -25,7 +25,7 @@ const settings = await sanity.fetch<{
     captchaEnabled,
     hcaptchaSiteKey
   }`
-);
+).catch(() => null) : null;
 
 const captchaConfig: CaptchaConfig | undefined = settings?.captchaEnabled
   ? {
