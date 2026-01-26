@@ -50,8 +50,12 @@ const heroData = sanity ? await sanity.fetch(`*[_type == "hero" && page == "home
               : "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/694200055fe4955e89271fbb/0d4eae03a_whiteshirtwithJacket2.png"}
             alt="Leadership Coach"
             class="h-full w-auto max-w-none object-contain"
-            style="mask-image: linear-gradient(to bottom, black 70%, transparent 100%), linear-gradient(to left, black 70%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent 100%), linear-gradient(to left, black 70%, transparent 100%); mask-composite: intersect; -webkit-mask-composite: source-in;"
           />
+          <!-- Square blur frame on all edges -->
+          <div class="absolute top-0 left-0 right-0 h-6 pointer-events-none" style="backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);"></div>
+          <div class="absolute bottom-0 left-0 right-0 h-6 pointer-events-none" style="backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);"></div>
+          <div class="absolute top-0 bottom-0 left-0 w-6 pointer-events-none" style="backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);"></div>
+          <div class="absolute top-0 bottom-0 right-0 w-6 pointer-events-none" style="backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);"></div>
         </div>
       </div>
     </div>
