@@ -14,6 +14,7 @@ import teamMember from './teamMember';
 import caseStudy from './caseStudy';
 import assessmentQuestion from './assessmentQuestion';
 import assessmentSettings from './assessmentSettings';
+import socialLink from './socialLink';
 
 export const schemaTypes = [
   siteSettings,
@@ -32,4 +33,5 @@ export const schemaTypes = [
   caseStudy,
   assessmentQuestion,
   assessmentSettings,
+  socialLink,
 ];

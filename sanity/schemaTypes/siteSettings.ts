@@ -33,12 +33,8 @@ export default defineType({
     defineField({
       name: 'socialLinks',
       title: 'Social Links',
-      type: 'object',
-      fields: [
-        {name: 'twitter', title: 'Twitter', type: 'url'},
-        {name: 'linkedin', title: 'LinkedIn', type: 'url'},
-        {name: 'facebook', title: 'Facebook', type: 'url'},
-      ],
+      type: 'array',
+      of: [{type: 'socialLink'}],
     }),
     defineField({
       name: 'bookingUrl',
