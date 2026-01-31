@@ -2,6 +2,7 @@
 import { sanity } from '../../lib/sanity';
 import { urlFor } from '../../lib/sanity';
 import CTAButtons from '../common/CTAButtons';
+import { DEFAULT_HERO_IMAGE_URL } from '../../lib/defaultContent';
 
 const heroData = sanity ? await sanity.fetch(`*[_type == "hero" && page == "home"][0]{
   heading,
@@ -10,6 +11,10 @@ const heroData = sanity ? await sanity.fetch(`*[_type == "hero" && page == "home
   mediaUrl,
   image
 }`).catch(() => null) : null;
+
+const heroImageUrl = heroData?.image
+  ? urlFor(heroData.image)?.width(600).height(800).url()
+  : DEFAULT_HERO_IMAGE_URL;
 ---
 
 <section class="relative min-h-screen flex items-center overflow-hidden bg-gradient-to-br from-primary via-primary-dark to-primary-dark">
@@ -45,21 +50,18 @@ const heroData = sanity ? await sanity.fetch(`*[_type == "hero" && page == "home
       <div class="relative h-full w-full flex items-center justify-end pr-8">
         <div class="relative z-10 hero-image-wrapper">
           <img
-            src={heroData?.image
-              ? urlFor(heroData.image)?.width(600).height(800).url()
-              : "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/694200055fe4955e89271fbb/0d4eae03a_whiteshirtwithJacket2.png"}
+            src={heroImageUrl}
             alt="Leadership Coach"
             class="h-full w-auto max-w-none object-contain"
           />
           <!-- Square blur frame on all edges -->
-          <div class="absolute top-0 left-0 right-0 h-6 pointer-events-none" style="backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);"></div>
-          <div class="absolute bottom-0 left-0 right-0 h-6 pointer-events-none" style="backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);"></div>
-          <div class="absolute top-0 bottom-0 left-0 w-6 pointer-events-none" style="backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);"></div>
-          <div class="absolute top-0 bottom-0 right-0 w-6 pointer-events-none" style="backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);"></div>
+          <div class="absolute top-0 left-0 right-0 h-6 pointer-events-none backdrop-blur-sm"></div>
+          <div class="absolute bottom-0 left-0 right-0 h-6 pointer-events-none backdrop-blur-sm"></div>
+          <div class="absolute top-0 bottom-0 left-0 w-6 pointer-events-none backdrop-blur-sm"></div>
+          <div class="absolute top-0 bottom-0 right-0 w-6 pointer-events-none backdrop-blur-sm"></div>
         </div>
       </div>
     </div>
   </div>
 </section>
-
 

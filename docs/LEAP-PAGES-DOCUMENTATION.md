@@ -19,9 +19,9 @@ Complete documentation for all major pages including layout, content, and struct
 
 ## 1. About LEAP
 
-**File:** `src/pages/About.jsx`
-**Route:** `/About`
-**Lines:** 592
+**File:** `src/pages/about.astro`
+**Route:** `/about`
+**Framework:** Astro
 
 ### Layout Structure
 
@@ -126,9 +126,9 @@ base44.entities.Testimonial.filter({
 
 ## 2. Solutions
 
-**File:** `src/pages/Solutions.jsx`
-**Route:** `/Solutions`
-**Lines:** 249
+**File:** `src/pages/solutions.astro`
+**Route:** `/solutions`
+**Framework:** Astro
 
 ### Layout Structure
 
@@ -223,7 +223,7 @@ base44.entities.Testimonial.filter({
 
 ## 3. What's In Your Practice
 
-**File:** `src/pages/Practice.jsx`
+**File:** `src/pages/practice/index.astro`
 **Route:** `/Practice` or `/What-In-Your-Practice`
 **Lines:** 843
 
@@ -338,7 +338,7 @@ await base44.entities.Lead.create({
 
 ## 4. Signature Events
 
-**File:** `src/pages/SignatureEvents.jsx`
+**File:** `src/pages/events/index.astro`
 **Route:** `/SignatureEvents`
 **Lines:** 508
 
@@ -459,7 +459,7 @@ await base44.entities.Lead.create({
 
 ## 5. LEAP Lounge
 
-**File:** `src/pages/LEAPLounge.jsx`
+**File:** `src/pages/events/lounge.astro`
 **Route:** `/LEAPLounge`
 **Lines:** 602
 
@@ -582,7 +582,7 @@ base44.entities.SignatureEventSession.list('date', 10)
 
 ## 6. Resources
 
-**File:** `src/pages/Resources.jsx`
+**File:** `src/pages/resources/index.astro`
 **Route:** `/Resources`
 **Lines:** 403
 
@@ -797,12 +797,12 @@ export function createPageUrl(pageName) {
 
 | Page | File | Route | Lines | Content Type | Data Source |
 |------|------|-------|-------|--------------|-------------|
-| About LEAP | About.jsx | /About | 592 | Informational | Static + DB (Testimonials) |
-| Solutions | Solutions.jsx | /Solutions | 249 | Product showcase | Static |
-| What's In Your Practice | Practice.jsx | /Practice | 843 | Interactive assessment | DB (Leads) |
-| Signature Events | SignatureEvents.jsx | /SignatureEvents | 508 | Events listing | Static |
-| LEAP Lounge | LEAPLounge.jsx | /LEAPLounge | 602 | Venue rental | DB (Events) |
-| Resources | Resources.jsx | /Resources | 403 | Learning hub | DB (4 content types) |
+| About LEAP | about.astro | /about | - | Informational | Static + Sanity (Testimonials) |
+| Solutions | solutions.astro | /solutions | - | Product showcase | Static + Sanity |
+| What's In Your Practice | practice/index.astro | /practice | - | Interactive assessment | Supabase (Leads) |
+| Signature Events | events/index.astro | /events | - | Events listing | Static + Sanity |
+| LEAP Lounge | events/lounge.astro | /events/lounge | - | Venue rental | Sanity (Events) |
+| Resources | resources/index.astro | /resources | - | Learning hub | Sanity (4 content types) |
 
 ---
 

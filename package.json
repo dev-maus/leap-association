@@ -32,13 +32,13 @@
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/conradera/leap-association.git"
+    "url": "git+https://github.com/dev-maus/leap-association.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/conradera/leap-association/issues"
+    "url": "https://github.com/dev-maus/leap-association/issues"
   },
-  "homepage": "https://github.com/conradera/leap-association#readme"
+  "homepage": "https://github.com/dev-maus/leap-association#readme"
 }

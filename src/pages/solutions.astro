@@ -8,8 +8,10 @@ import Button from '../components/ui/Button.astro';
 import Card from '../components/ui/Card.astro';
 import { sanity } from '../lib/sanity';
 import { createPageUrl } from '../lib/utils';
+import { DEFAULT_STATS, type Statistic } from '../lib/defaultContent';
 
 const services = sanity ? await sanity.fetch(`*[_type == "service"] | order(_createdAt asc)`).catch(() => []) : [];
+const statsData = sanity ? await sanity.fetch(`*[_type == "statistic" && page == "solutions"] | order(order asc)`).catch(() => []) : [];
 
 // Default services with full details per documentation
 const defaultServices = [
@@ -67,13 +69,8 @@ const defaultServices = [
 
 const displayServices = services.length > 0 ? services : defaultServices;
 
-// Stats data
-const stats = [
-  { value: '750+', label: 'Organizations Served' },
-  { value: '10,000+', label: 'Leaders Trained' },
-  { value: '25+', label: 'Industries' },
-  { value: '98%', label: 'Client Satisfaction' },
-];
+// Stats data - from CMS or fallback to defaults
+const stats: Statistic[] = statsData.length > 0 ? statsData : DEFAULT_STATS;
 ---
 
 <Layout>

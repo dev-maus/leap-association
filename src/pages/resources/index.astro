@@ -10,6 +10,7 @@ import NewsletterForm from '../../components/islands/NewsletterForm';
 import { sanity } from '../../lib/sanity';
 import { urlFor, urlForFile } from '../../lib/sanity';
 import { createPageUrl } from '../../lib/utils';
+import { DEFAULT_BOOKS, type Book } from '../../lib/defaultContent';
 
 const blogPosts = sanity ? await sanity.fetch(`*[_type == "blogPost" && status == "published"] | order(publishedAt desc)[0...12]`).catch(() => []) : [];
 const videos = sanity ? await sanity.fetch(`*[_type == "video" && status == "published"] | order(_createdAt desc)[0...12]`).catch(() => []) : [];
@@ -34,19 +35,7 @@ const books = sanity ? await sanity.fetch(`*[_type == "book" && status == "publi
 // Extract unique categories from blog posts
 const categories = [...new Set(blogPosts.map((post: any) => post.category).filter(Boolean))];
 
-// Default books if none in CMS
-const defaultBooks = [
-  {
-    title: 'The Practice of Excellence',
-    subtitle: 'Building Repeatable Success Through Intentional Action',
-    description: 'Discover how to transform your daily actions into powerful patterns that create lasting excellence. This comprehensive guide walks you through the LEAP methodology with practical exercises and real-world examples.',
-    coverUrl: null,
-    price: '$24.99',
-    purchaseLink: '#'
-  }
-];
-
-const displayBooks = books.length > 0 ? books : defaultBooks;
+const displayBooks: Book[] = books.length > 0 ? books : DEFAULT_BOOKS;
 ---
 
 <Layout>
