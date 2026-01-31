@@ -2,8 +2,64 @@ import { useState, useEffect } from 'react';
 import { supabaseClient } from '../../lib/supabase';
 import { getUserDetails } from '../../lib/userStorage';
 import { saveAssessmentData } from '../../lib/assessmentStorage';
+import { buildUrl } from '../../lib/utils';
 import jsPDF from 'jspdf';
-import { Download, Loader2, Calendar } from 'lucide-react';
+import { Download, Loader2, Calendar, Target, Zap, BookOpen, ChevronRight } from 'lucide-react';
+
+interface LeapDimensionScores {
+  leadership: number;
+  effectiveness: number;
+  accountability: number;
+  productivity: number;
+}
+
+function getInterpretationText(
+  leapScores: LeapDimensionScores,
+  maxLEAPScore: number
+): { zone: string; description: string } {
+  const percentages = Object.values(leapScores).map((s) => (s / maxLEAPScore) * 100);
+  const minPct = Math.min(...percentages);
+  const maxPct = Math.max(...percentages);
+  const avgPct = percentages.reduce((a, b) => a + b, 0) / 4;
+  const range = maxPct - minPct;
+
+  if (minPct >= 80) {
+    return {
+      zone: 'Expert Zone',
+      description:
+        'Your scores indicate exceptional development across all LEAP dimensions. You demonstrate consistent, high-level practice in Leadership, Effectiveness, Accountability, and Productivity.',
+    };
+  }
+  if (minPct < 40) {
+    return {
+      zone: 'Growth Zone',
+      description:
+        'Your scores reveal opportunities for focused development. One or more dimensions would benefit from intentional practice. Start with your lowest area and build systematically.',
+    };
+  }
+  if (range <= 25 && avgPct >= 60) {
+    return {
+      zone: 'Emerging Leader Zone',
+      description:
+        "Your scores indicate balanced development across Habits, Abilities, Talents, and Skills. This profile represents the 'Emerging Leader Zone' — high potential with inconsistent execution. You demonstrate the capability for strong leadership but require more consistent practice across LEAP dimensions.",
+    };
+  }
+  return {
+    zone: 'Developing Leader Zone',
+    description:
+      'Your scores show a mix of strengths and growth areas. Focus on building consistency in your strongest dimensions while intentionally developing those that need more attention.',
+  };
+}
+
+function formatCategory(category: string): string {
+  const map: Record<string, string> = {
+    habit: 'Habits',
+    ability: 'Ability',
+    talent: 'Talent',
+    skill: 'Skill',
+  };
+  return map[category] ?? category;
+}
 
 interface SchedulingOption {
   buttonText: string;
@@ -168,7 +224,42 @@ export default function AssessmentResults({ schedulingConfig }: AssessmentResult
   const maxLEAPScore = isTeam ? 24 : 16;  // (12+12) or (8+8)
   const maxHATSScore = isTeam ? 12 : 8;   // 3×4 or 2×4
 
-  const leapScores = [
+  const dimensionConfig: Record<
+    string,
+    { letter: string; formula: string; barColor: string; gradient: string }
+  > = {
+    leadership: {
+      letter: 'L',
+      formula: 'Habits + Talents',
+      barColor: 'bg-blue-500',
+      gradient: 'from-blue-500 to-blue-600',
+    },
+    effectiveness: {
+      letter: 'E',
+      formula: 'Habits + Abilities',
+      barColor: 'bg-emerald-500',
+      gradient: 'from-emerald-500 to-emerald-600',
+    },
+    accountability: {
+      letter: 'A',
+      formula: 'Abilities + Skills',
+      barColor: 'bg-purple-500',
+      gradient: 'from-purple-500 to-purple-600',
+    },
+    productivity: {
+      letter: 'P',
+      formula: 'Habits + Skills',
+      barColor: 'bg-amber-500',
+      gradient: 'from-amber-500 to-amber-600',
+    },
+  };
+
+  const interpretation = getInterpretationText(
+    response.scores || { leadership: 0, effectiveness: 0, accountability: 0, productivity: 0 },
+    maxLEAPScore
+  );
+
+  const orderedLeapScores = [
     { key: 'leadership', score: response.scores?.leadership || 0 },
     { key: 'effectiveness', score: response.scores?.effectiveness || 0 },
     { key: 'accountability', score: response.scores?.accountability || 0 },
@@ -176,290 +267,352 @@ export default function AssessmentResults({ schedulingConfig }: AssessmentResult
   ].map((s) => ({
     ...s,
     percentage: (s.score / maxLEAPScore) * 100,
-  })).sort((a, b) => b.percentage - a.percentage);
+  }));
 
-  const strongest = leapScores[0];
-  const needsFocus = leapScores[leapScores.length - 1];
+  const answers = (response.answers || []) as Array<{
+    question_id?: string;
+    question_text?: string;
+    response_label?: string;
+    category?: string;
+    score?: number;
+  }>;
 
-  const dimensionConfig: Record<string, any> = {
-    leadership: {
-      letter: 'L',
-      title: 'Leadership',
-      subtitle: 'The practice of influence',
-      description: 'How you show up determines how others follow, align, and collaborate.',
-      color: 'from-blue-500 to-blue-600',
-      bgColor: 'bg-blue-50',
-      textColor: 'text-blue-600',
-      barColor: 'bg-blue-500',
-    },
-    effectiveness: {
-      letter: 'E',
-      title: 'Effectiveness',
-      subtitle: 'The practice of clarity and execution',
-      description: 'Great visions require effective behaviors, structure, and habits.',
-      color: 'from-emerald-500 to-emerald-600',
-      bgColor: 'bg-emerald-50',
-      textColor: 'text-emerald-600',
-      barColor: 'bg-emerald-500',
-    },
-    accountability: {
-      letter: 'A',
-      title: 'Accountability',
-      subtitle: 'The practice of ownership and trust',
-      description: 'Teams rise or fall on their ability to follow through.',
-      color: 'from-purple-500 to-purple-600',
-      bgColor: 'bg-purple-50',
-      textColor: 'text-purple-600',
-      barColor: 'bg-purple-500',
-    },
-    productivity: {
-      letter: 'P',
-      title: 'Productivity',
-      subtitle: 'The practice of meaningful progress',
-      description: 'Not just doing more, but doing what matters most.',
-      color: 'from-amber-500 to-amber-600',
-      bgColor: 'bg-amber-50',
-      textColor: 'text-amber-600',
-      barColor: 'bg-amber-500',
-    },
-  };
-
-  const getScoreLabel = (pct: number) => {
-    if (pct >= 80) return 'Excellent';
-    if (pct >= 60) return 'Strong';
-    if (pct >= 40) return 'Developing';
-    return 'Needs Focus';
-  };
+  const quickWinItems = [
+    'Set a Daily Top 3 — Identify the 3 most important tasks before your day begins',
+    "Give one piece of positive feedback — Acknowledge someone's contribution within the first hour",
+    "Review tomorrow's priorities before ending your day — Spend 5 minutes planning the next day",
+  ];
 
   const handleDownloadPDF = () => {
     const doc = new jsPDF();
+    const purple = [118, 100, 143] as [number, number, number];
 
-    // Header
     doc.setFontSize(20);
-    doc.setTextColor(118, 100, 143);
-    doc.text('HATS™ Assessment Results', 20, 20);
+    doc.setTextColor(...purple);
+    doc.text('LEAP HATS™ Diagnostic Results', 20, 20);
 
+    doc.setFontSize(11);
+    doc.setTextColor(100, 100, 100);
+    doc.text('A LEAP-Branded Practice Insight Report', 20, 28);
+
+    // Introduction block (purple background)
+    doc.setFillColor(...purple);
+    doc.rect(0, 35, 210, 25, 'F');
+    doc.setTextColor(255, 255, 255);
     doc.setFontSize(12);
+    doc.text('Introduction', 20, 44);
+    doc.setFontSize(10);
+    doc.text(
+      'Every leader is practicing something — intentionally or unintentionally. Your HATS™ (Habits, Abilities, Talents, and Skills) reveal the truth behind your daily practice and how it impacts your Leadership, Effectiveness, Accountability, and Productivity.',
+      20,
+      52,
+      { maxWidth: 170 }
+    );
+
+    let yPos = 70;
     doc.setTextColor(0, 0, 0);
-    doc.text(`${isTeam ? 'Team/Organization' : 'Individual'} Assessment`, 20, 30);
-
-    if (userDetails) {
-      doc.setFontSize(10);
-      if (userDetails.full_name) doc.text(`Name: ${userDetails.full_name}`, 20, 38);
-      if (userDetails.company) doc.text(`Company: ${userDetails.company}`, 20, 44);
-      doc.text(`Date: ${new Date(response.created_date).toLocaleDateString()}`, 20, userDetails.company ? 50 : 44);
-    }
-
-    // LEAP Scores
     doc.setFontSize(14);
-    doc.setTextColor(118, 100, 143);
-    doc.text('LEAP Dimension Scores', 20, 65);
+    doc.setTextColor(...purple);
+    doc.text('Participant Results Summary', 20, yPos);
+    yPos += 8;
 
+    const participantName = userDetails?.full_name || '—';
+    const dateStr = new Date(response.created_at || response.created_date || Date.now()).toLocaleDateString();
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text('Name', 20, yPos);
+    doc.setTextColor(0, 0, 0);
+    doc.text(participantName, 50, yPos);
+    doc.setTextColor(100, 100, 100);
+    doc.text('Date', 140, yPos);
+    doc.setTextColor(0, 0, 0);
+    doc.text(dateStr, 160, yPos);
+    yPos += 10;
+
+    doc.setDrawColor(200, 200, 200);
+    doc.line(20, yPos, 190, yPos);
+    yPos += 8;
+
+    doc.setFontSize(9);
+    doc.setTextColor(100, 100, 100);
+    doc.text('Question', 20, yPos);
+    doc.text('Your Response', 70, yPos);
+    doc.text('Category', 130, yPos);
+    doc.text('Points', 175, yPos);
+    yPos += 8;
+    doc.line(20, yPos, 190, yPos);
+    yPos += 6;
+
+    doc.setTextColor(0, 0, 0);
+    answers.forEach((a, i) => {
+      if (yPos > 270) return;
+      const qText = (a.question_text || `Q${i + 1}`).slice(0, 35);
+      const resp = (a.response_label || '—').slice(0, 35);
+      const cat = formatCategory(a.category || '');
+      const pts = String(a.score ?? '—');
+      doc.text(qText, 20, yPos);
+      doc.text(resp, 70, yPos);
+      doc.text(cat, 130, yPos);
+      doc.text(pts, 180, yPos);
+      yPos += 7;
+    });
+
+    yPos += 10;
+    doc.setFontSize(14);
+    doc.setTextColor(...purple);
+    doc.text('LEAP Dimension Scores', 20, yPos);
+    yPos += 8;
     doc.setFontSize(10);
     doc.setTextColor(0, 0, 0);
-    let yPos = 75;
-    Object.entries(response.scores || {}).forEach(([dimension, score]: [string, any]) => {
-      const percentage = Math.round((score / maxLEAPScore) * 100);
+    Object.entries(response.scores || {}).forEach(([dimension, score]: [string, unknown]) => {
+      const s = Number(score);
       doc.text(
-        `${dimension.charAt(0).toUpperCase() + dimension.slice(1)}: ${score}/${maxLEAPScore} (${percentage}%)`,
+        `${dimension.charAt(0).toUpperCase() + dimension.slice(1)}: ${s}/${maxLEAPScore}`,
         20,
         yPos
       );
-      yPos += 8;
+      yPos += 6;
     });
 
-    // HATS Breakdown
-    yPos += 10;
+    yPos += 6;
     doc.setFontSize(14);
-    doc.setTextColor(118, 100, 143);
+    doc.setTextColor(...purple);
     doc.text('HATS™ Category Breakdown', 20, yPos);
-
-    yPos += 10;
+    yPos += 6;
     doc.setFontSize(10);
     doc.setTextColor(0, 0, 0);
     doc.text(`Habits: ${response.habit_score || 0}/${maxHATSScore}`, 20, yPos);
-    yPos += 8;
+    yPos += 6;
     doc.text(`Abilities: ${response.ability_score || 0}/${maxHATSScore}`, 20, yPos);
-    yPos += 8;
+    yPos += 6;
     doc.text(`Talents: ${response.talent_score || 0}/${maxHATSScore}`, 20, yPos);
-    yPos += 8;
+    yPos += 6;
     doc.text(`Skills: ${response.skill_score || 0}/${maxHATSScore}`, 20, yPos);
-
-    // Key Insights
-    yPos += 15;
-    doc.setFontSize(14);
-    doc.setTextColor(118, 100, 143);
-    doc.text('Key Insights', 20, yPos);
-
-    yPos += 10;
-    doc.setFontSize(10);
-    doc.setTextColor(0, 0, 0);
-    doc.text(
-      `Strongest Area: ${strongest.key.charAt(0).toUpperCase() + strongest.key.slice(1)} (${Math.round(strongest.percentage)}%)`,
-      20,
-      yPos
-    );
-    yPos += 8;
-    doc.text(
-      `Growth Opportunity: ${needsFocus.key.charAt(0).toUpperCase() + needsFocus.key.slice(1)} (${Math.round(needsFocus.percentage)}%)`,
-      20,
-      yPos
-    );
 
     doc.setFontSize(8);
     doc.setTextColor(100, 100, 100);
-    doc.text('© LEAP Association - Excellence is a practice, not an event.', 20, 280);
+    doc.text('© LEAP Association - Excellence is a practice, not an event.', 20, 285);
 
-    const fileName = userDetails?.full_name 
-      ? `Assessment-${userDetails.full_name.replace(/\s+/g, '-')}.pdf`
-      : `Assessment-${response.id}.pdf`;
+    const fileName = userDetails?.full_name
+      ? `LEAP-HATS-Assessment-${userDetails.full_name.replace(/\s+/g, '-')}.pdf`
+      : `LEAP-HATS-Assessment-${response.id}.pdf`;
     doc.save(fileName);
   };
+
+  const scheduling = isTeam ? schedulingConfig.team : schedulingConfig.individual;
+  const schedulingUrl = scheduling.url
+    ? (() => {
+        const url = new URL(scheduling.url);
+        if (userDetails?.full_name) url.searchParams.set('name', userDetails.full_name);
+        if (userDetails?.email) url.searchParams.set('email', userDetails.email);
+        if (userDetails?.company) url.searchParams.set('company', userDetails.company);
+        return url.toString();
+      })()
+    : null;
+  const trainingUrl = buildUrl('services/training');
+  const createdDate = new Date(response.created_at || response.created_date || Date.now()).toLocaleDateString();
 
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="text-center">
-        <h1 className="text-4xl lg:text-5xl font-bold text-primary mb-4">
-          Your Assessment Results
+        <h1 className="text-4xl lg:text-5xl font-bold text-primary mb-2">
+          LEAP HATS™ Diagnostic Results
         </h1>
-        <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-          {isTeam
-            ? 'Here are your team\'s practice patterns and LEAP dimension scores.'
-            : 'Here are your personal practice patterns and LEAP dimension scores.'}
+        <p className="text-lg text-slate-600 italic mb-6">
+          A LEAP-Branded Practice Insight Report
         </p>
-      </div>
-
-      {/* LEAP Scores */}
-      <div className="grid md:grid-cols-2 gap-6">
-        {leapScores.map((dimension) => {
-          const config = dimensionConfig[dimension.key];
-          return (
-            <div
-              key={dimension.key}
-              className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-shadow"
-            >
-              <div className="flex items-start gap-4">
-                <div
-                  className={`w-14 h-14 rounded-xl bg-gradient-to-br ${config.color} flex items-center justify-center flex-shrink-0`}
-                >
-                  <span className="text-2xl font-bold text-white">{config.letter}</span>
-                </div>
-
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-1">
-                    <h3 className="text-lg font-bold text-primary">{config.title}</h3>
-                    <span className={`text-sm font-semibold ${config.textColor}`}>
-                      {dimension.score}/{maxLEAPScore}
-                    </span>
-                  </div>
-                  <p className={`text-sm ${config.textColor} font-medium mb-3`}>{config.subtitle}</p>
-
-                  {/* Progress bar */}
-                  <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden mb-2">
-                    <div
-                      className={`h-full ${config.barColor} rounded-full transition-all duration-1000`}
-                      style={{ width: `${dimension.percentage}%` }}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-slate-500">{config.description}</span>
-                    <span
-                      className={`text-xs font-semibold px-2 py-1 rounded-full ${config.bgColor} ${config.textColor}`}
-                    >
-                      {getScoreLabel(dimension.percentage)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* HATS Breakdown */}
-      <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-100">
-        <h2 className="text-2xl font-bold text-primary mb-6">HATS™ Category Breakdown</h2>
-        <div className="grid md:grid-cols-4 gap-6">
-          {[
-            { label: 'Habits', score: response.habit_score || 0, max: maxHATSScore },
-            { label: 'Abilities', score: response.ability_score || 0, max: maxHATSScore },
-            { label: 'Talents', score: response.talent_score || 0, max: maxHATSScore },
-            { label: 'Skills', score: response.skill_score || 0, max: maxHATSScore },
-          ].map((item) => (
-            <div key={item.label} className="text-center">
-              <div className="text-3xl font-bold text-primary mb-2">
-                {item.score}/{item.max}
-              </div>
-              <div className="text-sm text-slate-600">{item.label}</div>
-              <div className="w-full h-2 bg-slate-100 rounded-full mt-3 overflow-hidden">
-                <div
-                  className="h-full bg-primary rounded-full"
-                  style={{ width: `${(item.score / item.max) * 100}%` }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Key Insights */}
-      <div className="bg-gradient-to-br from-primary/5 to-accent/5 rounded-2xl p-8">
-        <h2 className="text-2xl font-bold text-primary mb-6">Key Insights</h2>
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="bg-white rounded-xl p-6">
-            <h3 className="font-semibold text-slate-900 mb-2">Strongest Area</h3>
-            <p className="text-2xl font-bold text-primary mb-2">
-              {strongest.key.charAt(0).toUpperCase() + strongest.key.slice(1)}
-            </p>
-            <p className="text-slate-600">
-              {Math.round(strongest.percentage)}% - {getScoreLabel(strongest.percentage)}
-            </p>
-          </div>
-          <div className="bg-white rounded-xl p-6">
-            <h3 className="font-semibold text-slate-900 mb-2">Growth Opportunity</h3>
-            <p className="text-2xl font-bold text-primary mb-2">
-              {needsFocus.key.charAt(0).toUpperCase() + needsFocus.key.slice(1)}
-            </p>
-            <p className="text-slate-600">
-              {Math.round(needsFocus.percentage)}% - {getScoreLabel(needsFocus.percentage)}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Actions */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-center">
         <button
           onClick={handleDownloadPDF}
-          className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-primary text-white hover:bg-primary-dark transition-colors"
+          className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl border-2 border-primary bg-white text-primary hover:bg-primary/5 transition-colors"
         >
           <Download className="w-5 h-5" />
           Download PDF Report
         </button>
-        {(() => {
-          const scheduling = isTeam ? schedulingConfig.team : schedulingConfig.individual;
-          if (!scheduling.url) return null;
-          
-          // Build URL with user details as query params
-          const url = new URL(scheduling.url);
-          if (userDetails?.full_name) url.searchParams.set('name', userDetails.full_name);
-          if (userDetails?.email) url.searchParams.set('email', userDetails.email);
-          if (userDetails?.company) url.searchParams.set('company', userDetails.company);
-          
-          return (
+      </div>
+
+      {/* Introduction */}
+      <div className="bg-primary rounded-2xl p-8 shadow-md">
+        <h2 className="text-xl font-bold text-white mb-4">Introduction</h2>
+        <p className="text-white/95 leading-relaxed">
+          Every leader is practicing something — intentionally or unintentionally. Your HATS™ (Habits, Abilities, Talents, and Skills) reveal the truth behind your daily practice and how it impacts your Leadership, Effectiveness, Accountability, and Productivity.
+        </p>
+      </div>
+
+      {/* HATS Score Summary */}
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+        <h2 className="text-xl font-bold text-primary">HATS Score Summary</h2>
+      </div>
+
+      {/* Interpretation of Your HATS Profile */}
+      <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-100">
+        <h2 className="text-xl font-bold text-primary mb-4">Interpretation of Your HATS™ Profile</h2>
+        <p className="text-slate-700 leading-relaxed">
+          {interpretation.description}
+        </p>
+      </div>
+
+      {/* LEAP Interpretation */}
+      <div className="bg-amber-50 rounded-2xl p-8 shadow-sm border border-amber-200">
+        <h2 className="text-xl font-bold text-primary mb-6">LEAP Interpretation</h2>
+        <div className="space-y-5">
+          {orderedLeapScores.map((dimension) => {
+            const config = dimensionConfig[dimension.key];
+            return (
+              <div key={dimension.key} className="flex items-center gap-4">
+                <div
+                  className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${config.gradient} flex items-center justify-center flex-shrink-0 shadow-lg`}
+                >
+                  <span className="text-white text-3xl font-bold">{config.letter}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-slate-700 font-medium">
+                    {dimension.key.charAt(0).toUpperCase() + dimension.key.slice(1)} ({config.letter}) = {config.formula}
+                  </span>
+                  <div className="mt-2 h-3 bg-slate-200 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full ${config.barColor} rounded-full transition-all duration-1000`}
+                      style={{ width: `${Math.min(100, dimension.percentage)}%` }}
+                    />
+                  </div>
+                </div>
+                <span className="text-slate-700 font-semibold flex-shrink-0">
+                  {dimension.score}/{maxLEAPScore}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Participant Results Summary */}
+      <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-100">
+        <h2 className="text-xl font-bold text-primary mb-6">Participant Results Summary</h2>
+        <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-200">
+          <div>
+            <span className="text-slate-500 text-sm block">Name</span>
+            <span className="font-bold text-slate-900">{userDetails?.full_name || '—'}</span>
+          </div>
+          <div className="text-right">
+            <span className="text-slate-500 text-sm block">Date</span>
+            <span className="font-bold text-slate-900">{createdDate}</span>
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-200">
+                <th className="text-left py-3 text-slate-600 font-medium">Question</th>
+                <th className="text-left py-3 text-slate-600 font-medium">Your Response</th>
+                <th className="text-left py-3 text-slate-600 font-medium">Category</th>
+                <th className="text-right py-3 text-slate-600 font-medium">Points</th>
+              </tr>
+            </thead>
+            <tbody>
+              {answers.map((a, i) => (
+                <tr key={i} className="border-b border-slate-100">
+                  <td className="py-3 font-medium text-slate-900">{a.question_text || `Q${i + 1}`}</td>
+                  <td className="py-3 text-slate-700">{a.response_label || '—'}</td>
+                  <td className="py-3 text-slate-700">{formatCategory(a.category || '')}</td>
+                  <td className="py-3 text-right text-slate-700">{a.score ?? '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Your LEAP Practice Summary */}
+      <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-100">
+        <h2 className="text-xl font-bold text-primary mb-6">Your LEAP Practice Summary</h2>
+        <div className="space-y-4">
+          <div className="bg-primary/10 rounded-xl p-6 flex gap-4">
+            <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+              <Target className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h3 className="font-bold text-primary mb-2">Your Opportunity</h3>
+              <p className="text-slate-700">
+                Strengthen consistency in one key area at a time. Start with habits, then build abilities and skills.
+              </p>
+            </div>
+          </div>
+          <div className="bg-amber-50 rounded-xl p-6 flex gap-4">
+            <div className="w-12 h-12 rounded-full bg-accent flex items-center justify-center flex-shrink-0">
+              <Zap className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-slate-900 mb-2">Quick Win Challenge</h3>
+              <p className="text-slate-700 mb-4">
+                Choose one 5-minute leadership habit to repeat for 7 days:
+              </p>
+              <ul className="space-y-2">
+                {quickWinItems.map((item, i) => (
+                  <li key={i} className="flex gap-3 items-start">
+                    <span className="w-5 h-5 rounded-full bg-accent flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </span>
+                    <span className="text-slate-700">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Next Steps */}
+      <div className="bg-primary rounded-2xl p-8 lg:p-10 shadow-md">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
+            <Target className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-white">Next Steps for Your LEAP Practice</h2>
+            <p className="text-white/80">Ready to strengthen your LEAP practice?</p>
+          </div>
+        </div>
+        <div className="grid md:grid-cols-3 gap-6 mt-8">
+          {schedulingUrl && (
             <a
-              href={url.toString()}
+              href={schedulingUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-primary text-primary hover:bg-primary/5 transition-colors"
+              className="bg-primary-dark/80 rounded-xl p-6 hover:bg-primary-dark transition-colors group"
             >
-              <Calendar className="w-5 h-5" />
-              {scheduling.buttonText}
+              <Calendar className="w-10 h-10 text-accent mb-4" />
+              <h3 className="font-bold text-white mb-2">Schedule Your LEAP Strategy Call</h3>
+              <p className="text-white/80 text-sm mb-4">Book a personalized 30-minute session to discuss your results</p>
+              <span className="inline-flex w-8 h-8 rounded-full bg-accent items-center justify-center group-hover:scale-110 transition-transform">
+                <ChevronRight className="w-4 h-4 text-white" />
+              </span>
             </a>
-          );
-        })()}
+          )}
+          <button
+            onClick={handleDownloadPDF}
+            className="bg-primary-dark/80 rounded-xl p-6 hover:bg-primary-dark transition-colors text-left group"
+          >
+            <Download className="w-10 h-10 text-accent mb-4" />
+            <h3 className="font-bold text-white mb-2">Download Your Personalized LEAP Practice Plan</h3>
+            <p className="text-white/80 text-sm mb-4">Get your complete PDF report for reference</p>
+            <span className="inline-flex w-8 h-8 rounded-full bg-accent items-center justify-center group-hover:scale-110 transition-transform">
+              <ChevronRight className="w-4 h-4 text-white" />
+            </span>
+          </button>
+          <a
+            href={trainingUrl}
+            className="bg-primary-dark/80 rounded-xl p-6 hover:bg-primary-dark transition-colors group block"
+          >
+            <BookOpen className="w-10 h-10 text-accent mb-4" />
+            <h3 className="font-bold text-white mb-2">Explore LEAP Leadership Training</h3>
+            <p className="text-white/80 text-sm mb-4">Discover programs designed to strengthen your practice</p>
+            <span className="inline-flex w-8 h-8 rounded-full bg-accent items-center justify-center group-hover:scale-110 transition-transform">
+              <ChevronRight className="w-4 h-4 text-white" />
+            </span>
+          </a>
+        </div>
       </div>
     </div>
   );
