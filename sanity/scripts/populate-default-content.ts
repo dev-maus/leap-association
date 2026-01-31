@@ -83,29 +83,29 @@ async function populateDefaultContent() {
       {
         letter: 'L',
         title: 'Leadership',
-        subtitle: 'Lead with Purpose',
-        description: 'Develop the core leadership competencies needed to inspire and guide your team toward success.',
+        subtitle: 'The practice of influence.',
+        description: 'How you show up determines how others follow, align, and collaborate.',
         color: '#3B82F6',
       },
       {
         letter: 'E',
-        title: 'Excellence',
-        subtitle: 'Pursue Excellence',
-        description: 'Set high standards and continuously improve your performance and that of your organization.',
+        title: 'Effectiveness',
+        subtitle: 'The practice of clarity and execution.',
+        description: 'Great visions collapse without effective behaviors, structure, and habits.',
         color: '#10B981',
       },
       {
         letter: 'A',
-        title: 'Achievement',
-        subtitle: 'Achieve Results',
-        description: 'Focus on outcomes and deliver measurable results that drive organizational success.',
+        title: 'Accountability',
+        subtitle: 'The practice of ownership and trust.',
+        description: 'Teams rise or fall on their ability to follow through and hold each other up.',
         color: '#F59E0B',
       },
       {
         letter: 'P',
-        title: 'Performance',
-        subtitle: 'Peak Performance',
-        description: 'Optimize your performance and create systems that enable sustained high performance.',
+        title: 'Productivity',
+        subtitle: 'The practice of meaningful progress.',
+        description: 'Not just doing more, but doing what matters most, consistently.',
         color: '#EF4444',
       },
     ]
@@ -165,7 +165,7 @@ async function populateDefaultContent() {
     const faqs = [
       {
         question: 'What is the LEAP framework?',
-        answer: 'The LEAP framework is a comprehensive leadership development model that focuses on Leadership, Excellence, Achievement, and Performance. It provides a structured approach to developing leaders at all levels.',
+        answer: 'The LEAP framework is a comprehensive leadership development model that focuses on Leadership, Effectiveness, Accountability, and Productivity. It provides a structured approach to developing leaders at all levels.',
         category: 'General',
       },
       {

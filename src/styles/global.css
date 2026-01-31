@@ -11,7 +11,11 @@ html {
 }
 
 body {
-  @apply bg-white text-ink antialiased;
+  @apply bg-slate-50 text-ink antialiased font-sans;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  @apply font-display;
 }
 
 /* Section spacing utilities */
