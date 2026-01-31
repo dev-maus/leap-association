@@ -2,9 +2,9 @@
 import { sanity } from '../lib/sanity';
 
 // Fetch booking URL from Sanity
-const siteSettings = await sanity.fetch<{ bookingUrl?: string } | null>(
+const siteSettings = sanity ? await sanity.fetch<{ bookingUrl?: string } | null>(
   `*[_type == "siteSettings"][0] { bookingUrl }`
-);
+) : null;
 
 const bookingUrl = siteSettings?.bookingUrl;
 ---

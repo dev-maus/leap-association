@@ -13,7 +13,7 @@
     "@sanity/client": "^7.13.2",
     "@sanity/image-url": "^2.0.2",
     "@supabase/supabase-js": "^2.89.0",
-    "astro": "^5.16.12",
+    "astro": "^5.16.15",
     "date-fns": "^4.1.0",
     "jspdf": "^3.0.4",
     "lucide-react": "^0.562.0",
@@ -27,5 +27,18 @@
     "autoprefixer": "^10.4.23",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.1"
-  }
+  },
+  "description": "A modern web application for LEAP Performance Solutions built with Astro, Sanity CMS, and Supabase.",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dev-maus/leap-association.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dev-maus/leap-association/issues"
+  },
+  "homepage": "https://github.com/dev-maus/leap-association#readme"
 }

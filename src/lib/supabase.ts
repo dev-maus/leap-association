@@ -1,16 +1,94 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || '';
 
-// Use Supabase's default configuration - follows their best practices
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true, // Enable token refresh for better UX
-    detectSessionInUrl: true, // Automatically detect and handle auth callbacks
-  },
-});
+// Only create the client if configuration is available
+// This prevents crashes during development when env vars are not set
+let supabase: SupabaseClient;
+
+if (supabaseUrl && supabaseAnonKey) {
+  // Use Supabase's default configuration - follows their best practices
+  supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true, // Enable token refresh for better UX
+      detectSessionInUrl: true, // Automatically detect and handle auth callbacks
+    },
+  });
+} else {
+  // Create a mock client that warns when used without configuration
+  console.warn('Supabase configuration missing. Set PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY in .env file.');
+  
+  const notConfiguredError = { 
+    message: 'Supabase not configured', 
+    code: 'NOT_CONFIGURED',
+    details: 'Set PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY in .env file'
+  };
+
+  // Create a chainable query builder mock that returns proper error responses
+  const createChainableMock = (): Record<string, unknown> => {
+    const chainable: Record<string, unknown> = {};
+    const queryMethods = [
+      'select', 'insert', 'update', 'delete', 'upsert',
+      'eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'like', 'ilike',
+      'is', 'in', 'contains', 'containedBy', 'range', 'overlaps',
+      'textSearch', 'match', 'not', 'or', 'filter',
+      'order', 'limit', 'offset', 'single', 'maybeSingle',
+      'csv', 'geojson', 'explain', 'rollback', 'returns'
+    ];
+    
+    queryMethods.forEach(method => {
+      chainable[method] = () => chainable;
+    });
+    
+    // Terminal methods that return results
+    chainable.then = (resolve: (value: { data: null; error: typeof notConfiguredError; count: null }) => void) => {
+      resolve({ data: null, error: notConfiguredError, count: null });
+    };
+    
+    // Make it thenable for await
+    Object.defineProperty(chainable, Symbol.toStringTag, { value: 'Promise' });
+    
+    return chainable;
+  };
+
+  // Create auth mock with all common methods
+  const authMock = {
+    getSession: () => Promise.resolve({ data: { session: null }, error: notConfiguredError }),
+    getUser: () => Promise.resolve({ data: { user: null }, error: notConfiguredError }),
+    signInWithPassword: () => Promise.resolve({ data: { user: null, session: null }, error: notConfiguredError }),
+    signInWithOtp: () => Promise.resolve({ data: { user: null, session: null }, error: notConfiguredError }),
+    signUp: () => Promise.resolve({ data: { user: null, session: null }, error: notConfiguredError }),
+    signOut: () => Promise.resolve({ error: notConfiguredError }),
+    resetPasswordForEmail: () => Promise.resolve({ data: {}, error: notConfiguredError }),
+    updateUser: () => Promise.resolve({ data: { user: null }, error: notConfiguredError }),
+    onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
+  };
+
+  supabase = {
+    from: () => createChainableMock(),
+    rpc: () => Promise.resolve({ data: null, error: notConfiguredError }),
+    auth: authMock,
+    storage: {
+      from: () => ({
+        upload: () => Promise.resolve({ data: null, error: notConfiguredError }),
+        download: () => Promise.resolve({ data: null, error: notConfiguredError }),
+        getPublicUrl: () => ({ data: { publicUrl: '' } }),
+        list: () => Promise.resolve({ data: null, error: notConfiguredError }),
+        remove: () => Promise.resolve({ data: null, error: notConfiguredError }),
+      }),
+    },
+    channel: () => ({
+      on: () => ({ subscribe: () => {} }),
+      subscribe: () => {},
+      unsubscribe: () => {},
+    }),
+    removeChannel: () => Promise.resolve('ok'),
+  } as unknown as SupabaseClient;
+}
+
+export { supabase };
 
 // Helper function to convert entity names to table names
 const entityToTable = (entityName: string): string => {

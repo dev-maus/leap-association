@@ -14,6 +14,14 @@ import teamMember from './teamMember';
 import caseStudy from './caseStudy';
 import assessmentQuestion from './assessmentQuestion';
 import assessmentSettings from './assessmentSettings';
+import socialLink from './socialLink';
+// New schemas for CMS configurability
+import organizationValues from './organizationValues';
+import thrivingPillar from './thrivingPillar';
+import corePhilosophy from './corePhilosophy';
+import industryServed from './industryServed';
+import statistic from './statistic';
+import practiceResource from './practiceResource';
 
 export const schemaTypes = [
   siteSettings,
@@ -32,4 +40,12 @@ export const schemaTypes = [
   caseStudy,
   assessmentQuestion,
   assessmentSettings,
+  socialLink,
+  // New schemas for CMS configurability
+  organizationValues,
+  thrivingPillar,
+  corePhilosophy,
+  industryServed,
+  statistic,
+  practiceResource,
 ];

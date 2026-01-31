@@ -8,7 +8,7 @@ import Button from '../components/ui/Button.astro';
 import { sanity } from '../lib/sanity';
 import { createPageUrl } from '../lib/utils';
 
-const faqs = await sanity.fetch(`*[_type == "faq"] | order(category asc, _createdAt asc)`).catch(() => []);
+const faqs = sanity ? await sanity.fetch(`*[_type == "faq"] | order(category asc, _createdAt asc)`).catch(() => []) : [];
 
 // Group FAQs by category
 const faqCategories = faqs.reduce((acc: any, faq: any) => {

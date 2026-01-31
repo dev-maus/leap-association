@@ -27,6 +27,7 @@
     "@types/react": "^19.1",
     "eslint": "^9.28",
     "prettier": "^3.5",
+    "tsx": "^4.19.0",
     "typescript": "^5.8"
   },
   "prettier": {

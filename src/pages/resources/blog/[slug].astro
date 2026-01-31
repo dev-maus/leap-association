@@ -8,6 +8,7 @@ import { createPageUrl } from '../../../lib/utils';
 import { marked } from 'marked';
 
 export async function getStaticPaths() {
+  if (!sanity) return [];
   const posts = await sanity.fetch(`*[_type == "blogPost" && defined(slug.current) && status == "published"]{
     "slug": slug.current
   }`).catch(() => []);
@@ -18,7 +19,7 @@ export async function getStaticPaths() {
 }
 
 const { slug } = Astro.params;
-const post = await sanity.fetch(`*[_type == "blogPost" && slug.current == $slug][0]`, { slug }).catch(() => null);
+const post = sanity ? await sanity.fetch(`*[_type == "blogPost" && slug.current == $slug][0]`, { slug }).catch(() => null) : null;
 
 if (!post) {
   return Astro.redirect('/resources');
