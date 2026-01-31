@@ -505,8 +505,8 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
       const userDetails = getUserDetails();
       const isNewUser = userDetails.isNewUser === true;
 
-      // If captcha is enabled, ensure we have a token
-      if (captchaConfig?.enabled && !captchaToken) {
+      // If captcha is enabled and user is NOT authenticated, ensure we have a token
+      if (captchaConfig?.enabled && !captchaToken && !isAuthenticated) {
         setErrorMessage('Please complete the captcha verification before submitting.');
         return;
       }

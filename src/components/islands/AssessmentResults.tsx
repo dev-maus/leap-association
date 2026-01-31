@@ -297,19 +297,19 @@ export default function AssessmentResults({ schedulingConfig }: AssessmentResult
 
     // Introduction block (purple background)
     doc.setFillColor(...purple);
-    doc.rect(0, 35, 210, 25, 'F');
+    doc.rect(0, 35, 210, 40, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(12);
-    doc.text('Introduction', 20, 44);
-    doc.setFontSize(10);
+    doc.text('Introduction', 20, 45);
+    doc.setFontSize(9);
     doc.text(
       'Every leader is practicing something — intentionally or unintentionally. Your HATS™ (Habits, Abilities, Talents, and Skills) reveal the truth behind your daily practice and how it impacts your Leadership, Effectiveness, Accountability, and Productivity.',
       20,
-      52,
+      53,
       { maxWidth: 170 }
     );
 
-    let yPos = 70;
+    let yPos = 85;
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(14);
     doc.setTextColor(...purple);
@@ -336,25 +336,25 @@ export default function AssessmentResults({ schedulingConfig }: AssessmentResult
     doc.setFontSize(9);
     doc.setTextColor(100, 100, 100);
     doc.text('Question', 20, yPos);
-    doc.text('Your Response', 70, yPos);
-    doc.text('Category', 130, yPos);
-    doc.text('Points', 175, yPos);
-    yPos += 8;
+    doc.text('Your Response', 80, yPos);
+    doc.text('Category', 145, yPos);
+    doc.text('Points', 180, yPos);
+    yPos += 6;
     doc.line(20, yPos, 190, yPos);
     yPos += 6;
 
     doc.setTextColor(0, 0, 0);
     answers.forEach((a, i) => {
-      if (yPos > 270) return;
-      const qText = (a.question_text || `Q${i + 1}`).slice(0, 35);
-      const resp = (a.response_label || '—').slice(0, 35);
+      if (yPos > 260) return;
+      const qText = (a.question_text || `Q${i + 1}`).slice(0, 30);
+      const resp = (a.response_label || '—').slice(0, 30);
       const cat = formatCategory(a.category || '');
       const pts = String(a.score ?? '—');
       doc.text(qText, 20, yPos);
-      doc.text(resp, 70, yPos);
-      doc.text(cat, 130, yPos);
-      doc.text(pts, 180, yPos);
-      yPos += 7;
+      doc.text(resp, 80, yPos);
+      doc.text(cat, 145, yPos);
+      doc.text(pts, 183, yPos);
+      yPos += 8;
     });
 
     yPos += 10;
