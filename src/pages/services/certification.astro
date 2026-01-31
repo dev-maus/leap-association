@@ -8,7 +8,7 @@ import Button from '../../components/ui/Button.astro';
 import { sanity } from '../../lib/sanity';
 import { createPageUrl } from '../../lib/utils';
 
-const service = await sanity.fetch(`*[_type == "service" && slug == "certification"][0]`).catch(() => null);
+const service = sanity ? await sanity.fetch(`*[_type == "service" && slug == "certification"][0]`).catch(() => null) : null;
 ---
 
 <Layout>

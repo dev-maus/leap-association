@@ -9,7 +9,7 @@ import Card from '../../../components/ui/Card.astro';
 import { sanity } from '../../../lib/sanity';
 import { createPageUrl } from '../../../lib/utils';
 
-const service = await sanity.fetch(`*[_type == "service" && slug == "training"][0]`).catch(() => null);
+const service = sanity ? await sanity.fetch(`*[_type == "service" && slug == "training"][0]`).catch(() => null) : null;
 ---
 
 <Layout>

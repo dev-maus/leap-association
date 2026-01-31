@@ -9,8 +9,9 @@ import Card from '../components/ui/Card.astro';
 import { sanity } from '../lib/sanity';
 import { createPageUrl } from '../lib/utils';
 
-const services = await sanity.fetch(`*[_type == "service"] | order(_createdAt asc)`).catch(() => []);
+const services = sanity ? await sanity.fetch(`*[_type == "service"] | order(_createdAt asc)`).catch(() => []) : [];
 
+// Default services with full details per documentation
 const defaultServices = [
   {
     slug: 'consulting',
@@ -18,6 +19,9 @@ const defaultServices = [
     subtitle: 'Strategic Organizational Transformation',
     description: 'From power utility operations to leadership culture, we help organizations build practices that create measurable, sustainable results.',
     link: '/services/consulting',
+    icon: 'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
+    iconColor: 'from-blue-500 to-blue-600',
+    features: ['DRP/Operations Alignment', 'Leadership Culture Analysis', 'Performance Management', 'Organizational Readiness'],
   },
   {
     slug: 'training',
@@ -25,6 +29,9 @@ const defaultServices = [
     subtitle: 'Build Leaders at Every Level',
     description: 'Comprehensive leadership development tracks, from leading yourself to leading organizational change. Build practices that create excellence.',
     link: '/services/training',
+    icon: 'M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222',
+    iconColor: 'from-purple-500 to-purple-600',
+    features: ['Leading Self', 'Leading Others', 'Leading Projects', 'Leading Change'],
   },
   {
     slug: 'coaching',
@@ -32,6 +39,9 @@ const defaultServices = [
     subtitle: 'Personalized Leadership Development',
     description: 'One-on-one coaching for executives, leaders, teens, and couples. Discover what you\'re practicing and build patterns that create the results you want.',
     link: '/services/coaching',
+    icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z',
+    iconColor: 'from-amber-500 to-amber-600',
+    features: ['Executive Coaching', 'Leadership Coaching', 'Teen Coaching', 'Couples Coaching'],
   },
   {
     slug: 'keynotes',
@@ -39,6 +49,9 @@ const defaultServices = [
     subtitle: 'Inspire Your Audience',
     description: 'High-impact keynotes that challenge thinking, inspire action, and provide practical tools. From "Always LEAP Higher" to industry-specific talks.',
     link: '/services/keynotes',
+    icon: 'M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z',
+    iconColor: 'from-emerald-500 to-emerald-600',
+    features: ['Always LEAP Higher', 'Industry Keynotes', 'Custom Topics', 'Virtual & In-Person'],
   },
   {
     slug: 'certification',
@@ -46,10 +59,21 @@ const defaultServices = [
     subtitle: 'Become a Certified LEAP Practitioner',
     description: 'Join a growing network of certified practitioners bringing the LEAP Framework to organizations worldwide. Multiple certification levels available.',
     link: '/services/certification',
+    icon: 'M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z',
+    iconColor: 'from-primary to-primary-dark',
+    features: ['Practitioner Level', 'Advanced Level', 'Master Level', 'Ongoing Support'],
   },
 ];
 
 const displayServices = services.length > 0 ? services : defaultServices;
+
+// Stats data
+const stats = [
+  { value: '750+', label: 'Organizations Served' },
+  { value: '10,000+', label: 'Leaders Trained' },
+  { value: '25+', label: 'Industries' },
+  { value: '98%', label: 'Client Satisfaction' },
+];
 ---
 
 <Layout>
@@ -85,6 +109,20 @@ const displayServices = services.length > 0 ? services : defaultServices;
       </div>
     </section>
 
+    <!-- Stats Banner -->
+    <section class="py-12 bg-gradient-to-br from-primary to-primary-dark">
+      <div class="max-w-7xl mx-auto px-6 lg:px-8">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-8">
+          {stats.map((stat) => (
+            <div class="text-center">
+              <p class="text-4xl lg:text-5xl font-bold text-white mb-2">{stat.value}</p>
+              <p class="text-slate-200 text-sm lg:text-base">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
     <!-- Solutions Grid -->
     <section class="py-20">
       <div class="max-w-7xl mx-auto px-6 lg:px-8">
@@ -97,40 +135,33 @@ const displayServices = services.length > 0 ? services : defaultServices;
           </p>
         </div>
 
-        <div class="space-y-8">
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {displayServices.map((service: any) => (
-            <Card class="p-8 lg:p-10 hover:shadow-xl transition-all group">
-              <div class="grid lg:grid-cols-2 gap-8 items-center">
-                <div>
-                  <h3 class="text-3xl font-bold text-primary mb-3">{service.title}</h3>
-                  <p class="text-lg font-semibold text-accent mb-4">{service.subtitle}</p>
-                  <p class="text-slate-600 leading-relaxed mb-6">{service.description}</p>
-                  <Button href={service.link || `/services/${service.slug}`}>
-                    Learn More
-                  </Button>
-                </div>
+            <Card class="p-8 hover:shadow-xl transition-all group h-full flex flex-col">
+              <div class={`w-16 h-16 rounded-2xl bg-gradient-to-br ${service.iconColor || 'from-primary to-primary-dark'} flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform`}>
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={service.icon || 'M13 10V3L4 14h7v7l9-11h-7z'} />
+                </svg>
+              </div>
 
-                <div class="bg-slate-50 rounded-2xl p-6">
-                  <h4 class="font-bold text-slate-900 mb-4 flex items-center gap-2">
-                    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <h3 class="text-2xl font-bold text-primary mb-2">{service.title}</h3>
+              <p class="text-accent font-semibold mb-4">{service.subtitle}</p>
+              <p class="text-slate-600 leading-relaxed mb-6 flex-grow">{service.description}</p>
+
+              <div class="space-y-3 mb-6">
+                {(service.features || []).map((feature: string) => (
+                  <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    What's Included
-                  </h4>
-                  <ul class="space-y-3">
-                    {service.features && service.features.length > 0 ? (
-                      service.features.map((feature: string) => (
-                        <li class="flex items-start gap-3">
-                          <div class="w-2 h-2 rounded-full bg-primary mt-2" />
-                          <span class="text-slate-700">{feature}</span>
-                        </li>
-                      ))
-                    ) : (
-                      <li class="text-slate-600">Customized to your needs</li>
-                    )}
-                  </ul>
-                </div>
+                    <span class="text-slate-700 text-sm">{feature}</span>
+                  </div>
+                ))}
               </div>
+
+              <Button href={service.link || `/services/${service.slug}`} class="w-full mt-auto">
+                Learn More
+              </Button>
             </Card>
           ))}
         </div>
@@ -142,6 +173,7 @@ const displayServices = services.length > 0 ? services : defaultServices;
       <div class="max-w-4xl mx-auto px-6 lg:px-8">
         <div class="bg-gradient-to-br from-primary to-primary-dark rounded-3xl p-12 text-center text-white relative overflow-hidden">
           <div class="absolute top-0 right-0 w-64 h-64 bg-accent/20 rounded-full blur-3xl" />
+          <div class="absolute -bottom-10 -left-10 w-80 h-80 bg-white/5 rounded-full blur-3xl" />
           <div class="relative z-10">
             <h2 class="text-3xl font-bold mb-4">Not Sure Where to Start?</h2>
             <p class="text-slate-200 text-lg mb-8 max-w-2xl mx-auto">

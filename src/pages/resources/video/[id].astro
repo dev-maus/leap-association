@@ -8,6 +8,7 @@ import { urlForFile } from '../../../lib/sanity';
 import { createPageUrl } from '../../../lib/utils';
 
 export async function getStaticPaths() {
+  if (!sanity) return [];
   const videos = await sanity.fetch(`*[_type == "video" && status == "published"]{
     _id
   }`).catch(() => []);
@@ -18,7 +19,7 @@ export async function getStaticPaths() {
 }
 
 const { id } = Astro.params;
-const video = await sanity.fetch(`*[_type == "video" && _id == $id][0]{
+const video = sanity ? await sanity.fetch(`*[_type == "video" && _id == $id][0]{
   _id,
   title,
   description,
@@ -35,7 +36,7 @@ const video = await sanity.fetch(`*[_type == "video" && _id == $id][0]{
     mimeType
   },
   url
-}`, { id }).catch(() => null);
+}`, { id }).catch(() => null) : null;
 
 if (!video) {
   return Astro.redirect('/resources');

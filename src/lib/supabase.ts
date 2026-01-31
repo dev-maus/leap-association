@@ -1,16 +1,44 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || '';
 
-// Use Supabase's default configuration - follows their best practices
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true, // Enable token refresh for better UX
-    detectSessionInUrl: true, // Automatically detect and handle auth callbacks
-  },
-});
+// Only create the client if configuration is available
+// This prevents crashes during development when env vars are not set
+let supabase: SupabaseClient;
+
+if (supabaseUrl && supabaseAnonKey) {
+  // Use Supabase's default configuration - follows their best practices
+  supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true, // Enable token refresh for better UX
+      detectSessionInUrl: true, // Automatically detect and handle auth callbacks
+    },
+  });
+} else {
+  // Create a mock client that warns when used without configuration
+  console.warn('Supabase configuration missing. Set PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY in .env file.');
+  supabase = new Proxy({} as SupabaseClient, {
+    get(_, prop) {
+      if (prop === 'auth') {
+        return new Proxy({}, {
+          get() {
+            return () => Promise.reject(new Error('Supabase not configured'));
+          }
+        });
+      }
+      if (prop === 'from') {
+        return () => ({
+          select: () => ({ data: null, error: new Error('Supabase not configured') }),
+        });
+      }
+      return () => Promise.reject(new Error('Supabase not configured'));
+    }
+  });
+}
+
+export { supabase };
 
 // Helper function to convert entity names to table names
 const entityToTable = (entityName: string): string => {
