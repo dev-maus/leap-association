@@ -1,0 +1,304 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Head from '../components/layout/Head.astro';
+import Header from '../components/layout/Header.astro';
+import Footer from '../components/layout/Footer.astro';
+import { createPageUrl } from '../lib/utils';
+---
+
+<Layout>
+  <Head slot="head" title="Leadership" description="Leadership Comes First. Leadership determines direction, shapes culture, and sets the ceiling for what an organization can achieve." />
+  <Header />
+  <main id="main-content" class="min-h-screen bg-gradient-to-br from-slate-50 to-white">
+    <!-- Hero Section -->
+    <section class="pt-32 pb-20 px-6 lg:px-8 relative overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-blue-600/5" />
+      <div class="max-w-6xl mx-auto relative z-10">
+        <a
+          href={createPageUrl('Home')}
+          class="inline-flex items-center gap-2 text-slate-500 hover:text-slate-700 mb-8 transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to Home
+        </a>
+
+        <div class="animate-fadeUp flex items-center gap-6 mb-8">
+          <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-display text-4xl font-bold shadow-lg">
+            L
+          </div>
+          <div>
+            <h1 class="text-4xl lg:text-6xl font-bold text-primary">Leadership Comes First</h1>
+          </div>
+        </div>
+
+        <p class="animate-fadeUp text-xl text-slate-600 max-w-4xl leading-relaxed mb-4" style="animation-delay: 0.1s;">
+          Leadership is the starting point for everything that follows.
+        </p>
+        <p class="animate-fadeUp text-lg text-slate-500 max-w-4xl leading-relaxed mb-4" style="animation-delay: 0.15s;">
+          Before strategy works. Before systems scale. Before performance improves.
+        </p>
+        <p class="animate-fadeUp text-lg text-slate-600 max-w-4xl leading-relaxed mb-4" style="animation-delay: 0.2s;">
+          Leadership determines direction, shapes culture, and sets the ceiling for what an organization can achieve. When leadership is strong, everything else has a chance to work. When it isn't, even the best plans struggle to survive.
+        </p>
+        <p class="animate-fadeUp text-lg text-blue-700 font-semibold max-w-4xl" style="animation-delay: 0.25s;">
+          At LEAP, we don't treat leadership as a title or a personality trait — we treat it as a practice.
+        </p>
+      </div>
+    </section>
+
+    <!-- How We Define Leadership -->
+    <section class="py-20 px-6 lg:px-8 bg-white">
+      <div class="max-w-6xl mx-auto">
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+          <div class="reveal-left">
+            <h2 class="text-3xl lg:text-4xl font-bold text-primary mb-6">How We Define Leadership</h2>
+            <p class="text-lg text-slate-600 mb-6 leading-relaxed">
+              Leadership is the intentional practice of taking responsibility for:
+            </p>
+            <div class="grid grid-cols-2 gap-4 mb-8">
+              <div class="bg-blue-50 rounded-2xl p-5 text-center">
+                <span class="text-blue-600 font-bold text-lg">Direction</span>
+              </div>
+              <div class="bg-blue-50 rounded-2xl p-5 text-center">
+                <span class="text-blue-600 font-bold text-lg">People</span>
+              </div>
+              <div class="bg-blue-50 rounded-2xl p-5 text-center">
+                <span class="text-blue-600 font-bold text-lg">Work</span>
+              </div>
+              <div class="bg-blue-50 rounded-2xl p-5 text-center">
+                <span class="text-blue-600 font-bold text-lg">The Future</span>
+              </div>
+            </div>
+            <p class="text-lg text-slate-600 leading-relaxed">
+              It's not about being in charge. It's about being accountable — for what happens next.
+            </p>
+            <p class="text-primary font-semibold mt-4">
+              That's why leadership is foundational in the LEAP model.
+            </p>
+          </div>
+          <div class="reveal-right bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl p-10 text-white">
+            <h3 class="text-2xl font-bold mb-4">The Four Areas of Leadership We Develop</h3>
+            <p class="text-blue-100 leading-relaxed">
+              To make leadership practical and repeatable, we focus on four essential areas. Together, they form a complete picture of what effective leadership actually requires — without oversimplifying it.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Four Areas of Leadership -->
+    <section class="py-20 px-6 lg:px-8">
+      <div class="max-w-6xl mx-auto">
+        <div class="grid md:grid-cols-2 gap-8">
+          <!-- Leading Self -->
+          <div class="reveal stagger-1 bg-white rounded-3xl p-8 shadow-lg border border-slate-100 hover:shadow-xl transition-shadow">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center mb-6 shadow-lg">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-primary mb-2">Leading Self</h3>
+            <p class="text-slate-500 text-sm font-medium mb-4">Leadership always starts within.</p>
+            <ul class="space-y-2 mb-6">
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 flex-shrink-0"></div>
+                Awareness, discipline, and intentional behavior
+              </li>
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 flex-shrink-0"></div>
+                Emotional steadiness under pressure
+              </li>
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 flex-shrink-0"></div>
+                Credibility built through consistency
+              </li>
+            </ul>
+            <p class="text-sm text-blue-600 font-semibold italic border-t border-slate-100 pt-4">
+              Am I showing up as the leader this moment requires?
+            </p>
+          </div>
+
+          <!-- Leading Others -->
+          <div class="reveal stagger-2 bg-white rounded-3xl p-8 shadow-lg border border-slate-100 hover:shadow-xl transition-shadow">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-500 flex items-center justify-center mb-6 shadow-lg">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-primary mb-2">Leading Others</h3>
+            <p class="text-slate-500 text-sm font-medium mb-4">Leadership is relational before it is organizational.</p>
+            <ul class="space-y-2 mb-6">
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 flex-shrink-0"></div>
+                Trust, clarity, and communication
+              </li>
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 flex-shrink-0"></div>
+                Influence without reliance on authority
+              </li>
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 flex-shrink-0"></div>
+                Developing people — not just directing them
+              </li>
+            </ul>
+            <p class="text-sm text-emerald-600 font-semibold italic border-t border-slate-100 pt-4">
+              Am I helping others perform and grow?
+            </p>
+          </div>
+
+          <!-- Leading Tasks & Projects -->
+          <div class="reveal stagger-3 bg-white rounded-3xl p-8 shadow-lg border border-slate-100 hover:shadow-xl transition-shadow">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-400 to-purple-500 flex items-center justify-center mb-6 shadow-lg">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-primary mb-2">Leading Tasks & Projects</h3>
+            <p class="text-slate-500 text-sm font-medium mb-4">Leadership must translate into execution.</p>
+            <ul class="space-y-2 mb-6">
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-purple-500 mt-2 flex-shrink-0"></div>
+                Clear priorities and expectations
+              </li>
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-purple-500 mt-2 flex-shrink-0"></div>
+                Alignment between people, process, and purpose
+              </li>
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-purple-500 mt-2 flex-shrink-0"></div>
+                Progress that moves from intention to completion
+              </li>
+            </ul>
+            <p class="text-sm text-purple-600 font-semibold italic border-t border-slate-100 pt-4">
+              Are we executing what matters most?
+            </p>
+          </div>
+
+          <!-- Leading Change & Transformation -->
+          <div class="reveal stagger-4 bg-white rounded-3xl p-8 shadow-lg border border-slate-100 hover:shadow-xl transition-shadow">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center mb-6 shadow-lg">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-primary mb-2">Leading Change & Transformation</h3>
+            <p class="text-slate-500 text-sm font-medium mb-4">Leadership is tested when things are uncertain.</p>
+            <ul class="space-y-2 mb-6">
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-amber-500 mt-2 flex-shrink-0"></div>
+                Navigating change without losing alignment
+              </li>
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-amber-500 mt-2 flex-shrink-0"></div>
+                Anchoring people while moving forward
+              </li>
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-amber-500 mt-2 flex-shrink-0"></div>
+                Creating momentum toward what's next
+              </li>
+            </ul>
+            <p class="text-sm text-amber-600 font-semibold italic border-t border-slate-100 pt-4">
+              How do we move forward — together?
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Why This Matters -->
+    <section class="py-20 px-6 lg:px-8 bg-gradient-to-br from-primary to-primary-dark">
+      <div class="max-w-6xl mx-auto">
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+          <div>
+            <h2 class="text-3xl lg:text-4xl font-bold text-white mb-6">Why This Matters</h2>
+            <p class="text-slate-200 text-lg leading-relaxed mb-6">
+              Most leadership breakdowns don't happen because people don't care. They happen because leadership is underdeveloped, inconsistent, or misaligned.
+            </p>
+            <p class="text-slate-200 text-lg leading-relaxed">
+              When leaders strengthen all four areas, leadership stops being reactive — and becomes intentional.
+            </p>
+          </div>
+          <div class="bg-white/10 backdrop-blur-sm border border-white/20 rounded-3xl p-8">
+            <h3 class="text-xl font-bold text-white mb-6">When leaders strengthen all four areas:</h3>
+            <ul class="space-y-4">
+              <li class="flex items-start gap-3">
+                <div class="w-5 h-5 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div class="w-2 h-2 rounded-full bg-accent"></div>
+                </div>
+                <span class="text-slate-200">Direction becomes <strong class="text-white">clear</strong></span>
+              </li>
+              <li class="flex items-start gap-3">
+                <div class="w-5 h-5 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div class="w-2 h-2 rounded-full bg-accent"></div>
+                </div>
+                <span class="text-slate-200">Accountability becomes <strong class="text-white">credible</strong></span>
+              </li>
+              <li class="flex items-start gap-3">
+                <div class="w-5 h-5 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div class="w-2 h-2 rounded-full bg-accent"></div>
+                </div>
+                <span class="text-slate-200">Performance becomes <strong class="text-white">sustainable</strong></span>
+              </li>
+              <li class="flex items-start gap-3">
+                <div class="w-5 h-5 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div class="w-2 h-2 rounded-full bg-accent"></div>
+                </div>
+                <span class="text-slate-200">Change becomes <strong class="text-white">navigable</strong></span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Our Belief -->
+    <section class="py-20 px-6 lg:px-8">
+      <div class="max-w-4xl mx-auto text-center">
+        <h2 class="text-3xl lg:text-4xl font-bold text-primary mb-6">Our Belief</h2>
+        <p class="text-xl text-slate-600 leading-relaxed mb-4">
+          Leadership isn't something you have. It's something you practice.
+        </p>
+        <p class="text-lg text-slate-600 leading-relaxed mb-6">
+          And like any meaningful practice, it can be developed — with the right structure, standards, and support.
+        </p>
+        <p class="text-primary font-semibold text-lg">
+          That's what LEAP exists to do.
+        </p>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-20 px-6 lg:px-8 bg-slate-50">
+      <div class="max-w-4xl mx-auto text-center">
+        <h2 class="text-3xl lg:text-4xl font-bold text-primary mb-6">
+          Ready to Strengthen Leadership Where It Matters Most?
+        </h2>
+        <p class="text-lg text-slate-600 leading-relaxed mb-8 max-w-3xl mx-auto">
+          Whether you're developing leaders, aligning teams, executing critical initiatives, or navigating change, leadership is the lever that moves everything else.
+        </p>
+        <p class="text-xl text-primary font-semibold mb-8">Let's start there.</p>
+      </div>
+    </section>
+
+    <!-- Footer CTA -->
+    <section class="py-16 px-6 lg:px-8 bg-gradient-to-br from-primary to-primary-dark">
+      <div class="max-w-4xl mx-auto text-center">
+        <p class="text-3xl lg:text-4xl font-bold text-white mb-8">
+          Always LEAP Higher.
+        </p>
+        <a
+          href={createPageUrl('Home')}
+          class="inline-flex items-center gap-2 px-8 py-4 bg-white text-primary font-semibold rounded-xl hover:bg-slate-100 transition-colors"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          Return to Homepage
+        </a>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Layout>

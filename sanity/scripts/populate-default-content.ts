@@ -90,23 +90,23 @@ async function populateDefaultContent() {
       {
         letter: 'E',
         title: 'Effectiveness',
-        subtitle: 'The practice of clarity and execution.',
-        description: 'Great visions collapse without effective behaviors, structure, and habits.',
+        subtitle: 'Meaningful Progress',
+        description: 'Advancing the right priorities through disciplined, focused, and aligned execution.',
         color: '#10B981',
       },
       {
         letter: 'A',
         title: 'Accountability',
-        subtitle: 'The practice of ownership and trust.',
-        description: 'Teams rise or fall on their ability to follow through and hold each other up.',
-        color: '#F59E0B',
+        subtitle: 'Practice Accountability',
+        description: 'Own commitments, follow through on priorities, and take responsibility for outcomes that drive organizational success.',
+        color: '#8B5CF6',
       },
       {
         letter: 'P',
         title: 'Productivity',
-        subtitle: 'The practice of meaningful progress.',
-        description: 'Not just doing more, but doing what matters most, consistently.',
-        color: '#EF4444',
+        subtitle: 'Create Systems',
+        description: 'Optimize rhythms and priorities that enable consistent progress and long-term organizational impact.',
+        color: '#F59E0B',
       },
     ]
 

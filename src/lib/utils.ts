@@ -10,6 +10,7 @@ export function createPageUrl(pageName: string): string {
     'Home': '/',
     'About': '/about',
     'Solutions': '/solutions',
+    'WhoWeServe': '/who-we-serve',
     'Practice': '/practice',
     'SignatureEvents': '/events',
     'LEAPLounge': '/events/lounge',
@@ -18,6 +19,11 @@ export function createPageUrl(pageName: string): string {
     'FAQ': '/faq',
     'ScheduleCall': '/schedule',
     'Search': '/search',
+    'Leadership': '/leadership',
+    'Effectiveness': '/effectiveness',
+    'Accountability': '/accountability',
+    'Productivity': '/productivity',
+    'TeamDebrief': '/practice/team-debrief',
   };
   const path = pageMap[pageName] || `/${pageName.toLowerCase()}`;
   // Ensure base path is included (remove trailing slash from base, add path)

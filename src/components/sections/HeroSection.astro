@@ -23,21 +23,21 @@ const heroData = sanity ? await sanity.fetch(`*[_type == "hero" && page == "home
   <!-- Two Column Layout -->
   <div class="relative z-10 w-full min-h-screen flex overflow-hidden">
     <!-- Left Column - Text Content -->
-    <div class="w-full lg:w-1/2 flex items-start px-6 lg:px-12 xl:px-20 pt-32 lg:pt-40 pb-20 relative z-20">
+    <div class="w-full lg:w-1/2 flex items-start px-6 lg:px-12 xl:px-20 pt-24 lg:pt-40 pb-20 relative z-20">
       <div class="max-w-xl lg:max-w-none">
-        <h1 class="text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-6 leading-tight">
+        <h1 class="animate-fadeUp text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-6 leading-tight">
           {heroData?.heading || "What's In Your Practice?"}
         </h1>
 
-        <p class="text-lg lg:text-xl text-white/90 mb-6 leading-relaxed">
+        <p class="animate-fadeUp text-lg lg:text-xl text-white/90 mb-6 leading-relaxed" style="animation-delay: 0.15s;">
           {heroData?.subheading || "Because whether you know it or not, you're already practicing something. The question is: Is it helping you thrive... or holding you back?"}
         </p>
 
-        <p class="text-base lg:text-lg text-white/80 mb-8 leading-relaxed">
-          Every leader, team and organization operates from a set of daily behaviors, some intentional, many automatic. At LEAP Association, we bring awareness, alignment, and action to your practice so you can unlock Leadership, Effectiveness, Accountability, and Productivity at the highest level.
+        <p class="animate-fadeUp text-base lg:text-lg text-white/80 mb-8 leading-relaxed" style="animation-delay: 0.3s;">
+          At LEAP Association, we bring awareness, alignment, and action to your daily behaviors so you can unlock Leadership, Effectiveness, Accountability, and Productivity.
         </p>
 
-        <div class="flex flex-col sm:flex-row gap-4">
+        <div class="animate-fadeUp flex flex-col sm:flex-row gap-4" style="animation-delay: 0.45s;">
           <CTAButtons client:load />
         </div>
       </div>

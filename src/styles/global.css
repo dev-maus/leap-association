@@ -56,11 +56,15 @@ section[id] {
          text-sm hover:border-primary hover:bg-primary/5 transition-colors;
 }
 
-/* Animations */
+/* ============================================
+   ANIMATIONS & SCROLL REVEAL SYSTEM
+   ============================================ */
+
+/* Base fade-up animation */
 @keyframes fadeUp {
   from {
     opacity: 0;
-    transform: translateY(16px);
+    transform: translateY(24px);
   }
   to {
     opacity: 1;
@@ -68,22 +72,149 @@ section[id] {
   }
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
 .animate-fadeUp {
   animation: fadeUp 0.8s ease both;
 }
 
-/* Scroll reveal */
+.animate-fadeIn {
+  animation: fadeIn 0.6s ease both;
+}
+
+.animate-fadeInLeft {
+  animation: fadeInLeft 0.7s ease both;
+}
+
+.animate-fadeInRight {
+  animation: fadeInRight 0.7s ease both;
+}
+
+.animate-scaleIn {
+  animation: scaleIn 0.6s ease both;
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 3s ease-in-out infinite;
+}
+
+/* Scroll reveal - elements start hidden, revealed by IntersectionObserver */
 .reveal {
   opacity: 0;
-  transform: translateY(16px);
+  transform: translateY(24px);
+  transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1), transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .reveal.show {
   opacity: 1;
   transform: none;
-  transition: opacity 0.6s ease, transform 0.6s ease;
 }
 
+/* Reveal variants */
+.reveal-left {
+  opacity: 0;
+  transform: translateX(-30px);
+  transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1), transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reveal-left.show {
+  opacity: 1;
+  transform: none;
+}
+
+.reveal-right {
+  opacity: 0;
+  transform: translateX(30px);
+  transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1), transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reveal-right.show {
+  opacity: 1;
+  transform: none;
+}
+
+.reveal-scale {
+  opacity: 0;
+  transform: scale(0.92);
+  transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1), transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reveal-scale.show {
+  opacity: 1;
+  transform: none;
+}
+
+/* Stagger delays for children */
+.stagger-1 { transition-delay: 0.1s; }
+.stagger-2 { transition-delay: 0.2s; }
+.stagger-3 { transition-delay: 0.3s; }
+.stagger-4 { transition-delay: 0.4s; }
+.stagger-5 { transition-delay: 0.5s; }
+.stagger-6 { transition-delay: 0.6s; }
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .reveal-left, .reveal-right, .reveal-scale {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .animate-fadeUp, .animate-fadeIn, .animate-fadeInLeft,
+  .animate-fadeInRight, .animate-scaleIn, .animate-float,
+  .animate-pulse-soft {
+    animation: none;
+  }
+}
 
 /* Gradient text */
 .gradient-text {
@@ -92,7 +223,6 @@ section[id] {
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
-
 
 /* Hero image soft edges */
 .hero-image-wrapper img {

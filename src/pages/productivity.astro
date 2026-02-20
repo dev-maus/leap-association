@@ -1,0 +1,313 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Head from '../components/layout/Head.astro';
+import Header from '../components/layout/Header.astro';
+import Footer from '../components/layout/Footer.astro';
+import { createPageUrl } from '../lib/utils';
+---
+
+<Layout>
+  <Head slot="head" title="Productivity" description="Productivity Sustains Performance. Productivity is the result of clarity, alignment, and disciplined execution." />
+  <Header />
+  <main id="main-content" class="min-h-screen bg-gradient-to-br from-slate-50 to-white">
+    <!-- Hero Section -->
+    <section class="pt-32 pb-20 px-6 lg:px-8 relative overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-amber-600/5" />
+      <div class="max-w-6xl mx-auto relative z-10">
+        <a
+          href={createPageUrl('Home')}
+          class="inline-flex items-center gap-2 text-slate-500 hover:text-slate-700 mb-8 transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to Home
+        </a>
+
+        <div class="flex items-center gap-6 mb-8 animate-fadeUp">
+          <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center text-white font-display text-4xl font-bold shadow-lg">
+            P
+          </div>
+          <div>
+            <h1 class="text-4xl lg:text-6xl font-bold text-primary">Productivity Sustains Performance</h1>
+          </div>
+        </div>
+
+        <p class="text-xl text-slate-600 max-w-4xl leading-relaxed mb-4 animate-fadeUp" style="animation-delay: 0.1s;">
+          Productivity is not about doing more. It's about producing results — consistently and sustainably.
+        </p>
+        <p class="text-lg text-slate-500 max-w-4xl leading-relaxed mb-4 animate-fadeUp" style="animation-delay: 0.15s;">
+          Many individuals and organizations are exhausted, not unproductive. They're busy, reactive, and stretched thin — yet still falling short of the outcomes that matter most.
+        </p>
+        <p class="text-lg text-slate-600 max-w-4xl leading-relaxed mb-4 animate-fadeUp" style="animation-delay: 0.2s;">
+          At LEAP, productivity is the result of clarity, alignment, and disciplined execution. When leadership, effectiveness, and accountability are practiced well, productivity becomes a natural outcome — not a constant struggle.
+        </p>
+      </div>
+    </section>
+
+    <!-- How We Define Productivity -->
+    <section class="py-20 px-6 lg:px-8 bg-white">
+      <div class="max-w-6xl mx-auto">
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+          <div class="reveal-left">
+            <h2 class="text-3xl lg:text-4xl font-bold text-primary mb-6">How We Define Productivity</h2>
+            <p class="text-lg text-slate-600 mb-6 leading-relaxed">
+              Productivity is the ability to:
+            </p>
+            <ul class="space-y-3 mb-8">
+              <li class="flex items-start gap-3 text-lg text-slate-700">
+                <div class="w-2 h-2 rounded-full bg-amber-500 mt-2.5 flex-shrink-0"></div>
+                Convert effort into meaningful results
+              </li>
+              <li class="flex items-start gap-3 text-lg text-slate-700">
+                <div class="w-2 h-2 rounded-full bg-amber-500 mt-2.5 flex-shrink-0"></div>
+                Maintain momentum without burnout
+              </li>
+              <li class="flex items-start gap-3 text-lg text-slate-700">
+                <div class="w-2 h-2 rounded-full bg-amber-500 mt-2.5 flex-shrink-0"></div>
+                Sustain performance over time
+              </li>
+            </ul>
+            <p class="text-lg text-slate-600 leading-relaxed mb-4">
+              It answers a critical question:
+            </p>
+            <p class="text-xl text-primary font-bold italic mb-4">
+              "Are we producing outcomes — or just consuming energy?"
+            </p>
+            <p class="text-primary font-semibold">
+              True productivity creates margin, not fatigue.
+            </p>
+          </div>
+          <div class="bg-gradient-to-br from-amber-500 to-amber-600 rounded-3xl p-10 text-white reveal-right">
+            <h3 class="text-2xl font-bold mb-4">What Enables Real Productivity</h3>
+            <p class="text-amber-100 leading-relaxed">
+              Productivity doesn't start with tools or time management. It starts with how work is designed, owned, and executed.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Four Areas -->
+    <section class="py-20 px-6 lg:px-8">
+      <div class="max-w-6xl mx-auto">
+        <div class="grid md:grid-cols-2 gap-8">
+          <!-- Focused Effort -->
+          <div class="bg-white rounded-3xl p-8 shadow-lg border border-slate-100 hover:shadow-xl transition-shadow reveal stagger-1">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center mb-6 shadow-lg">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-primary mb-2">Focused Effort</h3>
+            <p class="text-slate-500 text-sm font-medium mb-4">Productivity requires focus.</p>
+            <ul class="space-y-2 mb-6">
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-amber-500 mt-2 flex-shrink-0"></div>
+                Attention is directed toward what matters most
+              </li>
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-amber-500 mt-2 flex-shrink-0"></div>
+                Distractions are minimized
+              </li>
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-amber-500 mt-2 flex-shrink-0"></div>
+                Energy is applied intentionally
+              </li>
+            </ul>
+            <p class="text-sm text-slate-500 mb-4">When focus improves, output follows.</p>
+            <p class="text-sm text-amber-600 font-semibold italic border-t border-slate-100 pt-4">
+              Is our effort focused — or scattered?
+            </p>
+          </div>
+
+          <!-- Disciplined Execution -->
+          <div class="bg-white rounded-3xl p-8 shadow-lg border border-slate-100 hover:shadow-xl transition-shadow reveal stagger-2">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center mb-6 shadow-lg">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-primary mb-2">Disciplined Execution</h3>
+            <p class="text-slate-500 text-sm font-medium mb-4">Productivity lives in disciplined habits.</p>
+            <ul class="space-y-2 mb-6">
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 flex-shrink-0"></div>
+                Work progresses steadily, not sporadically
+              </li>
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 flex-shrink-0"></div>
+                Standards guide action
+              </li>
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 flex-shrink-0"></div>
+                Progress is visible and repeatable
+              </li>
+            </ul>
+            <p class="text-sm text-slate-500 mb-4">Productivity isn't about intensity — it's about rhythm.</p>
+            <p class="text-sm text-blue-600 font-semibold italic border-t border-slate-100 pt-4">
+              Do we rely on last-minute pushes — or consistent progress?
+            </p>
+          </div>
+
+          <!-- Sustainable Pace -->
+          <div class="bg-white rounded-3xl p-8 shadow-lg border border-slate-100 hover:shadow-xl transition-shadow reveal stagger-3">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-500 flex items-center justify-center mb-6 shadow-lg">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-primary mb-2">Sustainable Pace</h3>
+            <p class="text-slate-500 text-sm font-medium mb-4">Productivity must be sustainable to last.</p>
+            <ul class="space-y-2 mb-6">
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 flex-shrink-0"></div>
+                Performance is maintained without burnout
+              </li>
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 flex-shrink-0"></div>
+                Recovery and margin are respected
+              </li>
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 flex-shrink-0"></div>
+                People can perform well today — and tomorrow
+              </li>
+            </ul>
+            <p class="text-sm text-slate-500 mb-4">Burnout is not a badge of honor. Sustainable productivity is.</p>
+            <p class="text-sm text-emerald-600 font-semibold italic border-t border-slate-100 pt-4">
+              Can our current pace be sustained?
+            </p>
+          </div>
+
+          <!-- Measurable Output -->
+          <div class="bg-white rounded-3xl p-8 shadow-lg border border-slate-100 hover:shadow-xl transition-shadow reveal stagger-4">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-400 to-purple-500 flex items-center justify-center mb-6 shadow-lg">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-primary mb-2">Measurable Output</h3>
+            <p class="text-slate-500 text-sm font-medium mb-4">Productivity produces visible results.</p>
+            <ul class="space-y-2 mb-6">
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-purple-500 mt-2 flex-shrink-0"></div>
+                Outcomes are clear
+              </li>
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-purple-500 mt-2 flex-shrink-0"></div>
+                Progress can be measured
+              </li>
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-purple-500 mt-2 flex-shrink-0"></div>
+                Success is recognized and reinforced
+              </li>
+            </ul>
+            <p class="text-sm text-slate-500 mb-4">What gets produced — and measured — gets improved.</p>
+            <p class="text-sm text-purple-600 font-semibold italic border-t border-slate-100 pt-4">
+              Are results clear and meaningful?
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Why Productivity Matters -->
+    <section class="py-20 px-6 lg:px-8 bg-gradient-to-br from-primary to-primary-dark">
+      <div class="max-w-6xl mx-auto">
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+          <div>
+            <h2 class="text-3xl lg:text-4xl font-bold text-white mb-6">Why Productivity Matters</h2>
+            <div class="mb-8">
+              <h3 class="text-lg font-semibold text-red-300 mb-3">Without productivity:</h3>
+              <ul class="space-y-2">
+                <li class="flex items-start gap-2 text-slate-300">
+                  <div class="w-1.5 h-1.5 rounded-full bg-red-400 mt-2 flex-shrink-0"></div>
+                  Effort feels exhausting
+                </li>
+                <li class="flex items-start gap-2 text-slate-300">
+                  <div class="w-1.5 h-1.5 rounded-full bg-red-400 mt-2 flex-shrink-0"></div>
+                  Progress feels slow
+                </li>
+                <li class="flex items-start gap-2 text-slate-300">
+                  <div class="w-1.5 h-1.5 rounded-full bg-red-400 mt-2 flex-shrink-0"></div>
+                  Results feel inconsistent
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-emerald-300 mb-3">With productivity:</h3>
+              <ul class="space-y-2">
+                <li class="flex items-start gap-2 text-slate-200">
+                  <div class="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-2 flex-shrink-0"></div>
+                  Work feels purposeful
+                </li>
+                <li class="flex items-start gap-2 text-slate-200">
+                  <div class="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-2 flex-shrink-0"></div>
+                  Momentum builds
+                </li>
+                <li class="flex items-start gap-2 text-slate-200">
+                  <div class="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-2 flex-shrink-0"></div>
+                  Performance becomes dependable
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div class="bg-white/10 backdrop-blur-sm border border-white/20 rounded-3xl p-8 text-center">
+            <p class="text-2xl font-bold text-white mb-4">
+              Productivity is the outcome of a healthy system — not the pressure applied to a broken one.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Our Belief -->
+    <section class="py-20 px-6 lg:px-8">
+      <div class="max-w-4xl mx-auto text-center">
+        <h2 class="text-3xl lg:text-4xl font-bold text-primary mb-6">Our Belief</h2>
+        <p class="text-xl text-slate-600 leading-relaxed mb-4">
+          Productivity is not about squeezing more out of people. It's about creating the conditions where people can perform at their best — consistently.
+        </p>
+        <p class="text-lg text-slate-600 leading-relaxed mb-6">
+          When leadership sets direction, effectiveness sharpens focus, and accountability ensures follow-through, productivity becomes sustainable and repeatable.
+        </p>
+        <p class="text-primary font-semibold text-lg">
+          That's the LEAP difference.
+        </p>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-20 px-6 lg:px-8 bg-slate-50">
+      <div class="max-w-4xl mx-auto text-center">
+        <h2 class="text-3xl lg:text-4xl font-bold text-primary mb-6">
+          Ready to Build Sustainable Productivity?
+        </h2>
+        <p class="text-lg text-slate-600 leading-relaxed mb-8 max-w-3xl mx-auto">
+          If your organization is working hard but feeling stretched, productivity may not be the problem — the system may be.
+        </p>
+        <p class="text-xl text-primary font-semibold mb-8">Let's build clarity, alignment, and momentum that lasts.</p>
+      </div>
+    </section>
+
+    <!-- Footer CTA -->
+    <section class="py-16 px-6 lg:px-8 bg-gradient-to-br from-primary to-primary-dark">
+      <div class="max-w-4xl mx-auto text-center">
+        <p class="text-3xl lg:text-4xl font-bold text-white mb-8">
+          Always LEAP Higher.
+        </p>
+        <a
+          href={createPageUrl('Home')}
+          class="inline-flex items-center gap-2 px-8 py-4 bg-white text-primary font-semibold rounded-xl hover:bg-slate-100 transition-colors"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          Return to Homepage
+        </a>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Layout>

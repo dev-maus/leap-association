@@ -87,17 +87,17 @@ const stats = [
         <Breadcrumbs items={[{ label: 'Solutions' }]} />
 
         <div class="text-center max-w-4xl mx-auto">
-          <span class="text-primary font-semibold text-sm tracking-wider uppercase mb-4 block">
+          <span class="animate-fadeUp text-primary font-semibold text-sm tracking-wider uppercase mb-4 block">
             LEAP Solutions
           </span>
-          <h1 class="text-5xl lg:text-6xl font-bold text-primary mb-6">
+          <h1 class="animate-fadeUp text-5xl lg:text-6xl font-bold text-primary mb-6" style="animation-delay: 0.1s;">
             Transform Your Organization Through <span class="gradient-text">Practice</span>
           </h1>
-          <p class="text-xl text-slate-600 leading-relaxed mb-8">
+          <p class="animate-fadeUp text-xl text-slate-600 leading-relaxed mb-8" style="animation-delay: 0.2s;">
             From strategic consulting to leadership development, we provide comprehensive solutions
             that help organizations build repeatable, reliable, scalable practices that create excellence.
           </p>
-          <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <div class="animate-fadeUp flex flex-col sm:flex-row gap-4 justify-center" style="animation-delay: 0.3s;">
             <Button href={createPageUrl('ScheduleCall')} size="lg">
               Schedule a Consultation
             </Button>
@@ -113,8 +113,8 @@ const stats = [
     <section class="py-12 bg-gradient-to-br from-primary to-primary-dark">
       <div class="max-w-7xl mx-auto px-6 lg:px-8">
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-8">
-          {stats.map((stat) => (
-            <div class="text-center">
+          {stats.map((stat, i) => (
+            <div class={`reveal stagger-${i + 1} text-center`}>
               <p class="text-4xl lg:text-5xl font-bold text-white mb-2">{stat.value}</p>
               <p class="text-slate-200 text-sm lg:text-base">{stat.label}</p>
             </div>
@@ -126,7 +126,7 @@ const stats = [
     <!-- Solutions Grid -->
     <section class="py-20">
       <div class="max-w-7xl mx-auto px-6 lg:px-8">
-        <div class="text-center mb-16">
+        <div class="reveal text-center mb-16">
           <h2 class="text-4xl font-bold text-primary mb-4">
             Comprehensive Solutions for Every Need
           </h2>
@@ -135,12 +135,13 @@ const stats = [
           </p>
         </div>
 
+        <!-- Safelist gradient classes for Tailwind: from-blue-500 to-blue-600 from-purple-500 to-purple-600 from-amber-500 to-amber-600 from-emerald-500 to-emerald-600 from-primary to-primary-dark -->
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {displayServices.map((service: any) => (
-            <Card class="p-8 hover:shadow-xl transition-all group h-full flex flex-col">
+          {displayServices.map((service: any, i: number) => (
+            <Card class={`reveal stagger-${Math.min(i + 1, 6)} p-8 hover:shadow-xl transition-all group h-full flex flex-col`}>
               <div class={`w-16 h-16 rounded-2xl bg-gradient-to-br ${service.iconColor || 'from-primary to-primary-dark'} flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform`}>
-                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={service.icon || 'M13 10V3L4 14h7v7l9-11h-7z'} />
+                <svg class="w-8 h-8" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d={service.icon || 'M13 10V3L4 14h7v7l9-11h-7z'} />
                 </svg>
               </div>
 

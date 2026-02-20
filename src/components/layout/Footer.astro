@@ -12,7 +12,7 @@ const base = import.meta.env.BASE_URL;
           <img
             src={`${base}logo.png`}
             alt="LEAP Association Logo"
-            class="h-12 w-auto"
+            class="h-12 w-auto rounded-[50%]"
           />
           <span class="text-xl font-semibold">LEAP Association</span>
         </div>
@@ -50,17 +50,17 @@ const base = import.meta.env.BASE_URL;
         <ul class="space-y-3">
           <li>
             <a href={createPageUrl('Practice')} class="text-slate-300 hover:text-white transition-colors">
-              Individual HATS™
+              HATS™ Assessment
             </a>
           </li>
           <li>
-            <a href={createPageUrl('Practice')} class="text-slate-300 hover:text-white transition-colors">
-              Team HATS™
+            <a href={createPageUrl('Solutions')} class="text-slate-300 hover:text-white transition-colors">
+              Our Solutions
             </a>
           </li>
           <li>
-            <a href={createPageUrl('TeamDebrief')} class="text-slate-300 hover:text-white transition-colors">
-              Team Debrief
+            <a href={createPageUrl('ScheduleCall')} class="text-slate-300 hover:text-white transition-colors">
+              Schedule a Call
             </a>
           </li>
         </ul>

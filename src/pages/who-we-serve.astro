@@ -1,0 +1,139 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Head from '../components/layout/Head.astro';
+import Header from '../components/layout/Header.astro';
+import Footer from '../components/layout/Footer.astro';
+import CTAButtons from '../components/common/CTAButtons';
+import { createPageUrl } from '../lib/utils';
+
+const audiences = [
+  {
+    title: 'Executive Leaders & C-Suite',
+    description: 'Senior leaders who want to model intentional practice and create lasting cultural transformation from the top down.',
+    icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z',
+    color: 'from-blue-500 to-blue-600',
+    bgColor: 'bg-blue-50',
+  },
+  {
+    title: 'Managers & Team Leaders',
+    description: 'Leaders responsible for team performance who need practical tools to build accountability, alignment, and productivity.',
+    icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z',
+    color: 'from-emerald-500 to-emerald-600',
+    bgColor: 'bg-emerald-50',
+  },
+  {
+    title: 'Teams & Departments',
+    description: 'Intact teams seeking to strengthen collaboration, communication, and shared accountability through the LEAP framework.',
+    icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
+    color: 'from-purple-500 to-purple-600',
+    bgColor: 'bg-purple-50',
+  },
+  {
+    title: 'Organizations & Enterprises',
+    description: 'Companies committed to building a culture of intentional practice where Leadership, Effectiveness, Accountability, and Productivity thrive at every level.',
+    icon: 'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
+    color: 'from-amber-500 to-amber-600',
+    bgColor: 'bg-amber-50',
+  },
+];
+
+const industries = [
+  'Technology', 'Manufacturing', 'Healthcare', 'Education',
+  'Finance', 'Consulting', 'Government', 'Non-Profit',
+  'Retail', 'Real Estate', 'Legal', 'Energy',
+];
+---
+
+<Layout>
+  <Head slot="head" title="Who We Serve" description="LEAP Association serves executive leaders, managers, teams, and organizations across 25+ industries." />
+  <Header />
+  <main id="main-content" class="min-h-screen bg-gradient-to-br from-slate-50 to-white">
+    <!-- Hero Section -->
+    <section class="pt-32 pb-20 px-6 lg:px-8 relative overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5" />
+      <div class="max-w-6xl mx-auto relative z-10">
+        <a
+          href={createPageUrl('Home')}
+          class="inline-flex items-center gap-2 text-slate-500 hover:text-slate-700 mb-8 transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to Home
+        </a>
+
+        <div class="text-center">
+          <span class="animate-fadeUp text-primary font-semibold text-sm tracking-wider uppercase mb-4 block">
+            Who We Serve
+          </span>
+          <h1 class="animate-fadeUp text-4xl lg:text-6xl font-bold text-primary mb-6" style="animation-delay: 0.1s;">
+            Leaders & Organizations <span class="gradient-text">Ready to LEAP</span>
+          </h1>
+          <p class="animate-fadeUp text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed" style="animation-delay: 0.2s;">
+            We partner with individuals, teams, and organizations who are ready to move from accidental patterns to intentional practice — unlocking Leadership, Effectiveness, Accountability, and Productivity.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Audiences Grid -->
+    <section class="py-20 px-6 lg:px-8">
+      <div class="max-w-6xl mx-auto">
+        <div class="grid md:grid-cols-2 gap-8">
+          {audiences.map((audience, i) => (
+            <div class={`reveal stagger-${i + 1} bg-white rounded-3xl p-8 shadow-lg border border-slate-100 hover:shadow-xl transition-shadow`}>
+              <div class={`w-16 h-16 rounded-2xl bg-gradient-to-br ${audience.color} flex items-center justify-center mb-6 shadow-lg`}>
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={audience.icon} />
+                </svg>
+              </div>
+              <h3 class="text-2xl font-bold text-primary mb-4">{audience.title}</h3>
+              <p class="text-slate-600 leading-relaxed">{audience.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Industries Section -->
+    <section class="py-20 px-6 lg:px-8 bg-gradient-to-br from-primary to-primary-dark">
+      <div class="max-w-6xl mx-auto text-center">
+        <h2 class="text-3xl lg:text-4xl font-bold text-white mb-4">
+          Across 25+ Industries
+        </h2>
+        <p class="text-xl text-slate-200 max-w-3xl mx-auto mb-12">
+          The LEAP framework is universal. Wherever people lead and teams collaborate, intentional practice creates transformation.
+        </p>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {industries.map((industry, i) => (
+            <div class={`reveal stagger-${Math.min(i + 1, 6)} bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl py-4 px-6 text-white font-medium hover:bg-white/15 transition-colors`}>
+              {industry}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-20 px-6 lg:px-8">
+      <div class="max-w-4xl mx-auto">
+        <div class="bg-gradient-to-br from-primary to-primary-dark rounded-3xl p-12 text-center text-white relative overflow-hidden">
+          <div class="absolute -top-10 -right-10 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
+          <div class="absolute -bottom-10 -left-10 w-80 h-80 bg-accent/10 rounded-full blur-3xl" />
+          <div class="relative z-10">
+            <h2 class="text-3xl lg:text-4xl font-bold mb-6">
+              Ready to Transform Your Practice?
+            </h2>
+            <p class="text-xl text-slate-200 mb-8 max-w-2xl mx-auto">
+              Discover what you're practicing and build the patterns that create excellence.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+              <CTAButtons client:load />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Layout>
