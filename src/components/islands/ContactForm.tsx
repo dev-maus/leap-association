@@ -154,17 +154,17 @@ export default function ContactForm() {
       {/* Auth Status Banner */}
       {isAuthenticated && userEmail && (
         <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <User className="w-5 h-5 text-blue-600" />
-              <p className="text-sm text-blue-800">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <User className="w-5 h-5 text-blue-600 flex-shrink-0" />
+              <p className="text-sm text-blue-800 truncate">
                 Logged in as <strong>{userEmail}</strong>
               </p>
             </div>
             <button
               type="button"
               onClick={handleSignOut}
-              className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium"
+              className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium flex-shrink-0"
             >
               <LogOut className="w-4 h-4" />
               Sign Out

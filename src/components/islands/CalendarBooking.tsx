@@ -183,7 +183,7 @@ export default function CalendarBooking() {
             {selectedDate && (
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-3">Available Times</label>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {timesForDate.map((time) => (
                     <button
                       key={time}
