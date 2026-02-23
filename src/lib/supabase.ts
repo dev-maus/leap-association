@@ -19,23 +19,73 @@ if (supabaseUrl && supabaseAnonKey) {
 } else {
   // Create a mock client that warns when used without configuration
   console.warn('Supabase configuration missing. Set PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY in .env file.');
-  supabase = new Proxy({} as SupabaseClient, {
-    get(_, prop) {
-      if (prop === 'auth') {
-        return new Proxy({}, {
-          get() {
-            return () => Promise.reject(new Error('Supabase not configured'));
-          }
-        });
-      }
-      if (prop === 'from') {
-        return () => ({
-          select: () => ({ data: null, error: new Error('Supabase not configured') }),
-        });
-      }
-      return () => Promise.reject(new Error('Supabase not configured'));
-    }
-  });
+  
+  const notConfiguredError = { 
+    message: 'Supabase not configured', 
+    code: 'NOT_CONFIGURED',
+    details: 'Set PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY in .env file'
+  };
+
+  // Create a chainable query builder mock that returns proper error responses
+  const createChainableMock = (): Record<string, unknown> => {
+    const chainable: Record<string, unknown> = {};
+    const queryMethods = [
+      'select', 'insert', 'update', 'delete', 'upsert',
+      'eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'like', 'ilike',
+      'is', 'in', 'contains', 'containedBy', 'range', 'overlaps',
+      'textSearch', 'match', 'not', 'or', 'filter',
+      'order', 'limit', 'offset', 'single', 'maybeSingle',
+      'csv', 'geojson', 'explain', 'rollback', 'returns'
+    ];
+    
+    queryMethods.forEach(method => {
+      chainable[method] = () => chainable;
+    });
+    
+    // Terminal methods that return results
+    chainable.then = (resolve: (value: { data: null; error: typeof notConfiguredError; count: null }) => void) => {
+      resolve({ data: null, error: notConfiguredError, count: null });
+    };
+    
+    // Make it thenable for await
+    Object.defineProperty(chainable, Symbol.toStringTag, { value: 'Promise' });
+    
+    return chainable;
+  };
+
+  // Create auth mock with all common methods
+  const authMock = {
+    getSession: () => Promise.resolve({ data: { session: null }, error: notConfiguredError }),
+    getUser: () => Promise.resolve({ data: { user: null }, error: notConfiguredError }),
+    signInWithPassword: () => Promise.resolve({ data: { user: null, session: null }, error: notConfiguredError }),
+    signInWithOtp: () => Promise.resolve({ data: { user: null, session: null }, error: notConfiguredError }),
+    signUp: () => Promise.resolve({ data: { user: null, session: null }, error: notConfiguredError }),
+    signOut: () => Promise.resolve({ error: notConfiguredError }),
+    resetPasswordForEmail: () => Promise.resolve({ data: {}, error: notConfiguredError }),
+    updateUser: () => Promise.resolve({ data: { user: null }, error: notConfiguredError }),
+    onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
+  };
+
+  supabase = {
+    from: () => createChainableMock(),
+    rpc: () => Promise.resolve({ data: null, error: notConfiguredError }),
+    auth: authMock,
+    storage: {
+      from: () => ({
+        upload: () => Promise.resolve({ data: null, error: notConfiguredError }),
+        download: () => Promise.resolve({ data: null, error: notConfiguredError }),
+        getPublicUrl: () => ({ data: { publicUrl: '' } }),
+        list: () => Promise.resolve({ data: null, error: notConfiguredError }),
+        remove: () => Promise.resolve({ data: null, error: notConfiguredError }),
+      }),
+    },
+    channel: () => ({
+      on: () => ({ subscribe: () => {} }),
+      subscribe: () => {},
+      unsubscribe: () => {},
+    }),
+    removeChannel: () => Promise.resolve('ok'),
+  } as unknown as SupabaseClient;
 }
 
 export { supabase };

@@ -505,8 +505,8 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
       const userDetails = getUserDetails();
       const isNewUser = userDetails.isNewUser === true;
 
-      // If captcha is enabled, ensure we have a token
-      if (captchaConfig?.enabled && !captchaToken) {
+      // If captcha is enabled and user is NOT authenticated, ensure we have a token
+      if (captchaConfig?.enabled && !captchaToken && !isAuthenticated) {
         setErrorMessage('Please complete the captcha verification before submitting.');
         return;
       }
@@ -519,11 +519,13 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
 
       const answersArray = Object.entries(answers).map(([questionId, answer]) => {
         const question = questions.find((q) => q._id === questionId);
+        const responseLabel = question?.ratingOptions?.[answer.optionIndex]?.label;
         return {
           question_id: questionId,
           category: question?.category,
           score: answer.points,
           question_text: question?.text,
+          response_label: responseLabel,
         };
       });
 

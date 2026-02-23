@@ -85,6 +85,7 @@ interface RequestBody {
     category?: string;
     score: number;
     question_text?: string;
+    response_label?: string;
   }>;
   captchaToken?: string; // Optional - if not provided or empty, captcha verification is skipped
 }
