@@ -92,7 +92,7 @@ async function populateDefaultContent() {
     // 3. Hero Sections
     console.log('Creating hero sections...')
     const heroSections = [
-      { page: 'home', heading: 'Transform Your Leadership', subheading: 'Discover the LEAP framework and unlock your full potential as a leader.', ctaLabel: 'Get Started' },
+      { page: 'home', heading: "What's In Your Practice?", subheading: 'At LEAP Association, we bring awareness, alignment, and action to your daily behaviors so you can unlock Leadership, Effectiveness, Accountability, and Productivity.', ctaLabel: 'Get Started' },
       { page: 'about', heading: 'Excellence Through Intentional Practice', subheading: "We help leaders and organizations build repeatable, reliable, scalable behaviors that create lasting excellence, not through theory, but through practice.", ctaLabel: 'Learn More' },
       { page: 'solutions', heading: 'Transform Your Organization Through Practice', subheading: 'From strategic consulting to leadership development, we provide comprehensive solutions that help organizations build repeatable, reliable, scalable practices that create excellence.', ctaLabel: 'Schedule a Consultation' },
       { page: 'events', heading: 'Transformative Leadership Experiences', subheading: "Join our signature events designed to deepen your practice and connect with other leaders committed to excellence.", ctaLabel: 'View Events' },
