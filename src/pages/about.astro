@@ -11,11 +11,39 @@ import { DEFAULT_CASE_STUDIES, DEFAULT_INDUSTRIES, type CaseStudy, type Industry
 
 const teamMember = sanity ? await sanity.fetch(`*[_type == "teamMember"][0]`).catch(() => null) : null;
 const testimonials = sanity ? await sanity.fetch(`*[_type == "testimonial" && featured == true] | order(_createdAt desc)[0...6]`).catch(() => []) : [];
-const caseStudies = sanity ? await sanity.fetch(`*[_type == "caseStudy"] | order(_createdAt desc)[0...3]`).catch(() => []) : [];
+const caseStudies = sanity ? await sanity.fetch(`*[_type == "caseStudy"] | order(_createdAt desc)[0...3]{ title, "category": company, "description": challenge, "result": results[0] }`).catch(() => []) : [];
 const industriesData = sanity ? await sanity.fetch(`*[_type == "industryServed"] | order(order asc)`).catch(() => []) : [];
+const orgValues = sanity ? await sanity.fetch(`*[_type == "organizationValues"][0]{ mission, vision, values }`).catch(() => null) : null;
+const thrivingPillars = sanity ? await sanity.fetch(`*[_type == "thrivingPillar"] | order(order asc){ order, title, description, icon, color }`).catch(() => []) : [];
+const corePhilosophyData = sanity ? await sanity.fetch(`*[_type == "corePhilosophy"][0]{ sectionLabel, heading, description, principles, statValue, statLabel, statDescription }`).catch(() => null) : null;
+const heroAbout = sanity ? await sanity.fetch(`*[_type == "hero" && page == "about"][0]{ heading, subheading }`).catch(() => null) : null;
 
 const displayCaseStudies: CaseStudy[] = caseStudies.length > 0 ? caseStudies : DEFAULT_CASE_STUDIES;
 const industries: Industry[] = industriesData.length > 0 ? industriesData : DEFAULT_INDUSTRIES;
+
+const defaultOrgValues = {
+  mission: { heading: 'Our Mission', text: 'To transform how individuals and organizations approach excellence by making intentional practice the foundation of all achievement.', iconColor: 'from-blue-500 to-blue-600' },
+  vision: { heading: 'Our Vision', text: 'A world where every person and organization understands what they\'re practicing and deliberately builds patterns that lead to repeatable excellence.', iconColor: 'from-purple-500 to-purple-600' },
+  values: { heading: 'Our Values', text: 'Intentionality over activity. Practice over perfection. Progress over comfort. Growth through deliberate action.', iconColor: 'from-amber-500 to-amber-600' },
+};
+const defaultPillars = [
+  { title: 'Repeatable', description: "Systems that work consistently, day after day. Build processes that don't depend on luck or circumstance.", color: 'from-blue-400 to-blue-500', icon: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15' },
+  { title: 'Reliable', description: 'Dependable results every time. Create behaviors your team and clients can count on without question.', color: 'from-emerald-400 to-emerald-500', icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' },
+  { title: 'Scalable', description: 'Growth that maintains quality. Expand your impact without sacrificing the excellence that got you here.', color: 'from-amber-400 to-amber-500', icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6' },
+];
+const pillarsToShow = thrivingPillars.length > 0 ? thrivingPillars : defaultPillars;
+const defaultPrinciples = [
+  { title: 'Practice Creates Patterns', description: 'Repeated actions become automatic behaviors that shape your outcomes.', color: 'blue' },
+  { title: 'Patterns Drive Results', description: 'Your consistent behaviors determine your consistent outcomes.', color: 'purple' },
+  { title: 'Intentionality Transforms', description: 'Awareness of your practice is the first step to changing it.', color: 'amber' },
+];
+const philosophySectionLabel = corePhilosophyData?.sectionLabel ?? 'Core Philosophy';
+const philosophyHeading = corePhilosophyData?.heading ?? 'You Are Always Practicing';
+const philosophyDescription = corePhilosophyData?.description ?? "Every action you take reinforces a pattern. Every decision builds a habit. The question isn't whether you're practicing—it's whether you're practicing what you want to become.";
+const philosophyPrinciples = (corePhilosophyData?.principles?.length ? corePhilosophyData.principles : defaultPrinciples) as { title: string; description?: string; color?: string }[];
+const philosophyStatValue = corePhilosophyData?.statValue ?? '93%';
+const philosophyStatLabel = corePhilosophyData?.statLabel ?? 'of behavior is driven by unconscious patterns';
+const philosophyStatDescription = corePhilosophyData?.statDescription ?? "Most of what we do happens on autopilot. LEAP helps you bring awareness to these patterns so you can intentionally build the behaviors that lead to the outcomes you want.";
 ---
 
 <Layout>
@@ -41,11 +69,10 @@ const industries: Industry[] = industriesData.length > 0 ? industriesData : DEFA
             About LEAP Association
           </span>
           <h1 class="animate-fadeUp text-4xl lg:text-6xl font-bold text-primary mb-6" style="animation-delay: 0.1s;">
-            Excellence Through <span class="gradient-text">Intentional Practice</span>
+            {heroAbout?.heading ?? 'Excellence Through Intentional Practice'}
           </h1>
           <p class="animate-fadeUp text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed" style="animation-delay: 0.2s;">
-            We help leaders and organizations build repeatable, reliable, scalable behaviors
-            that create lasting excellence, not through theory, but through practice.
+            {heroAbout?.subheading ?? "We help leaders and organizations build repeatable, reliable, scalable behaviors that create lasting excellence, not through theory, but through practice."}
           </p>
         </div>
       </div>
@@ -56,38 +83,38 @@ const industries: Industry[] = industriesData.length > 0 ? industriesData : DEFA
       <div class="max-w-6xl mx-auto">
         <div class="grid md:grid-cols-3 gap-8">
           <div class="reveal stagger-1 bg-white rounded-3xl p-8 shadow-lg border border-slate-100 hover:shadow-xl transition-shadow">
-            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mb-6 shadow-lg">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br {defaultOrgValues.mission.iconColor} flex items-center justify-center mb-6 shadow-lg">
               <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h3 class="text-2xl font-bold text-primary mb-4">Our Mission</h3>
+            <h3 class="text-2xl font-bold text-primary mb-4">{defaultOrgValues.mission.heading}</h3>
             <p class="text-slate-600 leading-relaxed">
-              To transform how individuals and organizations approach excellence by making intentional practice the foundation of all achievement.
+              {orgValues?.mission ?? defaultOrgValues.mission.text}
             </p>
           </div>
 
           <div class="reveal stagger-2 bg-white rounded-3xl p-8 shadow-lg border border-slate-100 hover:shadow-xl transition-shadow">
-            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center mb-6 shadow-lg">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br {defaultOrgValues.vision.iconColor} flex items-center justify-center mb-6 shadow-lg">
               <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
               </svg>
             </div>
-            <h3 class="text-2xl font-bold text-primary mb-4">Our Vision</h3>
+            <h3 class="text-2xl font-bold text-primary mb-4">{defaultOrgValues.vision.heading}</h3>
             <p class="text-slate-600 leading-relaxed">
-              A world where every person and organization understands what they're practicing and deliberately builds patterns that lead to repeatable excellence.
+              {orgValues?.vision ?? defaultOrgValues.vision.text}
             </p>
           </div>
 
           <div class="reveal stagger-3 bg-white rounded-3xl p-8 shadow-lg border border-slate-100 hover:shadow-xl transition-shadow">
-            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center mb-6 shadow-lg">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br {defaultOrgValues.values.iconColor} flex items-center justify-center mb-6 shadow-lg">
               <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
             </div>
-            <h3 class="text-2xl font-bold text-primary mb-4">Our Values</h3>
+            <h3 class="text-2xl font-bold text-primary mb-4">{defaultOrgValues.values.heading}</h3>
             <p class="text-slate-600 leading-relaxed">
-              Intentionality over activity. Practice over perfection. Progress over comfort. Growth through deliberate action.
+              {orgValues?.values ?? defaultOrgValues.values.text}
             </p>
           </div>
         </div>
@@ -110,41 +137,23 @@ const industries: Industry[] = industriesData.length > 0 ? industriesData : DEFA
         </div>
 
         <div class="grid md:grid-cols-3 gap-8">
-          <div class="reveal stagger-1 bg-white/10 backdrop-blur-sm border border-white/20 rounded-3xl p-8 text-center hover:bg-white/15 transition-colors">
-            <div class="w-20 h-20 rounded-full bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center mx-auto mb-6 shadow-lg">
-              <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
+          {pillarsToShow.map((pillar: { title: string; description: string; color?: string; icon?: string }, i: number) => (
+            <div class={`reveal stagger-${i + 1} bg-white/10 backdrop-blur-sm border border-white/20 rounded-3xl p-8 text-center hover:bg-white/15 transition-colors`}>
+              <div class={`w-20 h-20 rounded-full bg-gradient-to-br ${pillar.color || 'from-primary to-primary-dark'} flex items-center justify-center mx-auto mb-6 shadow-lg`}>
+                {pillar.icon ? (
+                  <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={pillar.icon} />
+                  </svg>
+                ) : (
+                  <span class="text-2xl font-bold text-white">{pillar.title[0]}</span>
+                )}
+              </div>
+              <h3 class="text-2xl font-bold text-white mb-4">{pillar.title}</h3>
+              <p class="text-slate-200 leading-relaxed">
+                {pillar.description}
+              </p>
             </div>
-            <h3 class="text-2xl font-bold text-white mb-4">Repeatable</h3>
-            <p class="text-slate-200 leading-relaxed">
-              Systems that work consistently, day after day. Build processes that don't depend on luck or circumstance.
-            </p>
-          </div>
-
-          <div class="reveal stagger-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-3xl p-8 text-center hover:bg-white/15 transition-colors">
-            <div class="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-500 flex items-center justify-center mx-auto mb-6 shadow-lg">
-              <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-            </div>
-            <h3 class="text-2xl font-bold text-white mb-4">Reliable</h3>
-            <p class="text-slate-200 leading-relaxed">
-              Dependable results every time. Create behaviors your team and clients can count on without question.
-            </p>
-          </div>
-
-          <div class="reveal stagger-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-3xl p-8 text-center hover:bg-white/15 transition-colors">
-            <div class="w-20 h-20 rounded-full bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center mx-auto mb-6 shadow-lg">
-              <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-              </svg>
-            </div>
-            <h3 class="text-2xl font-bold text-white mb-4">Scalable</h3>
-            <p class="text-slate-200 leading-relaxed">
-              Growth that maintains quality. Expand your impact without sacrificing the excellence that got you here.
-            </p>
-          </div>
+          ))}
         </div>
       </div>
     </section>
@@ -155,60 +164,43 @@ const industries: Industry[] = industriesData.length > 0 ? industriesData : DEFA
         <div class="grid lg:grid-cols-2 gap-12 items-center">
           <div class="reveal-left">
             <span class="text-primary font-semibold text-sm tracking-wider uppercase mb-4 block">
-              Core Philosophy
+              {philosophySectionLabel}
             </span>
             <h2 class="text-3xl lg:text-4xl font-bold text-primary mb-6">
-              You Are <span class="gradient-text">Always</span> Practicing
+              {philosophyHeading}
             </h2>
             <p class="text-lg text-slate-600 mb-6 leading-relaxed">
-              Every action you take reinforces a pattern. Every decision builds a habit. The question isn't whether you're practicing—it's whether you're practicing what you want to become.
+              {philosophyDescription}
             </p>
             <div class="space-y-4">
-              <div class="flex items-start gap-4">
-                <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-1">
-                  <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </div>
-                <div>
-                  <h4 class="font-semibold text-primary mb-1">Practice Creates Patterns</h4>
-                  <p class="text-slate-600">Repeated actions become automatic behaviors that shape your outcomes.</p>
-                </div>
-              </div>
-              <div class="flex items-start gap-4">
-                <div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0 mt-1">
-                  <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </div>
-                <div>
-                  <h4 class="font-semibold text-primary mb-1">Patterns Drive Results</h4>
-                  <p class="text-slate-600">Your consistent behaviors determine your consistent outcomes.</p>
-                </div>
-              </div>
-              <div class="flex items-start gap-4">
-                <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 mt-1">
-                  <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </div>
-                <div>
-                  <h4 class="font-semibold text-primary mb-1">Intentionality Transforms</h4>
-                  <p class="text-slate-600">Awareness of your practice is the first step to changing it.</p>
-                </div>
-              </div>
+              {philosophyPrinciples.map((principle: { title: string; description?: string; color?: string }) => {
+                const bgClass = principle.color === 'blue' ? 'bg-blue-100' : principle.color === 'purple' ? 'bg-purple-100' : principle.color === 'amber' ? 'bg-amber-100' : 'bg-primary/10';
+                const textClass = principle.color === 'blue' ? 'text-blue-600' : principle.color === 'purple' ? 'text-purple-600' : principle.color === 'amber' ? 'text-amber-600' : 'text-primary';
+                return (
+                  <div class="flex items-start gap-4">
+                    <div class={`w-8 h-8 rounded-full ${bgClass} flex items-center justify-center flex-shrink-0 mt-1`}>
+                      <svg class={`w-4 h-4 ${textClass}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 class="font-semibold text-primary mb-1">{principle.title}</h4>
+                      {principle.description && <p class="text-slate-600">{principle.description}</p>}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
           <div class="reveal-right bg-gradient-to-br from-slate-50 to-slate-100 rounded-3xl p-8 lg:p-12">
             <div class="text-center">
-              <div class="text-6xl sm:text-7xl lg:text-8xl xl:text-9xl font-bold gradient-text mb-4">93%</div>
+              <div class="text-6xl sm:text-7xl lg:text-8xl xl:text-9xl font-bold gradient-text mb-4">{philosophyStatValue}</div>
               <p class="text-xl text-slate-700 font-medium mb-4">
-                of behavior is driven by unconscious patterns
+                {philosophyStatLabel}
               </p>
               <p class="text-slate-600 leading-relaxed">
-                Most of what we do happens on autopilot. LEAP helps you bring awareness to these patterns
-                so you can intentionally build the behaviors that lead to the outcomes you want.
+                {philosophyStatDescription}
               </p>
             </div>
           </div>
