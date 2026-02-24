@@ -14,11 +14,13 @@ const base = import.meta.env.BASE_URL;
     <nav class="flex items-center justify-between">
       <!-- Logo -->
       <a href={createPageUrl('Home')} class="flex items-center gap-3">
-        <img
-          src={`${base}logo.png`}
-          alt="LEAP Association Logo"
-          class="h-12 w-auto rounded-[50%]"
-        />
+        <span class="flex h-12 w-14 rounded-full overflow-hidden bg-white/10 flex-shrink-0">
+          <img
+            src={`${base}logo.png`}
+            alt="LEAP Association Logo"
+            class="h-full w-full object-contain"
+          />
+        </span>
         <span class="text-xl font-semibold tracking-tight text-white">
           LEAP Association
         </span>

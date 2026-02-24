@@ -36,6 +36,7 @@ const books = sanity ? await sanity.fetch(`*[_type == "book" && status == "publi
 const categories = [...new Set(blogPosts.map((post: any) => post.category).filter(Boolean))];
 
 const displayBooks: Book[] = books.length > 0 ? books : DEFAULT_BOOKS;
+const heroResources = sanity ? await sanity.fetch(`*[_type == "hero" && page == "resources"][0]{ heading, subheading }`).catch(() => null) : null;
 ---
 
 <Layout>
@@ -59,10 +60,10 @@ const displayBooks: Book[] = books.length > 0 ? books : DEFAULT_BOOKS;
           Learning Hub
         </span>
         <h1 class="text-4xl lg:text-5xl font-bold text-primary mb-6">
-          Resources
+          {heroResources?.heading ?? 'Resources'}
         </h1>
         <p class="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
-          Tools, insights, and inspiration to fuel your leadership journey
+          {heroResources?.subheading ?? 'Tools, insights, and inspiration to fuel your leadership journey'}
         </p>
       </div>
 

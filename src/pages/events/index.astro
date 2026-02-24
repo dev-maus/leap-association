@@ -12,6 +12,7 @@ import { createPageUrl } from '../../lib/utils';
 import { DEFAULT_EVENTS, type SignatureEvent } from '../../lib/defaultContent';
 
 const events = sanity ? await sanity.fetch(`*[_type == "signatureEvent"] | order(order asc, _createdAt desc)`).catch(() => []) : [];
+const heroEvents = sanity ? await sanity.fetch(`*[_type == "hero" && page == "events"][0]{ heading, subheading }`).catch(() => null) : null;
 
 const displayEvents: SignatureEvent[] = events.length > 0 ? events : DEFAULT_EVENTS;
 ---
@@ -27,11 +28,10 @@ const displayEvents: SignatureEvent[] = events.length > 0 ? events : DEFAULT_EVE
           Signature Events
         </span>
         <h1 class="text-4xl lg:text-5xl font-bold text-primary mb-6">
-          Transformative Leadership <span class="gradient-text">Experiences</span>
+          {heroEvents?.heading ?? 'Transformative Leadership Experiences'}
         </h1>
         <p class="text-xl text-slate-600 max-w-3xl mx-auto">
-          Join our signature events designed to deepen your practice and connect with other leaders
-          committed to excellence.
+          {heroEvents?.subheading ?? "Join our signature events designed to deepen your practice and connect with other leaders committed to excellence."}
         </p>
       </div>
 

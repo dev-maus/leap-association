@@ -22,6 +22,8 @@ import corePhilosophy from './corePhilosophy';
 import industryServed from './industryServed';
 import statistic from './statistic';
 import practiceResource from './practiceResource';
+import leapDimension from './leapDimension';
+import loungePage from './loungePage';
 
 export const schemaTypes = [
   siteSettings,
@@ -48,4 +50,6 @@ export const schemaTypes = [
   industryServed,
   statistic,
   practiceResource,
+  leapDimension,
+  loungePage,
 ];

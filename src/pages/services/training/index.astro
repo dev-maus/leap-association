@@ -9,7 +9,15 @@ import Card from '../../../components/ui/Card.astro';
 import { sanity } from '../../../lib/sanity';
 import { createPageUrl } from '../../../lib/utils';
 
-const service = sanity ? await sanity.fetch(`*[_type == "service" && slug == "training"][0]`).catch(() => null) : null;
+const service = sanity ? await sanity.fetch(`*[_type == "service" && slug.current == "training"][0]{ title, subtitle, description, subItems, ctaHeading, ctaDescription }`).catch(() => null) : null;
+const defaultTracks = [
+  { title: 'Leading Self', description: 'Master personal leadership practices', slug: 'leading-self' },
+  { title: 'Leading Others', description: 'Develop team leadership capabilities', slug: 'leading-others' },
+  { title: 'Leading Projects', description: 'Excel at project and program leadership', slug: 'leading-projects' },
+  { title: 'Leading Change', description: 'Drive organizational transformation', slug: 'leading-change' },
+];
+const tracks = service?.subItems?.length ? service.subItems : defaultTracks;
+const basePath = `${import.meta.env.BASE_URL}services/training`;
 ---
 
 <Layout>
@@ -43,35 +51,19 @@ const service = sanity ? await sanity.fetch(`*[_type == "service" && slug == "tr
       </div>
 
       <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-        <Card class="p-6">
-          <h3 class="text-xl font-bold text-primary mb-3">Leading Self</h3>
-          <p class="text-slate-600 mb-4 text-sm">Master personal leadership practices</p>
-          <Button href={`${import.meta.env.BASE_URL}services/training/leading-self`} variant="outline" size="sm">Learn More</Button>
-        </Card>
-
-        <Card class="p-6">
-          <h3 class="text-xl font-bold text-primary mb-3">Leading Others</h3>
-          <p class="text-slate-600 mb-4 text-sm">Develop team leadership capabilities</p>
-          <Button href={`${import.meta.env.BASE_URL}services/training/leading-others`} variant="outline" size="sm">Learn More</Button>
-        </Card>
-
-        <Card class="p-6">
-          <h3 class="text-xl font-bold text-primary mb-3">Leading Projects</h3>
-          <p class="text-slate-600 mb-4 text-sm">Excel at project and program leadership</p>
-          <Button href={`${import.meta.env.BASE_URL}services/training/leading-projects`} variant="outline" size="sm">Learn More</Button>
-        </Card>
-
-        <Card class="p-6">
-          <h3 class="text-xl font-bold text-primary mb-3">Leading Change</h3>
-          <p class="text-slate-600 mb-4 text-sm">Drive organizational transformation</p>
-          <Button href={`${import.meta.env.BASE_URL}services/training/leading-change`} variant="outline" size="sm">Learn More</Button>
-        </Card>
+        {tracks.map((track: { title: string; description?: string; slug?: string }) => (
+          <Card class="p-6">
+            <h3 class="text-xl font-bold text-primary mb-3">{track.title}</h3>
+            <p class="text-slate-600 mb-4 text-sm">{track.description ?? ''}</p>
+            <Button href={track.slug ? `${basePath}/${track.slug}` : createPageUrl('ScheduleCall')} variant="outline" size="sm">Learn More</Button>
+          </Card>
+        ))}
       </div>
 
       <div class="bg-gradient-to-br from-primary to-primary-dark rounded-3xl p-6 sm:p-10 text-white text-center">
-        <h2 class="text-3xl font-bold mb-4">Ready to Develop Your Leaders?</h2>
+        <h2 class="text-3xl font-bold mb-4">{service?.ctaHeading ?? 'Ready to Develop Your Leaders?'}</h2>
         <p class="text-slate-200 mb-8 max-w-2xl mx-auto">
-          Discover which training program fits your organization's needs.
+          {service?.ctaDescription ?? "Discover which training program fits your organization's needs."}
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
           <Button href={createPageUrl('ScheduleCall')} variant="secondary" size="lg" class="bg-white text-primary hover:bg-slate-100">

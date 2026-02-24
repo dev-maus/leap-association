@@ -41,8 +41,7 @@ const defaultItems = [
   },
 ];
 
-// Always use default items to ensure correct updated names (Effectiveness, Accountability, Productivity)
-const displayItems = defaultItems;
+const displayItems = leapItems.length > 0 ? leapItems : defaultItems;
 ---
 
 <section id="leap" class="py-24 lg:py-32 bg-slate-50 overflow-hidden relative">
@@ -126,7 +125,7 @@ const displayItems = defaultItems;
         </div>
 
         <div class="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8">
-          <h4 class="font-bold text-accent text-lg uppercase tracking-wider mb-6">
+          <h4 class="text-2xl lg:text-3xl font-bold text-accent uppercase tracking-wider mb-6">
             LEAP as a Continuous Improvement Engine
           </h4>
           <p class="text-slate-300 mb-6">

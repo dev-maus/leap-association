@@ -9,7 +9,14 @@ import Card from '../../../components/ui/Card.astro';
 import { sanity } from '../../../lib/sanity';
 import { createPageUrl } from '../../../lib/utils';
 
-const service = sanity ? await sanity.fetch(`*[_type == "service" && slug == "consulting"][0]`).catch(() => null) : null;
+const service = sanity ? await sanity.fetch(`*[_type == "service" && slug.current == "consulting"][0]{ title, subtitle, description, subItems, ctaHeading, ctaDescription }`).catch(() => null) : null;
+const defaultOfferings = [
+  { title: 'DRP Consulting', description: 'Disaster Recovery Planning and organizational resilience', slug: 'drp' },
+  { title: 'Readiness Assessment', description: 'Evaluate organizational readiness for change and growth', slug: 'readiness' },
+  { title: 'Team Alignment', description: 'Align teams around shared practices and goals', slug: 'team-alignment' },
+];
+const offerings = service?.subItems?.length ? service.subItems : defaultOfferings;
+const basePath = `${import.meta.env.BASE_URL}services/consulting`;
 ---
 
 <Layout>
@@ -44,29 +51,19 @@ const service = sanity ? await sanity.fetch(`*[_type == "service" && slug == "co
       </div>
 
       <div class="grid md:grid-cols-3 gap-6 mb-16">
-        <Card class="p-6">
-          <h3 class="text-xl font-bold text-primary mb-3">DRP Consulting</h3>
-          <p class="text-slate-600 mb-4">Disaster Recovery Planning and organizational resilience</p>
-          <Button href={`${import.meta.env.BASE_URL}services/consulting/drp`} variant="outline" size="sm">Learn More</Button>
-        </Card>
-
-        <Card class="p-6">
-          <h3 class="text-xl font-bold text-primary mb-3">Readiness Assessment</h3>
-          <p class="text-slate-600 mb-4">Evaluate organizational readiness for change and growth</p>
-          <Button href={`${import.meta.env.BASE_URL}services/consulting/readiness`} variant="outline" size="sm">Learn More</Button>
-        </Card>
-
-        <Card class="p-6">
-          <h3 class="text-xl font-bold text-primary mb-3">Team Alignment</h3>
-          <p class="text-slate-600 mb-4">Align teams around shared practices and goals</p>
-          <Button href={`${import.meta.env.BASE_URL}services/consulting/team-alignment`} variant="outline" size="sm">Learn More</Button>
-        </Card>
+        {offerings.map((item: { title: string; description?: string; slug?: string }) => (
+          <Card class="p-6">
+            <h3 class="text-xl font-bold text-primary mb-3">{item.title}</h3>
+            <p class="text-slate-600 mb-4">{item.description ?? ''}</p>
+            <Button href={item.slug ? `${basePath}/${item.slug}` : createPageUrl('ScheduleCall')} variant="outline" size="sm">Learn More</Button>
+          </Card>
+        ))}
       </div>
 
       <div class="bg-gradient-to-br from-primary to-primary-dark rounded-3xl p-6 sm:p-10 text-white text-center">
-        <h2 class="text-3xl font-bold mb-4">Ready to Transform Your Organization?</h2>
+        <h2 class="text-3xl font-bold mb-4">{service?.ctaHeading ?? 'Ready to Transform Your Organization?'}</h2>
         <p class="text-slate-200 mb-8 max-w-2xl mx-auto">
-          Schedule a consultation to discuss how LEAP consulting can help your organization build excellence.
+          {service?.ctaDescription ?? 'Schedule a consultation to discuss how LEAP consulting can help your organization build excellence.'}
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
           <Button href={createPageUrl('ScheduleCall')} variant="secondary" size="lg" class="bg-white text-primary hover:bg-slate-100">
