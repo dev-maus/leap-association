@@ -49,13 +49,13 @@ const getSocialHref = (link: { platform: string; url: string }) => {
 
 <footer class="bg-primary text-white">
   <div class="max-w-7xl mx-auto px-6 lg:px-8 py-16">
-    <div class="grid md:grid-cols-4 gap-12">
+    <div class="grid md:grid-cols-5 gap-8 md:gap-12">
       <div class="md:col-span-2">
         <div class="flex items-center gap-3 mb-6">
           <img
             src={`${base}logo.png`}
             alt="LEAP Association Logo"
-            class="h-12 w-auto"
+            class="h-12 w-auto rounded-[50%]"
           />
           <span class="text-xl font-semibold">LEAP Association</span>
         </div>
@@ -105,17 +105,17 @@ const getSocialHref = (link: { platform: string; url: string }) => {
         <ul class="space-y-3">
           <li>
             <a href={createPageUrl('Practice')} class="text-slate-300 hover:text-white transition-colors">
-              Individual HATS™
+              HATS™ Assessment
             </a>
           </li>
           <li>
-            <a href={createPageUrl('Practice')} class="text-slate-300 hover:text-white transition-colors">
-              Team HATS™
+            <a href={createPageUrl('Solutions')} class="text-slate-300 hover:text-white transition-colors">
+              Our Solutions
             </a>
           </li>
           <li>
-            <a href={createPageUrl('TeamDebrief')} class="text-slate-300 hover:text-white transition-colors">
-              Team Debrief
+            <a href={createPageUrl('ScheduleCall')} class="text-slate-300 hover:text-white transition-colors">
+              Schedule a Call
             </a>
           </li>
         </ul>
@@ -146,17 +146,17 @@ const getSocialHref = (link: { platform: string; url: string }) => {
         <h4 class="font-semibold mb-4 text-white">Contact</h4>
         <ul class="space-y-3">
           <li>
-            <a href={createPageUrl('Contact')} class="text-slate-300 hover:text-white transition-colors">
+            <a href={`${base}contact`} class="text-slate-300 hover:text-white transition-colors">
               Contact Us
             </a>
           </li>
           <li>
-            <a href={createPageUrl('ScheduleCall')} class="text-slate-300 hover:text-white transition-colors">
+            <a href={`${base}schedule`} class="text-slate-300 hover:text-white transition-colors">
               Schedule a Call
             </a>
           </li>
           <li>
-            <a href={createPageUrl('FAQ')} class="text-slate-300 hover:text-white transition-colors">
+            <a href={`${base}faq`} class="text-slate-300 hover:text-white transition-colors">
               FAQ
             </a>
           </li>

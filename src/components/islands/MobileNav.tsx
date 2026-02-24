@@ -7,9 +7,7 @@ const NAV_LINKS = [
   { name: 'Home', pageName: 'Home' },
   { name: 'About LEAP', pageName: 'About' },
   { name: 'Solutions', pageName: 'Solutions' },
-  { name: "What's In Your Practice?", pageName: 'Practice' },
-  { name: 'Signature Events', pageName: 'SignatureEvents' },
-  { name: 'LEAP Lounge', pageName: 'LEAPLounge' },
+  { name: 'Who We Serve', pageName: 'WhoWeServe' },
   { name: 'Resources', pageName: 'Resources' },
 ] as const;
 

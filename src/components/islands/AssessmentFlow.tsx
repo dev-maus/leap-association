@@ -156,7 +156,7 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
             }
           } catch (assessmentError) {
             // No existing assessment or timeout - continue to show assessment form
-            console.log('No existing assessment found or check timed out');
+            // No existing assessment or timeout - continue to show form
           }
         }
       } catch (error) {

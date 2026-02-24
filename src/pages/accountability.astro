@@ -1,0 +1,315 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Head from '../components/layout/Head.astro';
+import Header from '../components/layout/Header.astro';
+import Footer from '../components/layout/Footer.astro';
+import { createPageUrl } from '../lib/utils';
+---
+
+<Layout>
+  <Head slot="head" title="Accountability" description="Accountability Builds Trust and Momentum. When accountability is clear and consistent, trust grows, progress accelerates, and performance becomes dependable." />
+  <Header />
+  <main id="main-content" class="min-h-screen bg-gradient-to-br from-slate-50 to-white">
+    <!-- Hero Section -->
+    <section class="pt-32 pb-20 px-6 lg:px-8 relative overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-purple-600/5" />
+      <div class="max-w-6xl mx-auto relative z-10">
+        <a
+          href={createPageUrl('Home')}
+          class="inline-flex items-center gap-2 text-slate-500 hover:text-slate-700 mb-8 transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to Home
+        </a>
+
+        <div class="flex items-center gap-6 mb-8 animate-fadeUp">
+          <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white font-display text-4xl font-bold shadow-lg">
+            A
+          </div>
+          <div>
+            <h1 class="text-4xl lg:text-6xl font-bold text-primary">Accountability Builds Trust and Momentum</h1>
+          </div>
+        </div>
+
+        <p class="text-xl text-slate-600 max-w-4xl leading-relaxed mb-4 animate-fadeUp" style="animation-delay: 0.1s;">
+          Accountability is where leadership becomes real.
+        </p>
+        <p class="text-lg text-slate-500 max-w-4xl leading-relaxed mb-4 animate-fadeUp" style="animation-delay: 0.15s;">
+          It's easy to talk about vision. It's harder — and far more powerful — to own commitments and follow through.
+        </p>
+        <p class="text-lg text-slate-600 max-w-4xl leading-relaxed mb-4 animate-fadeUp" style="animation-delay: 0.2s;">
+          At LEAP, we see accountability not as control or consequence, but as responsibility with integrity. When accountability is clear and consistent, trust grows, progress accelerates, and performance becomes dependable.
+        </p>
+        <p class="text-lg text-purple-700 font-semibold max-w-4xl animate-fadeUp" style="animation-delay: 0.25s;">
+          Without accountability, even great leadership intentions fade.
+        </p>
+      </div>
+    </section>
+
+    <!-- How We Define Accountability -->
+    <section class="py-20 px-6 lg:px-8 bg-white">
+      <div class="max-w-6xl mx-auto">
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+          <div class="reveal-left">
+            <h2 class="text-3xl lg:text-4xl font-bold text-primary mb-6">How We Define Accountability</h2>
+            <p class="text-lg text-slate-600 mb-6 leading-relaxed">
+              Accountability is the practice of:
+            </p>
+            <ul class="space-y-3 mb-8">
+              <li class="flex items-start gap-3 text-lg text-slate-700">
+                <div class="w-2 h-2 rounded-full bg-purple-500 mt-2.5 flex-shrink-0"></div>
+                Owning commitments
+              </li>
+              <li class="flex items-start gap-3 text-lg text-slate-700">
+                <div class="w-2 h-2 rounded-full bg-purple-500 mt-2.5 flex-shrink-0"></div>
+                Honoring expectations
+              </li>
+              <li class="flex items-start gap-3 text-lg text-slate-700">
+                <div class="w-2 h-2 rounded-full bg-purple-500 mt-2.5 flex-shrink-0"></div>
+                Following through — especially when it's uncomfortable
+              </li>
+            </ul>
+            <p class="text-lg text-slate-600 leading-relaxed mb-4">
+              It answers a defining question:
+            </p>
+            <p class="text-xl text-primary font-bold italic mb-4">
+              "Who owns this — and can we count on it getting done?"
+            </p>
+            <p class="text-primary font-semibold">
+              True accountability creates confidence, not fear.
+            </p>
+          </div>
+          <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-3xl p-6 sm:p-10 text-white reveal-right">
+            <h3 class="text-2xl font-bold mb-4">What Accountability Really Requires</h3>
+            <p class="text-purple-100 leading-relaxed">
+              Accountability isn't a system — it's a standard. We focus on the conditions that make accountability sustainable.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Four Areas -->
+    <section class="py-20 px-6 lg:px-8">
+      <div class="max-w-6xl mx-auto">
+        <div class="grid md:grid-cols-2 gap-8">
+          <!-- Ownership Before Expectation -->
+          <div class="bg-white rounded-3xl p-8 shadow-lg border border-slate-100 hover:shadow-xl transition-shadow reveal stagger-1">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-400 to-purple-500 flex items-center justify-center mb-6 shadow-lg">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-primary mb-2">Ownership Before Expectation</h3>
+            <p class="text-slate-500 text-sm font-medium mb-4">Accountability starts with leaders.</p>
+            <ul class="space-y-2 mb-6">
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-purple-500 mt-2 flex-shrink-0"></div>
+                Leaders own commitments before expecting others to
+              </li>
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-purple-500 mt-2 flex-shrink-0"></div>
+                Responsibility is clear, not implied
+              </li>
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-purple-500 mt-2 flex-shrink-0"></div>
+                Excuses don't replace ownership
+              </li>
+            </ul>
+            <p class="text-sm text-slate-500 mb-4">When leaders model accountability, it becomes cultural — not forced.</p>
+            <p class="text-sm text-purple-600 font-semibold italic border-t border-slate-100 pt-4">
+              Are commitments clearly owned — or quietly avoided?
+            </p>
+          </div>
+
+          <!-- Clear Expectations -->
+          <div class="bg-white rounded-3xl p-8 shadow-lg border border-slate-100 hover:shadow-xl transition-shadow reveal stagger-2">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center mb-6 shadow-lg">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-primary mb-2">Clear Expectations</h3>
+            <p class="text-slate-500 text-sm font-medium mb-4">People can't own what isn't clear.</p>
+            <ul class="space-y-2 mb-6">
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 flex-shrink-0"></div>
+                Roles and responsibilities are understood
+              </li>
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 flex-shrink-0"></div>
+                Success is defined upfront
+              </li>
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 flex-shrink-0"></div>
+                Assumptions are replaced with alignment
+              </li>
+            </ul>
+            <p class="text-sm text-slate-500 mb-4">Clarity removes confusion — and confusion is the enemy of accountability.</p>
+            <p class="text-sm text-blue-600 font-semibold italic border-t border-slate-100 pt-4">
+              Do people know what they are accountable for?
+            </p>
+          </div>
+
+          <!-- Consistent Follow-Through -->
+          <div class="bg-white rounded-3xl p-8 shadow-lg border border-slate-100 hover:shadow-xl transition-shadow reveal stagger-3">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-500 flex items-center justify-center mb-6 shadow-lg">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-primary mb-2">Consistent Follow-Through</h3>
+            <p class="text-slate-500 text-sm font-medium mb-4">Accountability lives in follow-up.</p>
+            <ul class="space-y-2 mb-6">
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 flex-shrink-0"></div>
+                Commitments are revisited
+              </li>
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 flex-shrink-0"></div>
+                Progress is checked — not ignored
+              </li>
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 flex-shrink-0"></div>
+                Standards are reinforced consistently
+              </li>
+            </ul>
+            <p class="text-sm text-slate-500 mb-4">Accountability doesn't require intensity — it requires consistency.</p>
+            <p class="text-sm text-emerald-600 font-semibold italic border-t border-slate-100 pt-4">
+              Do commitments matter after the meeting ends?
+            </p>
+          </div>
+
+          <!-- Trust-Based Accountability -->
+          <div class="bg-white rounded-3xl p-8 shadow-lg border border-slate-100 hover:shadow-xl transition-shadow reveal stagger-4">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center mb-6 shadow-lg">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-primary mb-2">Trust-Based Accountability</h3>
+            <p class="text-slate-500 text-sm font-medium mb-4">Healthy accountability strengthens relationships.</p>
+            <ul class="space-y-2 mb-6">
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-amber-500 mt-2 flex-shrink-0"></div>
+                Conversations are direct and respectful
+              </li>
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-amber-500 mt-2 flex-shrink-0"></div>
+                Feedback is timely and constructive
+              </li>
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-amber-500 mt-2 flex-shrink-0"></div>
+                Accountability builds trust instead of tension
+              </li>
+            </ul>
+            <p class="text-sm text-slate-500 mb-4">When accountability is handled well, people lean in rather than shut down.</p>
+            <p class="text-sm text-amber-600 font-semibold italic border-t border-slate-100 pt-4">
+              Does accountability build trust — or erode it?
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Why Accountability Matters -->
+    <section class="py-20 px-6 lg:px-8 bg-gradient-to-br from-primary to-primary-dark">
+      <div class="max-w-6xl mx-auto">
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+          <div>
+            <h2 class="text-3xl lg:text-4xl font-bold text-white mb-6">Why Accountability Matters</h2>
+            <div class="mb-8">
+              <h3 class="text-lg font-semibold text-red-300 mb-3">Without accountability:</h3>
+              <ul class="space-y-2">
+                <li class="flex items-start gap-2 text-slate-300">
+                  <div class="w-1.5 h-1.5 rounded-full bg-red-400 mt-2 flex-shrink-0"></div>
+                  Expectations drift
+                </li>
+                <li class="flex items-start gap-2 text-slate-300">
+                  <div class="w-1.5 h-1.5 rounded-full bg-red-400 mt-2 flex-shrink-0"></div>
+                  Standards erode
+                </li>
+                <li class="flex items-start gap-2 text-slate-300">
+                  <div class="w-1.5 h-1.5 rounded-full bg-red-400 mt-2 flex-shrink-0"></div>
+                  Performance becomes unpredictable
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-emerald-300 mb-3">With accountability:</h3>
+              <ul class="space-y-2">
+                <li class="flex items-start gap-2 text-slate-200">
+                  <div class="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-2 flex-shrink-0"></div>
+                  Commitments carry weight
+                </li>
+                <li class="flex items-start gap-2 text-slate-200">
+                  <div class="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-2 flex-shrink-0"></div>
+                  Progress becomes visible
+                </li>
+                <li class="flex items-start gap-2 text-slate-200">
+                  <div class="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-2 flex-shrink-0"></div>
+                  Teams trust each other — and leadership
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div class="bg-white/10 backdrop-blur-sm border border-white/20 rounded-3xl p-8 text-center">
+            <p class="text-2xl font-bold text-white mb-4">
+              Accountability is the bridge between effectiveness and productivity.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Our Belief -->
+    <section class="py-20 px-6 lg:px-8">
+      <div class="max-w-4xl mx-auto text-center">
+        <h2 class="text-3xl lg:text-4xl font-bold text-primary mb-6">Our Belief</h2>
+        <p class="text-xl text-slate-600 leading-relaxed mb-4">
+          Accountability is not about pressure. It's about integrity.
+        </p>
+        <p class="text-lg text-slate-600 leading-relaxed mb-6">
+          When individuals and organizations practice accountability with clarity and consistency, performance stops depending on reminders and starts depending on character.
+        </p>
+        <p class="text-primary font-semibold text-lg">
+          That's why accountability is a cornerstone of the LEAP model.
+        </p>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-20 px-6 lg:px-8 bg-slate-50">
+      <div class="max-w-4xl mx-auto text-center">
+        <h2 class="text-3xl lg:text-4xl font-bold text-primary mb-6">
+          Ready to Strengthen Accountability?
+        </h2>
+        <p class="text-lg text-slate-600 leading-relaxed mb-8 max-w-3xl mx-auto">
+          If commitments slip, follow-through fades, or standards feel inconsistent, accountability may be the missing element.
+        </p>
+        <p class="text-xl text-primary font-semibold mb-8">Let's build ownership, clarity, and trust — together.</p>
+      </div>
+    </section>
+
+    <!-- Footer CTA -->
+    <section class="py-16 px-6 lg:px-8 bg-gradient-to-br from-primary to-primary-dark">
+      <div class="max-w-4xl mx-auto text-center">
+        <p class="text-3xl lg:text-4xl font-bold text-white mb-8">
+          Always LEAP Higher.
+        </p>
+        <a
+          href={createPageUrl('Home')}
+          class="inline-flex items-center gap-2 px-8 py-4 bg-white text-primary font-semibold rounded-xl hover:bg-slate-100 transition-colors"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          Return to Homepage
+        </a>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Layout>
