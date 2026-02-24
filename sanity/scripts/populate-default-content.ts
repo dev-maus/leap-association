@@ -41,9 +41,9 @@ const DEFAULT_EVENTS = [
 ]
 
 const DEFAULT_CASE_STUDIES = [
-  { title: 'Manufacturing Excellence', company: 'Operations', challenge: 'A Fortune 500 manufacturing company transformed their operational efficiency through intentional practice methodology.', solution: 'Same.', results: ['40% improvement in team productivity'] },
-  { title: 'Leadership Transformation', company: 'Executive Development', challenge: 'C-suite executives developed repeatable leadership behaviors that cascaded throughout the organization.', solution: 'Same.', results: ['85% leadership effectiveness score'] },
-  { title: 'Cultural Shift', company: 'Organization Change', challenge: 'A healthcare system implemented practice-based culture change across 12 facilities.', solution: 'Same.', results: ['92% employee engagement increase'] },
+  { title: 'Manufacturing Excellence', category: 'Operations', description: 'A Fortune 500 manufacturing company transformed their operational efficiency through intentional practice methodology.', results: ['40% improvement in team productivity'] },
+  { title: 'Leadership Transformation', category: 'Executive Development', description: 'C-suite executives developed repeatable leadership behaviors that cascaded throughout the organization.', results: ['85% leadership effectiveness score'] },
+  { title: 'Cultural Shift', category: 'Organization Change', description: 'A healthcare system implemented practice-based culture change across 12 facilities.', results: ['92% employee engagement increase'] },
 ]
 
 const DEFAULT_BOOKS = [
@@ -596,9 +596,8 @@ async function populateDefaultContent() {
       await client.create({
         _type: 'caseStudy',
         title: study.title,
-        company: study.company,
-        challenge: study.challenge,
-        solution: study.solution,
+        category: study.category,
+        description: study.description,
         results: study.results,
       })
     }

@@ -11,7 +11,7 @@ import { DEFAULT_CASE_STUDIES, DEFAULT_INDUSTRIES, type CaseStudy, type Industry
 
 const teamMember = sanity ? await sanity.fetch(`*[_type == "teamMember"][0]`).catch(() => null) : null;
 const testimonials = sanity ? await sanity.fetch(`*[_type == "testimonial" && featured == true] | order(_createdAt desc)[0...6]`).catch(() => []) : [];
-const caseStudies = sanity ? await sanity.fetch(`*[_type == "caseStudy"] | order(_createdAt desc)[0...3]{ title, "category": company, "description": challenge, "result": results[0] }`).catch(() => []) : [];
+const caseStudies = sanity ? await sanity.fetch(`*[_type == "caseStudy"] | order(_createdAt desc)[0...3]{ title, category, description, "result": results[0] }`).catch(() => []) : [];
 const industriesData = sanity ? await sanity.fetch(`*[_type == "industryServed"] | order(order asc)`).catch(() => []) : [];
 const orgValues = sanity ? await sanity.fetch(`*[_type == "organizationValues"][0]{ mission, vision, values }`).catch(() => null) : null;
 const thrivingPillars = sanity ? await sanity.fetch(`*[_type == "thrivingPillar"] | order(order asc){ order, title, description, icon, color }`).catch(() => []) : [];
@@ -83,7 +83,7 @@ const philosophyStatDescription = corePhilosophyData?.statDescription ?? "Most o
       <div class="max-w-6xl mx-auto">
         <div class="grid md:grid-cols-3 gap-8">
           <div class="reveal stagger-1 bg-white rounded-3xl p-8 shadow-lg border border-slate-100 hover:shadow-xl transition-shadow">
-            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br {defaultOrgValues.mission.iconColor} flex items-center justify-center mb-6 shadow-lg">
+            <div class:list={["w-16 h-16 rounded-2xl bg-gradient-to-br flex items-center justify-center mb-6 shadow-lg", defaultOrgValues.mission.iconColor]}>
               <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -95,7 +95,7 @@ const philosophyStatDescription = corePhilosophyData?.statDescription ?? "Most o
           </div>
 
           <div class="reveal stagger-2 bg-white rounded-3xl p-8 shadow-lg border border-slate-100 hover:shadow-xl transition-shadow">
-            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br {defaultOrgValues.vision.iconColor} flex items-center justify-center mb-6 shadow-lg">
+            <div class:list={["w-16 h-16 rounded-2xl bg-gradient-to-br flex items-center justify-center mb-6 shadow-lg", defaultOrgValues.vision.iconColor]}>
               <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
               </svg>
@@ -107,7 +107,7 @@ const philosophyStatDescription = corePhilosophyData?.statDescription ?? "Most o
           </div>
 
           <div class="reveal stagger-3 bg-white rounded-3xl p-8 shadow-lg border border-slate-100 hover:shadow-xl transition-shadow">
-            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br {defaultOrgValues.values.iconColor} flex items-center justify-center mb-6 shadow-lg">
+            <div class:list={["w-16 h-16 rounded-2xl bg-gradient-to-br flex items-center justify-center mb-6 shadow-lg", defaultOrgValues.values.iconColor]}>
               <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
