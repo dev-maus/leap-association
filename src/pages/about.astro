@@ -5,7 +5,7 @@ import Header from '../components/layout/Header.astro';
 import Footer from '../components/layout/Footer.astro';
 import { sanity } from '../lib/sanity';
 import { urlFor } from '../lib/sanity';
-import { createPageUrl } from '../lib/utils';
+import { createPageUrl, getAssetUrl } from '../lib/utils';
 import CTAButtons from '../components/common/CTAButtons';
 import { DEFAULT_CASE_STUDIES, DEFAULT_INDUSTRIES, type CaseStudy, type Industry } from '../lib/defaultContent';
 
@@ -249,7 +249,7 @@ const industries: Industry[] = industriesData.length > 0 ? industriesData : DEFA
             <div class="bg-white rounded-3xl shadow-xl p-8">
               <div class="w-full h-96 rounded-2xl mb-6 overflow-hidden bg-gradient-to-br from-primary/10 to-primary/5">
                 <img
-                  src="./images/aaron-wright.webp"
+                  src={getAssetUrl('images/aaron-wright.webp')}
                   alt="Aaron Wright Jr. - Leadership Coach"
                   class="w-full h-full object-cover object-top"
                 />

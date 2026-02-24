@@ -3,6 +3,7 @@ import { sanity } from '../../lib/sanity';
 import { urlFor } from '../../lib/sanity';
 import CTAButtons from '../common/CTAButtons';
 import { DEFAULT_HERO_IMAGE_URL } from '../../lib/defaultContent';
+import { getAssetUrl } from '../../lib/utils';
 
 const heroData = sanity ? await sanity.fetch(`*[_type == "hero" && page == "home"][0]{
   heading,
@@ -56,7 +57,7 @@ const heroImageUrl = heroData?.image
           <img
             src={heroData?.image
               ? urlFor(heroData.image)?.width(700).height(900).url()
-              : "./images/aaron-wright.webp"}
+              : getAssetUrl('images/aaron-wright.webp')}
             alt="Aaron Wright Jr. - Leadership Coach"
             class="h-[90vh] w-auto max-w-none object-contain relative z-10"
           />
