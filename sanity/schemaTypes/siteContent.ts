@@ -1,5 +1,9 @@
 import {defineType, defineField} from 'sanity'
 
+/**
+ * Key-value content for page sections (hero, CTA, etc.).
+ * Not yet queried from the Astro frontend; wire by page + key when migrating hero/CTA copy to CMS.
+ */
 export default defineType({
   name: 'siteContent',
   title: 'Site Content',

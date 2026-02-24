@@ -12,6 +12,7 @@ import { DEFAULT_STATS, type Statistic } from '../lib/defaultContent';
 
 const services = sanity ? await sanity.fetch(`*[_type == "service"] | order(_createdAt asc)`).catch(() => []) : [];
 const statsData = sanity ? await sanity.fetch(`*[_type == "statistic" && page == "solutions"] | order(order asc)`).catch(() => []) : [];
+const heroSolutions = sanity ? await sanity.fetch(`*[_type == "hero" && page == "solutions"] | order(_updatedAt desc)[0]{ heading, subheading, ctaLabel }`).catch(() => null) : null;
 
 // Default services with full details per documentation
 const defaultServices = [
@@ -88,15 +89,14 @@ const stats: Statistic[] = statsData.length > 0 ? statsData : DEFAULT_STATS;
             LEAP Solutions
           </span>
           <h1 class="animate-fadeUp text-4xl sm:text-5xl lg:text-6xl font-bold text-primary mb-6" style="animation-delay: 0.1s;">
-            Transform Your Organization Through <span class="gradient-text">Practice</span>
+            {heroSolutions?.heading ?? 'Transform Your Organization Through Practice'}
           </h1>
           <p class="animate-fadeUp text-xl text-slate-600 leading-relaxed mb-8" style="animation-delay: 0.2s;">
-            From strategic consulting to leadership development, we provide comprehensive solutions
-            that help organizations build repeatable, reliable, scalable practices that create excellence.
+            {heroSolutions?.subheading ?? "From strategic consulting to leadership development, we provide comprehensive solutions that help organizations build repeatable, reliable, scalable practices that create excellence."}
           </p>
           <div class="animate-fadeUp flex flex-col sm:flex-row gap-4 justify-center" style="animation-delay: 0.3s;">
             <Button href={createPageUrl('ScheduleCall')} size="lg">
-              Schedule a Consultation
+              {heroSolutions?.ctaLabel ?? 'Schedule a Consultation'}
             </Button>
             <Button href={createPageUrl('Practice')} variant="outline" size="lg">
               Take the Assessment

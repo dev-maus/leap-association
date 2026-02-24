@@ -9,20 +9,16 @@ export default defineType({
       name: 'title',
       title: 'Title',
       type: 'string',
+      validation: (Rule) => Rule.required(),
     }),
     defineField({
-      name: 'company',
-      title: 'Company',
+      name: 'category',
+      title: 'Category',
       type: 'string',
     }),
     defineField({
-      name: 'challenge',
-      title: 'Challenge',
-      type: 'text',
-    }),
-    defineField({
-      name: 'solution',
-      title: 'Solution',
+      name: 'description',
+      title: 'Description',
       type: 'text',
     }),
     defineField({

@@ -9,12 +9,14 @@ import { sanity } from '../../lib/sanity';
 import { urlFor } from '../../lib/sanity';
 import { createPageUrl } from '../../lib/utils';
 
-// Fetch upcoming events from Sanity
-const leapLunchSessions = sanity ? await sanity.fetch(`*[_type == "leapLunchSession" && isActive == true] | order(date asc)[0...5]`).catch(() => []) : [];
-const signatureEventSessions = sanity ? await sanity.fetch(`*[_type == "signatureEventSession"] | order(date asc)[0...5]`).catch(() => []) : [];
+const loungeData = sanity ? await sanity.fetch(`*[_type == "loungePage"][0]{ heroBadge, heroHeading, heroDescription, overviewCards, amenities, packages, ctaHeading, ctaDescription }`).catch(() => null) : null;
 
-// Overview cards data
-const overviewCards = [
+// Upcoming events: no Sanity schemas (leapLunchSession, signatureEventSession) exist yet; section hidden until they are added
+const leapLunchSessions: unknown[] = [];
+const signatureEventSessions: unknown[] = [];
+
+// Overview cards data (fallback when no CMS content)
+const defaultOverviewCards = [
   {
     title: 'What It Is',
     icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
@@ -34,9 +36,10 @@ const overviewCards = [
     color: 'from-amber-500 to-amber-600'
   }
 ];
+const overviewCards = loungeData?.overviewCards?.length ? loungeData.overviewCards : defaultOverviewCards;
 
-// Premium amenities
-const amenities = [
+// Premium amenities (fallback)
+const defaultAmenities = [
   { name: 'High-Speed WiFi', icon: 'M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0', description: 'Reliable connectivity throughout' },
   { name: 'Refreshments', icon: 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z', description: 'Coffee, tea & snacks' },
   { name: 'AV Equipment', icon: 'M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z', description: 'Projector & sound system' },
@@ -44,9 +47,10 @@ const amenities = [
   { name: 'Catering Ready', icon: 'M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7', description: 'Full kitchen access' },
   { name: 'Flexible Space', icon: 'M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm0 8a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zm12 0a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z', description: 'Configurable layout' }
 ];
+const amenities = loungeData?.amenities?.length ? loungeData.amenities : defaultAmenities;
 
-// Pricing packages
-const packages = [
+// Pricing packages (fallback)
+const defaultPackages = [
   {
     name: 'Essentials',
     price: '$500',
@@ -99,6 +103,7 @@ const packages = [
     ]
   }
 ];
+const packages = loungeData?.packages?.length ? loungeData.packages : defaultPackages;
 ---
 
 <Layout>
@@ -109,14 +114,13 @@ const packages = [
       <!-- Hero Section -->
       <div class="text-center mb-16">
         <span class="inline-block px-4 py-2 bg-accent/10 text-accent font-bold text-sm tracking-wider uppercase rounded-full mb-6">
-          The Ultimate Event Experience
+          {loungeData?.heroBadge ?? 'The Ultimate Event Experience'}
         </span>
         <h1 class="text-4xl lg:text-6xl font-bold text-primary mb-6">
-          LEAP Lounge
+          {loungeData?.heroHeading ?? 'LEAP Lounge'}
         </h1>
         <p class="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
-          Where leaders gather, teams transform, and breakthrough moments happen.
-          Our premier venue in Atlanta is designed for excellence.
+          {loungeData?.heroDescription ?? 'Where leaders gather, teams transform, and breakthrough moments happen. Our premier venue in Atlanta is designed for excellence.'}
         </p>
       </div>
 
@@ -341,11 +345,10 @@ const packages = [
 
         <div class="relative z-10">
           <h2 class="text-3xl lg:text-4xl font-bold mb-4">
-            Ready to Transform Your Next Event?
+            {loungeData?.ctaHeading ?? 'Ready to Transform Your Next Event?'}
           </h2>
           <p class="text-slate-200 text-lg mb-8 max-w-2xl mx-auto">
-            Let's create an unforgettable experience for your team. Book the LEAP Lounge
-            for your next workshop, meeting, or leadership event.
+            {loungeData?.ctaDescription ?? "Let's create an unforgettable experience for your team. Book the LEAP Lounge for your next workshop, meeting, or leadership event."}
           </p>
           <div class="flex flex-col sm:flex-row gap-4 justify-center">
             <a href={createPageUrl('Contact')} class="inline-block px-8 py-4 bg-white text-primary rounded-xl font-semibold hover:bg-slate-100 transition-colors">
