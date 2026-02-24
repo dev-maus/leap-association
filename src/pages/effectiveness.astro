@@ -1,0 +1,316 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Head from '../components/layout/Head.astro';
+import Header from '../components/layout/Header.astro';
+import Footer from '../components/layout/Footer.astro';
+import { createPageUrl } from '../lib/utils';
+---
+
+<Layout>
+  <Head slot="head" title="Effectiveness" description="Effectiveness Turns Leadership Into Impact. Effectiveness is the discipline of doing the right work, the right way, at the right time — consistently." />
+  <Header />
+  <main id="main-content" class="min-h-screen bg-gradient-to-br from-slate-50 to-white">
+    <!-- Hero Section -->
+    <section class="pt-32 pb-20 px-6 lg:px-8 relative overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-emerald-600/5" />
+      <div class="max-w-6xl mx-auto relative z-10">
+        <a
+          href={createPageUrl('Home')}
+          class="inline-flex items-center gap-2 text-slate-500 hover:text-slate-700 mb-8 transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to Home
+        </a>
+
+        <div class="flex items-center gap-6 mb-8 animate-fadeUp">
+          <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white font-display text-4xl font-bold shadow-lg">
+            E
+          </div>
+          <div>
+            <h1 class="text-4xl lg:text-6xl font-bold text-primary">Effectiveness Turns Leadership Into Impact</h1>
+          </div>
+        </div>
+
+        <p class="text-xl text-slate-600 max-w-4xl leading-relaxed mb-4 animate-fadeUp" style="animation-delay: 0.1s;">
+          Leadership sets direction. Effectiveness ensures that direction turns into meaningful progress.
+        </p>
+        <p class="text-lg text-slate-500 max-w-4xl leading-relaxed mb-4 animate-fadeUp" style="animation-delay: 0.15s;">
+          Many organizations are busy. Fewer are truly effective.
+        </p>
+        <p class="text-lg text-slate-600 max-w-4xl leading-relaxed mb-4 animate-fadeUp" style="animation-delay: 0.2s;">
+          Effectiveness is the discipline of doing the right work, the right way, at the right time — consistently. Without it, effort is wasted, priorities blur, and performance stalls.
+        </p>
+        <p class="text-lg text-emerald-700 font-semibold max-w-4xl animate-fadeUp" style="animation-delay: 0.25s;">
+          At LEAP, effectiveness is not about working harder. It's about working with clarity and purpose.
+        </p>
+      </div>
+    </section>
+
+    <!-- How We Define Effectiveness -->
+    <section class="py-20 px-6 lg:px-8 bg-white">
+      <div class="max-w-6xl mx-auto">
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+          <div class="reveal-left">
+            <h2 class="text-3xl lg:text-4xl font-bold text-primary mb-6">How We Define Effectiveness</h2>
+            <p class="text-lg text-slate-600 mb-6 leading-relaxed">
+              Effectiveness is the ability to:
+            </p>
+            <ul class="space-y-3 mb-8">
+              <li class="flex items-start gap-3 text-lg text-slate-700">
+                <div class="w-2 h-2 rounded-full bg-emerald-500 mt-2.5 flex-shrink-0"></div>
+                Focus on what matters most
+              </li>
+              <li class="flex items-start gap-3 text-lg text-slate-700">
+                <div class="w-2 h-2 rounded-full bg-emerald-500 mt-2.5 flex-shrink-0"></div>
+                Align effort with intent
+              </li>
+              <li class="flex items-start gap-3 text-lg text-slate-700">
+                <div class="w-2 h-2 rounded-full bg-emerald-500 mt-2.5 flex-shrink-0"></div>
+                Convert energy into outcomes
+              </li>
+            </ul>
+            <p class="text-lg text-slate-600 leading-relaxed mb-4">
+              It answers a simple but critical question:
+            </p>
+            <p class="text-xl text-primary font-bold italic mb-4">
+              "Are we doing the right things — or just staying busy?"
+            </p>
+            <p class="text-primary font-semibold">
+              Effectiveness is what separates motion from progress.
+            </p>
+          </div>
+          <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-3xl p-6 sm:p-10 text-white reveal-right">
+            <h3 class="text-2xl font-bold mb-4">Where Effectiveness Shows Up</h3>
+            <p class="text-emerald-100 leading-relaxed">
+              Effectiveness is not a single skill — it's a way of operating. We focus on effectiveness where it matters most.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Four Areas -->
+    <section class="py-20 px-6 lg:px-8">
+      <div class="max-w-6xl mx-auto">
+        <div class="grid md:grid-cols-2 gap-8">
+          <!-- Clarity of Focus -->
+          <div class="bg-white rounded-3xl p-8 shadow-lg border border-slate-100 hover:shadow-xl transition-shadow reveal stagger-1">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-500 flex items-center justify-center mb-6 shadow-lg">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-primary mb-2">Clarity of Focus</h3>
+            <p class="text-slate-500 text-sm font-medium mb-4">Effectiveness begins with clarity.</p>
+            <ul class="space-y-2 mb-6">
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 flex-shrink-0"></div>
+                Clear priorities
+              </li>
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 flex-shrink-0"></div>
+                Defined success
+              </li>
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 flex-shrink-0"></div>
+                Fewer competing objectives
+              </li>
+            </ul>
+            <p class="text-sm text-slate-500 mb-4">When clarity is missing, teams scatter their energy. When clarity is present, momentum follows.</p>
+            <p class="text-sm text-emerald-600 font-semibold italic border-t border-slate-100 pt-4">
+              Do people know what matters most right now?
+            </p>
+          </div>
+
+          <!-- Intentional Decision-Making -->
+          <div class="bg-white rounded-3xl p-8 shadow-lg border border-slate-100 hover:shadow-xl transition-shadow reveal stagger-2">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center mb-6 shadow-lg">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-primary mb-2">Intentional Decision-Making</h3>
+            <p class="text-slate-500 text-sm font-medium mb-4">Effective organizations make decisions on purpose.</p>
+            <ul class="space-y-2 mb-6">
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 flex-shrink-0"></div>
+                Decisions align with strategy
+              </li>
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 flex-shrink-0"></div>
+                Tradeoffs are understood and owned
+              </li>
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 flex-shrink-0"></div>
+                "Yes" and "no" both have meaning
+              </li>
+            </ul>
+            <p class="text-sm text-slate-500 mb-4">Effectiveness isn't about more decisions — it's about better ones.</p>
+            <p class="text-sm text-blue-600 font-semibold italic border-t border-slate-100 pt-4">
+              Are our decisions aligned — or reactive?
+            </p>
+          </div>
+
+          <!-- Aligned Effort -->
+          <div class="bg-white rounded-3xl p-8 shadow-lg border border-slate-100 hover:shadow-xl transition-shadow reveal stagger-3">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-400 to-purple-500 flex items-center justify-center mb-6 shadow-lg">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-primary mb-2">Aligned Effort</h3>
+            <p class="text-slate-500 text-sm font-medium mb-4">Effectiveness multiplies when effort moves in the same direction.</p>
+            <ul class="space-y-2 mb-6">
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-purple-500 mt-2 flex-shrink-0"></div>
+                People understand how their work connects
+              </li>
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-purple-500 mt-2 flex-shrink-0"></div>
+                Teams pull together instead of competing
+              </li>
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-purple-500 mt-2 flex-shrink-0"></div>
+                Work reinforces rather than cancels out
+              </li>
+            </ul>
+            <p class="text-sm text-slate-500 mb-4">Alignment turns individual contribution into collective impact.</p>
+            <p class="text-sm text-purple-600 font-semibold italic border-t border-slate-100 pt-4">
+              Is effort reinforcing — or fragmenting — our goals?
+            </p>
+          </div>
+
+          <!-- Consistent Execution -->
+          <div class="bg-white rounded-3xl p-8 shadow-lg border border-slate-100 hover:shadow-xl transition-shadow reveal stagger-4">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center mb-6 shadow-lg">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-primary mb-2">Consistent Execution</h3>
+            <p class="text-slate-500 text-sm font-medium mb-4">Effectiveness requires follow-through.</p>
+            <ul class="space-y-2 mb-6">
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-amber-500 mt-2 flex-shrink-0"></div>
+                Standards are clear
+              </li>
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-amber-500 mt-2 flex-shrink-0"></div>
+                Expectations are understood
+              </li>
+              <li class="flex items-start gap-2 text-slate-600">
+                <div class="w-1.5 h-1.5 rounded-full bg-amber-500 mt-2 flex-shrink-0"></div>
+                Progress is reviewed and refined
+              </li>
+            </ul>
+            <p class="text-sm text-slate-500 mb-4">Effective organizations don't rely on heroics — they rely on consistency.</p>
+            <p class="text-sm text-amber-600 font-semibold italic border-t border-slate-100 pt-4">
+              Are we executing with intention — or relying on effort alone?
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Why Effectiveness Matters -->
+    <section class="py-20 px-6 lg:px-8 bg-gradient-to-br from-primary to-primary-dark">
+      <div class="max-w-6xl mx-auto">
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+          <div>
+            <h2 class="text-3xl lg:text-4xl font-bold text-white mb-6">Why Effectiveness Matters</h2>
+            <div class="mb-8">
+              <h3 class="text-lg font-semibold text-red-300 mb-3">Without effectiveness:</h3>
+              <ul class="space-y-2">
+                <li class="flex items-start gap-2 text-slate-300">
+                  <div class="w-1.5 h-1.5 rounded-full bg-red-400 mt-2 flex-shrink-0"></div>
+                  Leadership vision stalls
+                </li>
+                <li class="flex items-start gap-2 text-slate-300">
+                  <div class="w-1.5 h-1.5 rounded-full bg-red-400 mt-2 flex-shrink-0"></div>
+                  Accountability becomes frustrating
+                </li>
+                <li class="flex items-start gap-2 text-slate-300">
+                  <div class="w-1.5 h-1.5 rounded-full bg-red-400 mt-2 flex-shrink-0"></div>
+                  Productivity feels exhausting
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-emerald-300 mb-3">With effectiveness:</h3>
+              <ul class="space-y-2">
+                <li class="flex items-start gap-2 text-slate-200">
+                  <div class="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-2 flex-shrink-0"></div>
+                  Priorities sharpen
+                </li>
+                <li class="flex items-start gap-2 text-slate-200">
+                  <div class="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-2 flex-shrink-0"></div>
+                  Work gains meaning
+                </li>
+                <li class="flex items-start gap-2 text-slate-200">
+                  <div class="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-2 flex-shrink-0"></div>
+                  Results become repeatable
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div class="bg-white/10 backdrop-blur-sm border border-white/20 rounded-3xl p-8 text-center">
+            <p class="text-2xl font-bold text-white mb-4">
+              Effectiveness is the bridge between leadership and results.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Our Belief -->
+    <section class="py-20 px-6 lg:px-8">
+      <div class="max-w-4xl mx-auto text-center">
+        <h2 class="text-3xl lg:text-4xl font-bold text-primary mb-6">Our Belief</h2>
+        <p class="text-xl text-slate-600 leading-relaxed mb-4">
+          Effectiveness is not accidental. It is practiced.
+        </p>
+        <p class="text-lg text-slate-600 leading-relaxed mb-6">
+          When individuals and organizations learn to focus, align, and execute intentionally, performance improves — without burnout.
+        </p>
+        <p class="text-primary font-semibold text-lg">
+          That's why effectiveness sits at the core of the LEAP model.
+        </p>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-20 px-6 lg:px-8 bg-slate-50">
+      <div class="max-w-4xl mx-auto text-center">
+        <h2 class="text-3xl lg:text-4xl font-bold text-primary mb-6">
+          Ready to Increase Effectiveness Where It Counts?
+        </h2>
+        <p class="text-lg text-slate-600 leading-relaxed mb-8 max-w-3xl mx-auto">
+          If your organization is working hard but struggling to see consistent results, effectiveness may be the missing link.
+        </p>
+        <p class="text-xl text-primary font-semibold mb-8">Let's focus on what matters most — and make it work.</p>
+      </div>
+    </section>
+
+    <!-- Footer CTA -->
+    <section class="py-16 px-6 lg:px-8 bg-gradient-to-br from-primary to-primary-dark">
+      <div class="max-w-4xl mx-auto text-center">
+        <p class="text-3xl lg:text-4xl font-bold text-white mb-8">
+          Always LEAP Higher.
+        </p>
+        <a
+          href={createPageUrl('Home')}
+          class="inline-flex items-center gap-2 px-8 py-4 bg-white text-primary font-semibold rounded-xl hover:bg-slate-100 transition-colors"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          Return to Homepage
+        </a>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Layout>

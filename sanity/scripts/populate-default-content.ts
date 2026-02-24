@@ -83,30 +83,30 @@ async function populateDefaultContent() {
       {
         letter: 'L',
         title: 'Leadership',
-        subtitle: 'Lead with Purpose',
-        description: 'Develop the core leadership competencies needed to inspire and guide your team toward success.',
+        subtitle: 'The practice of influence.',
+        description: 'How you show up determines how others follow, align, and collaborate.',
         color: '#3B82F6',
       },
       {
         letter: 'E',
-        title: 'Excellence',
-        subtitle: 'Pursue Excellence',
-        description: 'Set high standards and continuously improve your performance and that of your organization.',
+        title: 'Effectiveness',
+        subtitle: 'Meaningful Progress',
+        description: 'Advancing the right priorities through disciplined, focused, and aligned execution.',
         color: '#10B981',
       },
       {
         letter: 'A',
-        title: 'Achievement',
-        subtitle: 'Achieve Results',
-        description: 'Focus on outcomes and deliver measurable results that drive organizational success.',
-        color: '#F59E0B',
+        title: 'Accountability',
+        subtitle: 'Practice Accountability',
+        description: 'Own commitments, follow through on priorities, and take responsibility for outcomes that drive organizational success.',
+        color: '#8B5CF6',
       },
       {
         letter: 'P',
-        title: 'Performance',
-        subtitle: 'Peak Performance',
-        description: 'Optimize your performance and create systems that enable sustained high performance.',
-        color: '#EF4444',
+        title: 'Productivity',
+        subtitle: 'Create Systems',
+        description: 'Optimize rhythms and priorities that enable consistent progress and long-term organizational impact.',
+        color: '#F59E0B',
       },
     ]
 
@@ -165,7 +165,7 @@ async function populateDefaultContent() {
     const faqs = [
       {
         question: 'What is the LEAP framework?',
-        answer: 'The LEAP framework is a comprehensive leadership development model that focuses on Leadership, Excellence, Achievement, and Performance. It provides a structured approach to developing leaders at all levels.',
+        answer: 'The LEAP framework is a comprehensive leadership development model that focuses on Leadership, Effectiveness, Accountability, and Productivity. It provides a structured approach to developing leaders at all levels.',
         category: 'General',
       },
       {

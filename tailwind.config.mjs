@@ -16,10 +16,11 @@ export default {
         ink: '#0F172A',
       },
       fontFamily: {
-        sans: ['ui-sans-serif', 'system-ui', 'Inter', 'sans-serif'],
+        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        display: ['Outfit', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
     },
   },
   plugins: [],
 }
-
+ 
