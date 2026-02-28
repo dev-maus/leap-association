@@ -38,7 +38,7 @@ jobs:
           SANITY_PROJECT_ID: ${{ vars.SANITY_PROJECT_ID }}
           PUBLIC_SUPABASE_URL: ${{ vars.PUBLIC_SUPABASE_URL }}
           PUBLIC_SUPABASE_ANON_KEY: ${{ vars.PUBLIC_SUPABASE_ANON_KEY }}
-          BASE_URL: "/leap-association/"
+          BASE_URL: "/"
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
