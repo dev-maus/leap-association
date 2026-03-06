@@ -27,70 +27,82 @@ const heroImageUrl = heroData?.image
   <div class="absolute top-1/2 right-10 w-48 h-48 bg-purple-200/20 rounded-full blur-2xl" />
 
   <!-- Two Column Layout -->
-  <div class="relative z-10 w-full min-h-screen flex overflow-hidden">
-    <!-- Left Column - Text Content -->
-    <div class="w-full lg:w-1/2 flex items-start px-6 lg:px-12 xl:px-20 pt-24 lg:pt-40 pb-20 relative z-20">
-      <div class="max-w-xl lg:max-w-none">
-        <h1 class="animate-fadeUp text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-6 leading-tight">
-          {heroData?.heading || "What's In Your Practice?"}
-        </h1>
+  <div class="relative z-10 w-full min-h-screen flex flex-col overflow-hidden">
+    <div class="flex flex-1 overflow-hidden">
+      <!-- Left Column - Text Content + Logo -->
+      <div class="w-full lg:w-1/2 flex flex-col items-start px-6 lg:px-12 xl:px-20 pt-24 lg:pt-40 pb-8 relative z-20">
+        <div class="max-w-xl lg:max-w-none">
+          <h1 class="animate-fadeUp text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-6 leading-tight">
+            {heroData?.heading || "What's In Your Practice?"}
+          </h1>
 
-        <p class="animate-fadeUp text-lg lg:text-xl text-white/90 mb-8 leading-relaxed" style="animation-delay: 0.15s;">
-          {heroData?.subheading || "At LEAP Association, we bring awareness, alignment, and action to your daily behaviors so you can unlock Leadership, Effectiveness, Accountability, and Productivity."}
-        </p>
+          <p class="animate-fadeUp text-lg lg:text-xl text-white/90 mb-8 leading-relaxed" style="animation-delay: 0.15s;">
+            {heroData?.subheading || "At LEAP Association, we bring awareness, alignment, and action to your daily behaviors so you can unlock Leadership, Effectiveness, Accountability, and Productivity."}
+          </p>
+        </div>
 
-        <div class="animate-fadeUp flex flex-col sm:flex-row gap-4" style="animation-delay: 0.45s;">
-          <CTAButtons client:load />
+        <!-- Square Logo - Centered -->
+        <div class="animate-fadeUp flex-1 flex items-center justify-center w-full" style="animation-delay: 0.3s;">
+          <img
+            src={`${import.meta.env.BASE_URL}main-logo.jpg`}
+            alt="L.E.A.P. - Consultant | Strategic Performance & Workforce Solutions"
+            class="w-64 lg:w-80 xl:w-96 h-auto object-contain"
+          />
+        </div>
+      </div>
+
+      <!-- Right Column - Image -->
+      <div class="hidden lg:flex w-1/2 items-center justify-center relative z-10 overflow-hidden">
+        <div class="relative h-full w-full flex items-center justify-end">
+          <div class="relative z-10 hero-image-container">
+            <!-- Main Image - Crystal Clear -->
+            <img
+              src={heroData?.image
+                ? urlFor(heroData.image)?.width(700).height(900).url()
+                : getAssetUrl('images/aaron-wright.webp')}
+              alt="Aaron Wright Jr. - Leadership Coach"
+              class="h-[90vh] w-auto max-w-none object-contain relative z-10"
+            />
+
+            <!-- Feathered Edge Gradients - Soft blend into purple background (#5A4A6F = rgb(90, 74, 111)) -->
+            <!-- Left edge fade (strongest) -->
+            <div class="absolute inset-y-0 left-0 w-36 pointer-events-none z-20"
+                 style="background: linear-gradient(to right, rgba(90, 74, 111, 1) 0%, rgba(90, 74, 111, 0.8) 25%, rgba(90, 74, 111, 0.4) 55%, transparent 100%);"></div>
+
+            <!-- Right edge fade -->
+            <div class="absolute inset-y-0 right-0 w-28 pointer-events-none z-20"
+                 style="background: linear-gradient(to left, rgba(90, 74, 111, 1) 0%, rgba(90, 74, 111, 0.6) 35%, transparent 100%);"></div>
+
+            <!-- Top edge fade -->
+            <div class="absolute inset-x-0 top-0 h-36 pointer-events-none z-20"
+                 style="background: linear-gradient(to bottom, rgba(90, 74, 111, 1) 0%, rgba(90, 74, 111, 0.7) 35%, transparent 100%);"></div>
+
+            <!-- Bottom edge fade -->
+            <div class="absolute inset-x-0 bottom-0 h-44 pointer-events-none z-20"
+                 style="background: linear-gradient(to top, rgba(90, 74, 111, 1) 0%, rgba(90, 74, 111, 0.8) 25%, rgba(90, 74, 111, 0.4) 55%, transparent 100%);"></div>
+
+            <!-- Corner vignettes for extra smoothness -->
+            <div class="absolute top-0 left-0 w-44 h-44 pointer-events-none z-20"
+                 style="background: radial-gradient(ellipse at top left, rgba(90, 74, 111, 1) 0%, transparent 70%);"></div>
+            <div class="absolute top-0 right-0 w-36 h-36 pointer-events-none z-20"
+                 style="background: radial-gradient(ellipse at top right, rgba(90, 74, 111, 0.9) 0%, transparent 70%);"></div>
+            <div class="absolute bottom-0 left-0 w-44 h-52 pointer-events-none z-20"
+                 style="background: radial-gradient(ellipse at bottom left, rgba(90, 74, 111, 1) 0%, transparent 70%);"></div>
+            <div class="absolute bottom-0 right-0 w-36 h-44 pointer-events-none z-20"
+                 style="background: radial-gradient(ellipse at bottom right, rgba(90, 74, 111, 1) 0%, transparent 70%);"></div>
+            <!-- Square blur frame on all edges -->
+            <div class="absolute top-0 left-0 right-0 h-6 pointer-events-none backdrop-blur-sm"></div>
+            <div class="absolute bottom-0 left-0 right-0 h-6 pointer-events-none backdrop-blur-sm"></div>
+            <div class="absolute top-0 bottom-0 left-0 w-6 pointer-events-none backdrop-blur-sm"></div>
+            <div class="absolute top-0 bottom-0 right-0 w-6 pointer-events-none backdrop-blur-sm"></div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Right Column - Image -->
-    <div class="hidden lg:flex w-1/2 items-center justify-center relative z-10 overflow-hidden">
-      <div class="relative h-full w-full flex items-center justify-end">
-        <div class="relative z-10 hero-image-container">
-          <!-- Main Image - Crystal Clear -->
-          <img
-            src={heroData?.image
-              ? urlFor(heroData.image)?.width(700).height(900).url()
-              : getAssetUrl('images/aaron-wright.webp')}
-            alt="Aaron Wright Jr. - Leadership Coach"
-            class="h-[90vh] w-auto max-w-none object-contain relative z-10"
-          />
-
-          <!-- Feathered Edge Gradients - Soft blend into purple background (#5A4A6F = rgb(90, 74, 111)) -->
-          <!-- Left edge fade (strongest) -->
-          <div class="absolute inset-y-0 left-0 w-36 pointer-events-none z-20"
-               style="background: linear-gradient(to right, rgba(90, 74, 111, 1) 0%, rgba(90, 74, 111, 0.8) 25%, rgba(90, 74, 111, 0.4) 55%, transparent 100%);"></div>
-
-          <!-- Right edge fade -->
-          <div class="absolute inset-y-0 right-0 w-28 pointer-events-none z-20"
-               style="background: linear-gradient(to left, rgba(90, 74, 111, 1) 0%, rgba(90, 74, 111, 0.6) 35%, transparent 100%);"></div>
-
-          <!-- Top edge fade -->
-          <div class="absolute inset-x-0 top-0 h-36 pointer-events-none z-20"
-               style="background: linear-gradient(to bottom, rgba(90, 74, 111, 1) 0%, rgba(90, 74, 111, 0.7) 35%, transparent 100%);"></div>
-
-          <!-- Bottom edge fade -->
-          <div class="absolute inset-x-0 bottom-0 h-44 pointer-events-none z-20"
-               style="background: linear-gradient(to top, rgba(90, 74, 111, 1) 0%, rgba(90, 74, 111, 0.8) 25%, rgba(90, 74, 111, 0.4) 55%, transparent 100%);"></div>
-
-          <!-- Corner vignettes for extra smoothness -->
-          <div class="absolute top-0 left-0 w-44 h-44 pointer-events-none z-20"
-               style="background: radial-gradient(ellipse at top left, rgba(90, 74, 111, 1) 0%, transparent 70%);"></div>
-          <div class="absolute top-0 right-0 w-36 h-36 pointer-events-none z-20"
-               style="background: radial-gradient(ellipse at top right, rgba(90, 74, 111, 0.9) 0%, transparent 70%);"></div>
-          <div class="absolute bottom-0 left-0 w-44 h-52 pointer-events-none z-20"
-               style="background: radial-gradient(ellipse at bottom left, rgba(90, 74, 111, 1) 0%, transparent 70%);"></div>
-          <div class="absolute bottom-0 right-0 w-36 h-44 pointer-events-none z-20"
-               style="background: radial-gradient(ellipse at bottom right, rgba(90, 74, 111, 1) 0%, transparent 70%);"></div>
-          <!-- Square blur frame on all edges -->
-          <div class="absolute top-0 left-0 right-0 h-6 pointer-events-none backdrop-blur-sm"></div>
-          <div class="absolute bottom-0 left-0 right-0 h-6 pointer-events-none backdrop-blur-sm"></div>
-          <div class="absolute top-0 bottom-0 left-0 w-6 pointer-events-none backdrop-blur-sm"></div>
-          <div class="absolute top-0 bottom-0 right-0 w-6 pointer-events-none backdrop-blur-sm"></div>
-        </div>
-      </div>
+    <!-- CTA Buttons - Bottom of purple section -->
+    <div class="animate-fadeUp relative z-20 flex flex-col sm:flex-row justify-center gap-4 px-6 pb-10" style="animation-delay: 0.45s;">
+      <CTAButtons client:load />
     </div>
   </div>
 </section>

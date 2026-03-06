@@ -46,9 +46,16 @@ type PracticeResourceItem = { title: string; type: string; description?: string;
         <h1 class="text-4xl lg:text-5xl font-bold text-primary mb-6">
           {heroPractice?.heading ?? "What's In Your Practice?"}
         </h1>
-        <p class="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
-          {heroPractice?.subheading ?? "You are always practicing something, whether you know it or not. The HATS™ Assessment reveals exactly what you're practicing and how it connects to excellence."}
-        </p>
+        <div class="flex items-center justify-center gap-6 max-w-3xl mx-auto">
+          <img
+            src={`${import.meta.env.BASE_URL}images/leap-man-sitting.jpg`}
+            alt="LEAP Man with clipboard"
+            class="w-24 h-auto flex-shrink-0 hidden sm:block"
+          />
+          <p class="text-xl text-slate-600 leading-relaxed">
+            {heroPractice?.subheading ?? "You are always practicing something, whether you know it or not. The HATS™ Assessment reveals what you're practicing and how it connects to excellence."}
+          </p>
+        </div>
       </div>
 
       <!-- Assessment Type Selection -->
