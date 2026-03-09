@@ -1,6 +1,9 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
+const NOTIFICATION_EMAIL = 'support@leapassociation.com';
+const NOTIFICATION_FROM = 'LEAP Assessment <<notifications@leapassociation.com>>';
+
 // Get allowed origins from environment or use defaults
 const getAllowedOrigins = (): string[] => {
   const envOrigins = Deno.env.get('ALLOWED_ORIGINS');
@@ -274,8 +277,59 @@ serve(async (req) => {
       throw new Error(`Failed to create assessment response: ${responseError.message}`);
     }
 
-    // No confirmation email needed - email is auto-confirmed
-    // Users will get a magic link when they log in next time
+    // Fire-and-forget email notification to support team
+    const resendApiKey = Deno.env.get('RESEND_API_KEY');
+    if (resendApiKey) {
+      const totalScore = body.scores.leadership + body.scores.effectiveness +
+        body.scores.accountability + body.scores.productivity;
+
+      fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${resendApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: NOTIFICATION_FROM,
+          to: [NOTIFICATION_EMAIL],
+          subject: `New ${body.assessmentType} assessment completed by ${body.contactData.full_name}`,
+          html: `
+            <h2>New Assessment Completed</h2>
+            <h3>Contact Information</h3>
+            <ul>
+              <li><strong>Name:</strong> ${body.contactData.full_name}</li>
+              <li><strong>Email:</strong> ${body.contactData.email}</li>
+              <li><strong>Company:</strong> ${body.contactData.company || 'N/A'}</li>
+              <li><strong>Role:</strong> ${body.contactData.role || 'N/A'}</li>
+              <li><strong>Phone:</strong> ${body.contactData.phone || 'N/A'}</li>
+            </ul>
+            <h3>Assessment Details</h3>
+            <ul>
+              <li><strong>Type:</strong> ${body.assessmentType}</li>
+              <li><strong>Assessment ID:</strong> ${response.id}</li>
+              <li><strong>Timestamp:</strong> ${response.created_at}</li>
+            </ul>
+            <h3>LEAP Scores</h3>
+            <ul>
+              <li><strong>Leadership:</strong> ${body.scores.leadership}</li>
+              <li><strong>Effectiveness:</strong> ${body.scores.effectiveness}</li>
+              <li><strong>Accountability:</strong> ${body.scores.accountability}</li>
+              <li><strong>Productivity:</strong> ${body.scores.productivity}</li>
+              <li><strong>Total:</strong> ${totalScore}</li>
+            </ul>
+            <h3>HATS Scores</h3>
+            <ul>
+              <li><strong>Habit:</strong> ${body.habitScore}</li>
+              <li><strong>Ability:</strong> ${body.abilityScore}</li>
+              <li><strong>Talent:</strong> ${body.talentScore}</li>
+              <li><strong>Skill:</strong> ${body.skillScore}</li>
+            </ul>
+          `,
+        }),
+      }).catch((err) => {
+        console.error('Failed to send assessment notification email:', err);
+      });
+    }
 
     return new Response(JSON.stringify(response), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
