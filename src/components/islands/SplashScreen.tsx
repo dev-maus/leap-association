@@ -25,7 +25,7 @@ export default function SplashScreen() {
       <div className="text-center">
         <div className="mb-6">
           <img
-            src={`${base}logo.png`}
+            src={`${base}circle-logo.jpg`}
             alt="LEAP Association"
             className="h-24 w-auto mx-auto animate-pulse"
           />
