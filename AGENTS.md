@@ -250,14 +250,32 @@ Available entities: `User`, `UserProfile`, `AssessmentResponse`, `Availability`,
 **RLS policies**: Users can read/write their own data. Admins can read/write all data. Service role (edge functions) can insert freely. Users cannot change their own `user_role`.
 
 **Edge functions** (Deno, in `supabase/functions/`):
-- `verify-captcha-and-create` — Verifies hCaptcha, creates or finds user, saves assessment response. Includes rate limiting (20 req/min).
+- `verify-captcha-and-create` — Verifies hCaptcha, creates or finds user, saves assessment response, sends email notification via Resend. Includes rate limiting (20 req/min) and CORS origin checking. Structured as 4 helper functions: `verifyCaptcha()`, `resolveOrCreateUser()`, `createAssessment()`, `sendNotificationEmail()`.
 - `check-user-exists` — Checks if email is already registered
 - `get-assessment-results` — Retrieves assessment results
+
+**Edge function environment variables** (set via `supabase secrets set`):
+- `HCAPTCHA_SECRET_KEY` — hCaptcha server-side secret
+- `RESEND_API_KEY` — Resend email API key for assessment notifications
+- `ALLOWED_ORIGINS` — Comma-separated list of allowed CORS origins
 
 ### Client-Side Storage
 
 - `assessmentStorage.ts` — Manages assessment state in `localStorage` (key: `leap_assessment_data`): submitted email, response ID, call scheduled flag, submission timestamp.
 - `userStorage.ts` — Manages user details in `localStorage` (key: `leap_user_details`): name, email, company, role, phone. Syncs from Supabase on auth state change. Used to prepopulate forms.
+
+---
+
+## Integrations (External Services)
+
+| Service | Purpose | Config | Notes |
+|---------|---------|--------|-------|
+| **Supabase** | Auth, PostgreSQL, edge functions, storage | `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_ANON_KEY` | Mock client if env vars missing |
+| **Sanity** | Headless CMS, GROQ queries at build time | `SANITY_PROJECT_ID`, `SANITY_DATASET`, `SANITY_API_VERSION` | Returns `null` if unconfigured; falls back to `defaultContent.ts` |
+| **hCaptcha** | Bot protection on assessment submissions | `HCAPTCHA_SECRET_KEY` (edge fn), `@hcaptcha/react-hcaptcha` (client) | Required for unauthenticated submissions; skipped for authenticated users |
+| **Resend** | Transactional email (assessment notifications) | `RESEND_API_KEY` (edge fn) | Fire-and-forget from `verify-captcha-and-create`; sends to `support@leapassociation.com` |
+| **Koalendar** | Appointment scheduling | Booking URL configured in Sanity `siteSettings` | URL built with prepopulated user details via `src/lib/booking.ts`; used by `CalendarBooking` island and `/schedule` page |
+| **Google Fonts** | Inter (body) + Outfit (headings) | Loaded in `Head.astro` | Allowed in CSP |
 
 ---
 
