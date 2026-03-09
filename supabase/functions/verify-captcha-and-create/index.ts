@@ -93,10 +93,231 @@ interface RequestBody {
   captchaToken?: string; // Optional - if not provided or empty, captcha verification is skipped
 }
 
+// deno-lint-ignore no-explicit-any
+type SupabaseClient = any;
+
+/**
+ * Verifies hCaptcha token. Returns an error Response if verification fails, or null if valid.
+ */
+async function verifyCaptcha(token: string, corsHeaders: Record<string, string>): Promise<Response | null> {
+  const hcaptchaSecretKey = Deno.env.get('HCAPTCHA_SECRET_KEY');
+  if (!hcaptchaSecretKey) {
+    throw new Error('HCAPTCHA_SECRET_KEY not configured');
+  }
+
+  const verifyResponse = await fetch('https://hcaptcha.com/siteverify', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({
+      secret: hcaptchaSecretKey,
+      response: token,
+    }),
+  });
+
+  const verifyResult = await verifyResponse.json();
+
+  if (!verifyResult.success) {
+    return new Response(
+      JSON.stringify({
+        error: 'Captcha verification failed',
+        details: verifyResult['error-codes'] || [],
+      }),
+      {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
+  }
+
+  return null;
+}
+
+/**
+ * Finds an existing user or creates a new one. Returns the final userId.
+ */
+async function resolveOrCreateUser(
+  supabase: SupabaseClient,
+  contactData: RequestBody['contactData'],
+  userId?: string,
+): Promise<string> {
+  if (userId) {
+    // Verify authenticated user exists
+    const { data: user, error: userError } = await supabase.auth.admin.getUserById(userId);
+    if (userError || !user) {
+      throw new Error(`User not found: ${userError?.message}`);
+    }
+
+    // Update user profile if it exists
+    const { data: existingProfile } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (existingProfile) {
+      await supabase
+        .from('user_profiles')
+        .update({
+          full_name: contactData.full_name,
+          company: contactData.company,
+          role: contactData.role,
+          phone: contactData.phone,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', userId);
+    }
+
+    return userId;
+  }
+
+  // No user_id provided - check if user exists by email
+  const { data: existingUsers } = await supabase.auth.admin.listUsers();
+  const existingUser = existingUsers?.users.find(
+    (u: { email: string }) => u.email === contactData.email,
+  );
+
+  if (existingUser) {
+    await supabase
+      .from('user_profiles')
+      .upsert({
+        id: existingUser.id,
+        email: contactData.email,
+        full_name: contactData.full_name,
+        company: contactData.company,
+        role: contactData.role,
+        phone: contactData.phone,
+        updated_at: new Date().toISOString(),
+      }, {
+        onConflict: 'id'
+      });
+
+    return existingUser.id;
+  }
+
+  // Create new auth user (first-time user)
+  const { data: newUser, error: createUserError } = await supabase.auth.admin.createUser({
+    email: contactData.email,
+    email_confirm: true,
+    user_metadata: {
+      full_name: contactData.full_name,
+      company: contactData.company,
+      role: contactData.role,
+    },
+  });
+
+  if (createUserError || !newUser.user) {
+    throw new Error(`Failed to create user: ${createUserError?.message}`);
+  }
+
+  await supabase
+    .from('user_profiles')
+    .upsert({
+      id: newUser.user.id,
+      email: contactData.email,
+      full_name: contactData.full_name,
+      company: contactData.company,
+      role: contactData.role,
+      phone: contactData.phone,
+      user_role: 'user',
+    }, {
+      onConflict: 'id'
+    });
+
+  return newUser.user.id;
+}
+
+/**
+ * Inserts an assessment row and returns the response. Throws on error.
+ */
+// deno-lint-ignore no-explicit-any
+async function createAssessment(supabase: SupabaseClient, userId: string, body: RequestBody): Promise<any> {
+  const { data: response, error: responseError } = await supabase
+    .from('assessment_responses')
+    .insert({
+      user_id: userId,
+      assessment_type: body.assessmentType,
+      scores: body.scores,
+      habit_score: body.habitScore,
+      ability_score: body.abilityScore,
+      talent_score: body.talentScore,
+      skill_score: body.skillScore,
+      answers: body.answers,
+    })
+    .select()
+    .single();
+
+  if (responseError) {
+    throw new Error(`Failed to create assessment response: ${responseError.message}`);
+  }
+
+  return response;
+}
+
+/**
+ * Sends a fire-and-forget email notification to the support team via Resend.
+ */
+// deno-lint-ignore no-explicit-any
+function sendNotificationEmail(body: RequestBody, response: any): void {
+  const resendApiKey = Deno.env.get('RESEND_API_KEY');
+  if (!resendApiKey) return;
+
+  const totalScore = body.scores.leadership + body.scores.effectiveness +
+    body.scores.accountability + body.scores.productivity;
+
+  fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${resendApiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: NOTIFICATION_FROM,
+      to: [NOTIFICATION_EMAIL],
+      subject: `New ${body.assessmentType} assessment completed by ${body.contactData.full_name}`,
+      html: `
+        <h2>New Assessment Completed</h2>
+        <h3>Contact Information</h3>
+        <ul>
+          <li><strong>Name:</strong> ${body.contactData.full_name}</li>
+          <li><strong>Email:</strong> ${body.contactData.email}</li>
+          <li><strong>Company:</strong> ${body.contactData.company || 'N/A'}</li>
+          <li><strong>Role:</strong> ${body.contactData.role || 'N/A'}</li>
+          <li><strong>Phone:</strong> ${body.contactData.phone || 'N/A'}</li>
+        </ul>
+        <h3>Assessment Details</h3>
+        <ul>
+          <li><strong>Type:</strong> ${body.assessmentType}</li>
+          <li><strong>Assessment ID:</strong> ${response.id}</li>
+          <li><strong>Timestamp:</strong> ${response.created_at}</li>
+        </ul>
+        <h3>LEAP Scores</h3>
+        <ul>
+          <li><strong>Leadership:</strong> ${body.scores.leadership}</li>
+          <li><strong>Effectiveness:</strong> ${body.scores.effectiveness}</li>
+          <li><strong>Accountability:</strong> ${body.scores.accountability}</li>
+          <li><strong>Productivity:</strong> ${body.scores.productivity}</li>
+          <li><strong>Total:</strong> ${totalScore}</li>
+        </ul>
+        <h3>HATS Scores</h3>
+        <ul>
+          <li><strong>Habit:</strong> ${body.habitScore}</li>
+          <li><strong>Ability:</strong> ${body.abilityScore}</li>
+          <li><strong>Talent:</strong> ${body.talentScore}</li>
+          <li><strong>Skill:</strong> ${body.skillScore}</li>
+        </ul>
+      `,
+    }),
+  }).catch((err) => {
+    console.error('Failed to send assessment notification email:', err);
+  });
+}
+
 serve(async (req) => {
   const origin = req.headers.get('origin');
   const corsHeaders = getCorsHeaders(origin);
-  
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -117,51 +338,20 @@ serve(async (req) => {
   }
 
   try {
-    // Parse request body
     const body: RequestBody = await req.json();
 
     // Require captcha for unauthenticated submissions
-    if (!body.userId) {
-      if (!body.captchaToken || body.captchaToken.trim() === '') {
-        return new Response(
-          JSON.stringify({ error: 'Captcha verification required for unauthenticated submissions' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
+    if (!body.userId && (!body.captchaToken || body.captchaToken.trim() === '')) {
+      return new Response(
+        JSON.stringify({ error: 'Captcha verification required for unauthenticated submissions' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Verify hCaptcha token if provided
     if (body.captchaToken && body.captchaToken.trim() !== '') {
-      const hcaptchaSecretKey = Deno.env.get('HCAPTCHA_SECRET_KEY');
-      if (!hcaptchaSecretKey) {
-        throw new Error('HCAPTCHA_SECRET_KEY not configured');
-      }
-
-      const verifyResponse = await fetch('https://hcaptcha.com/siteverify', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          secret: hcaptchaSecretKey,
-          response: body.captchaToken,
-        }),
-      });
-
-      const verifyResult = await verifyResponse.json();
-
-      if (!verifyResult.success) {
-        return new Response(
-          JSON.stringify({
-            error: 'Captcha verification failed',
-            details: verifyResult['error-codes'] || [],
-          }),
-          {
-            status: 400,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          }
-        );
-      }
+      const captchaError = await verifyCaptcha(body.captchaToken, corsHeaders);
+      if (captchaError) return captchaError;
     }
 
     // Initialize Supabase client with service role for admin operations
@@ -169,167 +359,9 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    let finalUserId: string | null = body.userId || null;
-
-    // If user_id is provided, use it (user is authenticated)
-    if (finalUserId) {
-      // Verify user exists
-      const { data: user, error: userError } = await supabase.auth.admin.getUserById(finalUserId);
-      if (userError || !user) {
-        throw new Error(`User not found: ${userError?.message}`);
-      }
-
-      // Update user profile if needed
-      const { data: existingProfile } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', finalUserId)
-        .single();
-
-      if (existingProfile) {
-        // Update profile with latest contact data
-        await supabase
-          .from('user_profiles')
-          .update({
-            full_name: body.contactData.full_name,
-            company: body.contactData.company,
-            role: body.contactData.role,
-            phone: body.contactData.phone,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', finalUserId);
-      }
-    } else {
-      // No user_id provided - check if user exists by email
-      const { data: existingUsers } = await supabase.auth.admin.listUsers();
-      const existingUser = existingUsers?.users.find(u => u.email === body.contactData.email);
-
-      if (existingUser) {
-        finalUserId = existingUser.id;
-        
-        // Update or create profile using upsert
-        await supabase
-          .from('user_profiles')
-          .upsert({
-            id: finalUserId,
-            email: body.contactData.email,
-            full_name: body.contactData.full_name,
-            company: body.contactData.company,
-            role: body.contactData.role,
-            phone: body.contactData.phone,
-            updated_at: new Date().toISOString(),
-          }, {
-            onConflict: 'id'
-          });
-      } else {
-        // Create new auth user (first-time user)
-        // Auto-confirm email - they'll get a magic link when they log in next time
-        const { data: newUser, error: createUserError } = await supabase.auth.admin.createUser({
-          email: body.contactData.email,
-          email_confirm: true, // Auto-confirm email - no confirmation needed
-          user_metadata: {
-            full_name: body.contactData.full_name,
-            company: body.contactData.company,
-            role: body.contactData.role,
-          },
-        });
-
-        if (createUserError || !newUser.user) {
-          throw new Error(`Failed to create user: ${createUserError?.message}`);
-        }
-
-        finalUserId = newUser.user.id;
-
-        // Create user profile (trigger should handle this, but ensure it exists)
-        await supabase
-          .from('user_profiles')
-          .upsert({
-            id: finalUserId,
-            email: body.contactData.email,
-            full_name: body.contactData.full_name,
-            company: body.contactData.company,
-            role: body.contactData.role,
-            phone: body.contactData.phone,
-            user_role: 'user',
-          }, {
-            onConflict: 'id'
-          });
-      }
-    }
-
-    // Create assessment response with user_id
-    const { data: response, error: responseError } = await supabase
-      .from('assessment_responses')
-      .insert({
-        user_id: finalUserId,
-        assessment_type: body.assessmentType,
-        scores: body.scores,
-        habit_score: body.habitScore,
-        ability_score: body.abilityScore,
-        talent_score: body.talentScore,
-        skill_score: body.skillScore,
-        answers: body.answers,
-      })
-      .select()
-      .single();
-
-    if (responseError) {
-      throw new Error(`Failed to create assessment response: ${responseError.message}`);
-    }
-
-    // Fire-and-forget email notification to support team
-    const resendApiKey = Deno.env.get('RESEND_API_KEY');
-    if (resendApiKey) {
-      const totalScore = body.scores.leadership + body.scores.effectiveness +
-        body.scores.accountability + body.scores.productivity;
-
-      fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${resendApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          from: NOTIFICATION_FROM,
-          to: [NOTIFICATION_EMAIL],
-          subject: `New ${body.assessmentType} assessment completed by ${body.contactData.full_name}`,
-          html: `
-            <h2>New Assessment Completed</h2>
-            <h3>Contact Information</h3>
-            <ul>
-              <li><strong>Name:</strong> ${body.contactData.full_name}</li>
-              <li><strong>Email:</strong> ${body.contactData.email}</li>
-              <li><strong>Company:</strong> ${body.contactData.company || 'N/A'}</li>
-              <li><strong>Role:</strong> ${body.contactData.role || 'N/A'}</li>
-              <li><strong>Phone:</strong> ${body.contactData.phone || 'N/A'}</li>
-            </ul>
-            <h3>Assessment Details</h3>
-            <ul>
-              <li><strong>Type:</strong> ${body.assessmentType}</li>
-              <li><strong>Assessment ID:</strong> ${response.id}</li>
-              <li><strong>Timestamp:</strong> ${response.created_at}</li>
-            </ul>
-            <h3>LEAP Scores</h3>
-            <ul>
-              <li><strong>Leadership:</strong> ${body.scores.leadership}</li>
-              <li><strong>Effectiveness:</strong> ${body.scores.effectiveness}</li>
-              <li><strong>Accountability:</strong> ${body.scores.accountability}</li>
-              <li><strong>Productivity:</strong> ${body.scores.productivity}</li>
-              <li><strong>Total:</strong> ${totalScore}</li>
-            </ul>
-            <h3>HATS Scores</h3>
-            <ul>
-              <li><strong>Habit:</strong> ${body.habitScore}</li>
-              <li><strong>Ability:</strong> ${body.abilityScore}</li>
-              <li><strong>Talent:</strong> ${body.talentScore}</li>
-              <li><strong>Skill:</strong> ${body.skillScore}</li>
-            </ul>
-          `,
-        }),
-      }).catch((err) => {
-        console.error('Failed to send assessment notification email:', err);
-      });
-    }
+    const finalUserId = await resolveOrCreateUser(supabase, body.contactData, body.userId);
+    const response = await createAssessment(supabase, finalUserId, body);
+    sendNotificationEmail(body, response);
 
     return new Response(JSON.stringify(response), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
