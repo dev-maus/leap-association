@@ -6,6 +6,9 @@ import Footer from '../components/layout/Footer.astro';
 import HeroSection from '../components/sections/HeroSection.astro';
 import LEAPFramework from '../components/sections/LEAPFramework.astro';
 import CTASection from '../components/sections/CTASection.astro';
+import Button from '../components/ui/Button.astro';
+import Card from '../components/ui/Card.astro';
+import { createPageUrl } from '../lib/utils';
 ---
 
 <Layout>
@@ -14,6 +17,188 @@ import CTASection from '../components/sections/CTASection.astro';
   <main id="main-content">
     <HeroSection />
     <LEAPFramework />
+
+    <!-- Section 2.5: The LEAP Leadership Engagement Pathway -->
+    <section class="py-24 bg-white overflow-hidden relative">
+      <div class="max-w-7xl mx-auto px-6 lg:px-8">
+        <div class="reveal text-center mb-16">
+          <span class="text-primary font-semibold text-sm tracking-wider uppercase mb-4 block">
+            Engagement Pathway
+          </span>
+          <h2 class="text-3xl lg:text-5xl font-bold text-primary mb-4">
+            The LEAP Leadership Engagement Pathway
+          </h2>
+          <p class="text-lg text-accent font-semibold mb-4">From Inspiration to Organizational Impact</p>
+          <p class="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
+            Many leaders first encounter LEAP through a keynote presentation or leadership event. As organizations experience the practical value of the LEAP philosophy, they often expand into deeper leadership development and organizational improvement efforts.
+          </p>
+        </div>
+
+        <!-- Four Stage Pathway -->
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          {[
+            {
+              stage: 'Discover',
+              subtitle: 'Leadership insight and inspiration',
+              items: ['Keynote presentations', 'Leadership conferences', 'Leadership events', 'Executive briefings'],
+              color: 'from-blue-500 to-blue-600',
+              number: '01',
+            },
+            {
+              stage: 'Experience',
+              subtitle: 'Practical leadership development',
+              items: ['Leadership workshops', 'LEAP Performance Experience', 'Team alignment experiences', 'Leadership development sessions'],
+              color: 'from-emerald-500 to-emerald-600',
+              number: '02',
+            },
+            {
+              stage: 'Develop',
+              subtitle: 'Strengthening leadership practices',
+              items: ['LEAP Coaching Series', 'Executive coaching', 'Leadership development programs', 'Leadership team development'],
+              color: 'from-purple-500 to-purple-600',
+              number: '03',
+            },
+            {
+              stage: 'Transform',
+              subtitle: 'Organizational leadership impact',
+              items: ['Organizational consulting', 'Performance management systems', 'Leadership culture initiatives', 'Strategic leadership advisory'],
+              color: 'from-amber-500 to-amber-600',
+              number: '04',
+            },
+          ].map((stage, i) => (
+            <div class={`reveal stagger-${i + 1}`}>
+              <Card class="p-6 h-full hover:shadow-xl transition-all group">
+                <div class={`w-12 h-12 rounded-xl bg-gradient-to-br ${stage.color} flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform`}>
+                  <span class="text-white font-bold text-sm">{stage.number}</span>
+                </div>
+                <h3 class="text-xl font-bold text-primary mb-1">{stage.stage}</h3>
+                <p class="text-accent font-medium text-sm mb-3">{stage.subtitle}</p>
+                <ul class="space-y-2">
+                  {stage.items.map((item) => (
+                    <li class="flex items-start gap-2">
+                      <svg class="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                      </svg>
+                      <span class="text-slate-600 text-sm">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            </div>
+          ))}
+        </div>
+
+        <div class="reveal text-center">
+          <Button href={createPageUrl('Investment')} size="lg">
+            View Investment Considerations
+          </Button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: Signature LEAP Engagements -->
+    <section class="py-24 bg-slate-50 overflow-hidden relative">
+      <div class="max-w-7xl mx-auto px-6 lg:px-8">
+        <div class="reveal text-center mb-8">
+          <span class="text-primary font-semibold text-sm tracking-wider uppercase mb-4 block">
+            Signature Engagements
+          </span>
+          <h2 class="text-3xl lg:text-5xl font-bold text-primary mb-6">
+            Signature LEAP Engagements
+          </h2>
+          <p class="text-xl text-slate-600 max-w-4xl mx-auto leading-relaxed mb-4">
+            Organizations often know they want stronger leadership, better accountability, and higher productivity — but many struggle to translate those goals into daily practice. That's where LEAP comes in.
+          </p>
+          <p class="text-lg text-slate-600 max-w-3xl mx-auto leading-relaxed">
+            To support this work, we offer three primary engagement pathways. Each one is designed to strengthen leadership capacity, improve operational effectiveness, and help organizations create sustainable results.
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8 mb-12">
+          {[
+            {
+              title: 'LEAP Leadership Development',
+              subtitle: 'Build Leaders Who Deliver Results',
+              description: 'LEAP Leadership Development equips leaders with the mindset, tools, and practices necessary to lead with clarity and confidence.',
+              features: ['Leadership development workshops', 'Team alignment and communication training', 'Accountability and performance management practices', 'Practical tools leaders can apply immediately', 'Customized sessions aligned to organizational goals'],
+              outcomes: ['Stronger leadership confidence', 'Improved team communication', 'Clearer expectations and accountability', 'Higher levels of productivity and engagement'],
+              ideal: 'Emerging leaders, supervisors, managers, and leadership teams.',
+              color: 'from-blue-500 to-blue-600',
+              icon: 'M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222',
+            },
+            {
+              title: 'Executive Coaching',
+              subtitle: 'Strengthen Leadership Where It Matters Most',
+              description: 'Executive Coaching provides leaders with a trusted environment to think clearly, strengthen decision-making, and develop leadership practices that elevate their impact.',
+              features: ['One-on-one executive coaching sessions', 'Leadership strategy and decision support', 'Communication and influence development', 'Performance and accountability alignment', 'Ongoing guidance between sessions'],
+              outcomes: ['Greater clarity in decision-making', 'Stronger leadership presence', 'Improved alignment across teams', 'More confident and effective leadership'],
+              ideal: 'Executives, directors, high-potential leaders, and business owners.',
+              color: 'from-purple-500 to-purple-600',
+              icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z',
+            },
+            {
+              title: 'Organizational Consulting',
+              subtitle: 'Strengthen the Systems That Drive Performance',
+              description: 'Organizational Consulting focuses on improving how the organization operates so leaders and teams can perform at their best.',
+              features: ['Organizational performance assessments', 'Leadership structure and accountability design', 'Culture and communication alignment', 'Performance management systems', 'Strategic operational improvements'],
+              outcomes: ['Stronger leadership alignment', 'Clearer operational processes', 'Improved accountability and follow-through', 'Measurable performance improvements'],
+              ideal: 'Executive teams, organizations navigating change, and companies seeking stronger operational performance.',
+              color: 'from-amber-500 to-amber-600',
+              icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
+            },
+          ].map((engagement, i) => (
+            <div class={`reveal stagger-${i + 1}`}>
+              <Card class="p-8 h-full flex flex-col hover:shadow-xl transition-all group">
+                <div class={`w-14 h-14 rounded-2xl bg-gradient-to-br ${engagement.color} flex items-center justify-center mb-5 shadow-lg group-hover:scale-110 transition-transform`}>
+                  <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={engagement.icon} />
+                  </svg>
+                </div>
+                <h3 class="text-2xl font-bold text-primary mb-2">{engagement.title}</h3>
+                <p class="text-accent font-semibold mb-4">{engagement.subtitle}</p>
+                <p class="text-slate-600 leading-relaxed mb-6">{engagement.description}</p>
+
+                <h4 class="text-sm font-semibold text-primary uppercase tracking-wide mb-3">What's Included</h4>
+                <div class="space-y-2 mb-6">
+                  {engagement.features.map((feature) => (
+                    <div class="flex items-start gap-2">
+                      <svg class="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span class="text-slate-600 text-sm">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <h4 class="text-sm font-semibold text-primary uppercase tracking-wide mb-3">Outcomes</h4>
+                <div class="space-y-2 mb-6 flex-grow">
+                  {engagement.outcomes.map((outcome) => (
+                    <div class="flex items-start gap-2">
+                      <svg class="w-4 h-4 text-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span class="text-slate-600 text-sm">{outcome}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <p class="text-slate-500 text-sm mb-4"><span class="font-semibold">Ideal for:</span> {engagement.ideal}</p>
+                <Button href={createPageUrl('Solutions')} class="w-full mt-auto">
+                  Learn More
+                </Button>
+              </Card>
+            </div>
+          ))}
+        </div>
+
+        <div class="reveal text-center">
+          <p class="text-slate-600 text-lg mb-8 max-w-3xl mx-auto">
+            Many organizations begin with one Signature LEAP Engagement and expand into others as their leadership practices mature.
+          </p>
+        </div>
+      </div>
+    </section>
+
     <CTASection />
   </main>
   <Footer />

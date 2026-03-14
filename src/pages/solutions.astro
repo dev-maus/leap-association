@@ -14,70 +14,109 @@ const services = sanity ? await sanity.fetch(`*[_type == "service"] | order(_cre
 const statsData = sanity ? await sanity.fetch(`*[_type == "statistic" && page == "solutions"] | order(order asc)`).catch(() => []) : [];
 const heroSolutions = sanity ? await sanity.fetch(`*[_type == "hero" && page == "solutions"] | order(_updatedAt desc)[0]{ heading, subheading, ctaLabel }`).catch(() => null) : null;
 
-// Default services with full details per documentation
-const defaultServices = [
+const stats: Statistic[] = statsData.length > 0 ? statsData : DEFAULT_STATS;
+
+const pathwaySteps = [
   {
-    slug: 'consulting',
-    title: 'Consulting Services',
-    subtitle: 'Strategic Organizational Transformation',
-    description: 'From power utility operations to leadership culture, we help organizations build practices that create measurable, sustainable results.',
-    link: '/services/consulting',
-    icon: 'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
-    iconColor: 'from-blue-500 to-blue-600',
-    features: ['DRP/Operations Alignment', 'Leadership Culture Analysis', 'Performance Management', 'Organizational Readiness'],
+    label: 'Discover',
+    color: 'from-blue-500 to-blue-600',
+    items: ['Speaking Events', 'LEAP through Lunch', 'Workshops'],
   },
   {
-    slug: 'training',
-    title: 'Leadership Training & Development',
-    subtitle: 'Build Leaders at Every Level',
-    description: 'Comprehensive leadership development tracks, from leading yourself to leading organizational change. Build practices that create excellence.',
-    link: '/services/training',
-    icon: 'M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222',
-    iconColor: 'from-purple-500 to-purple-600',
-    features: ['Leading Self', 'Leading Others', 'Leading Projects', 'Leading Change'],
+    label: 'Experience',
+    color: 'from-purple-500 to-purple-600',
+    items: ['Team Building/Development Experiences'],
   },
   {
-    slug: 'coaching',
-    title: 'Coaching',
-    subtitle: 'Personalized Leadership Development',
-    description: 'One-on-one coaching for executives, leaders, teens, and couples. Discover what you\'re practicing and build patterns that create the results you want.',
-    link: '/services/coaching',
-    icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z',
-    iconColor: 'from-amber-500 to-amber-600',
-    features: ['Executive Coaching', 'Leadership Coaching', 'Teen Coaching', 'Couples Coaching'],
+    label: 'Develop',
+    color: 'from-amber-500 to-amber-600',
+    items: ['Coaching', 'Leadership Programs'],
   },
   {
-    slug: 'keynotes',
-    title: 'Keynotes & Speaking',
-    subtitle: 'Inspire Your Audience',
-    description: 'High-impact keynotes that challenge thinking, inspire action, and provide practical tools. From "Always LEAP Higher" to industry-specific talks.',
-    link: '/services/keynotes',
-    icon: 'M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z',
-    iconColor: 'from-emerald-500 to-emerald-600',
-    features: ['Always LEAP Higher', 'Industry Keynotes', 'Custom Topics', 'Virtual & In-Person'],
-  },
-  {
-    slug: 'certification',
-    title: 'LEAP Certification Program',
-    subtitle: 'Become a Certified LEAP Practitioner',
-    description: 'Join a growing network of certified practitioners bringing the LEAP Framework to organizations worldwide. Multiple certification levels available.',
-    link: '/services/certification',
-    icon: 'M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z',
-    iconColor: 'from-primary to-primary-dark',
-    features: ['Practitioner Level', 'Advanced Level', 'Master Level', 'Ongoing Support'],
+    label: 'Transform',
+    color: 'from-emerald-500 to-emerald-600',
+    items: ['Consulting', 'Organizational Performance Systems'],
   },
 ];
 
-const displayServices = services.length > 0 ? services : defaultServices;
+const quickLinks = [
+  { text: 'I want to LEAP through Lunch', anchor: '#leap-through-lunch' },
+  { text: 'I want to engage a LEAP speaker', anchor: '#keynote-presentations' },
+  { text: 'I want to grow as an executive', anchor: '#executive-coaching' },
+  { text: 'I want to grow my leaders', anchor: '#leadership-coaching-series' },
+  { text: 'I want to strengthen my team', anchor: '#team-development' },
+  { text: 'I want to improve our leadership systems', anchor: '#performance-management' },
+  { text: 'I want to improve leadership hiring', anchor: '#hiring-framework' },
+];
 
-// Stats data - from CMS or fallback to defaults
-const stats: Statistic[] = statsData.length > 0 ? statsData : DEFAULT_STATS;
+const coachingPathway = [
+  {
+    title: 'Leading Self',
+    description: 'Develop self-awareness, personal accountability, and the mindset required to lead effectively. Build the foundation every leader needs.',
+  },
+  {
+    title: 'Leading Others',
+    description: 'Learn to communicate expectations, build trust, provide feedback, and develop the people around you into high performers.',
+  },
+  {
+    title: 'Leading Tasks & Projects',
+    description: 'Master the practices of planning, prioritizing, delegating, and executing with excellence. Turn strategy into daily action.',
+  },
+  {
+    title: 'Leading Change',
+    description: 'Guide teams and organizations through transitions with clarity, confidence, and commitment. Build cultures that embrace improvement.',
+  },
+  {
+    title: 'LEAP Coaching Certification',
+    description: 'Become a certified LEAP coach and bring the framework to your organization or practice. Expand your leadership impact.',
+  },
+];
+
+const signatureEngagements = [
+  {
+    title: 'LEAP Leadership Development',
+    features: [
+      'Structured coaching series',
+      'Leading Self through Leading Change',
+      'Individual and group formats',
+      'Practical application between sessions',
+      'Progress tracking and measurement',
+    ],
+    color: 'from-blue-500 to-blue-600',
+    anchor: '#leadership-coaching-series',
+  },
+  {
+    title: 'Executive Coaching',
+    features: [
+      'Strategic leadership advisory',
+      'One-on-one senior leader focus',
+      'Decision-making and alignment',
+      'Executive communication',
+      'Organizational performance',
+    ],
+    color: 'from-purple-500 to-purple-600',
+    anchor: '#executive-coaching',
+  },
+  {
+    title: 'Organizational Consulting',
+    features: [
+      'Performance assessments',
+      'Leadership structure design',
+      'Accountability frameworks',
+      'Operational improvement',
+      'Culture alignment',
+    ],
+    color: 'from-emerald-500 to-emerald-600',
+    anchor: '#performance-management',
+  },
+];
 ---
 
 <Layout>
-  <Head slot="head" title="LEAP Solutions" description="Comprehensive solutions for transforming your organization through intentional practice." />
+  <Head slot="head" title="LEAP Solutions" description="Turning leadership philosophy into measurable progress. Comprehensive solutions for leadership development, executive coaching, and organizational performance." />
   <Header />
   <main id="main-content" class="min-h-screen bg-gradient-to-br from-slate-50 to-white">
+
     <!-- Hero Section -->
     <section class="relative pt-32 pb-20 overflow-hidden">
       <div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5" />
@@ -89,16 +128,16 @@ const stats: Statistic[] = statsData.length > 0 ? statsData : DEFAULT_STATS;
             LEAP Solutions
           </span>
           <h1 class="animate-fadeUp text-4xl sm:text-5xl lg:text-6xl font-bold text-primary mb-6" style="animation-delay: 0.1s;">
-            {heroSolutions?.heading ?? 'Transform Your Organization Through Practice'}
+            {heroSolutions?.heading ?? 'Turning Leadership Philosophy Into Measurable Progress'}
           </h1>
           <p class="animate-fadeUp text-xl text-slate-600 leading-relaxed mb-8" style="animation-delay: 0.2s;">
-            {heroSolutions?.subheading ?? "From strategic consulting to leadership development, we provide comprehensive solutions that help organizations build repeatable, reliable, scalable practices that create excellence."}
+            {heroSolutions?.subheading ?? "Organizations everywhere are striving to strengthen leadership, improve accountability, and achieve better results. Yet many struggle to translate these goals into consistent daily practices. The LEAP philosophy helps close that gap."}
           </p>
           <div class="animate-fadeUp flex flex-col sm:flex-row gap-4 justify-center" style="animation-delay: 0.3s;">
             <Button href={createPageUrl('ScheduleCall')} size="lg">
-              {heroSolutions?.ctaLabel ?? 'Schedule a Consultation'}
+              {heroSolutions?.ctaLabel ?? 'Schedule a Leadership Conversation'}
             </Button>
-            <Button href={createPageUrl('Practice')} variant="outline" size="lg">
+            <Button href={createPageUrl('Practice')} variant="secondary" size="lg">
               Take the Assessment
             </Button>
           </div>
@@ -120,34 +159,532 @@ const stats: Statistic[] = statsData.length > 0 ? statsData : DEFAULT_STATS;
       </div>
     </section>
 
-    <!-- Solutions Grid -->
+    <!-- Where Should You Start? Pathway Section -->
     <section class="py-20">
       <div class="max-w-7xl mx-auto px-6 lg:px-8">
         <div class="reveal text-center mb-16">
-          <h2 class="text-4xl font-bold text-primary mb-4">
-            Comprehensive Solutions for Every Need
-          </h2>
+          <h2 class="text-4xl font-bold text-primary mb-4">Where Should You Start?</h2>
           <p class="text-xl text-slate-600 max-w-3xl mx-auto">
-            Choose the solution that fits your organization's current challenges and goals
+            Every organization is at a different stage. Find your entry point and build from there.
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-4 gap-6 relative">
+          <!-- Connecting line (hidden on mobile) -->
+          <div class="hidden md:block absolute top-16 left-[12.5%] right-[12.5%] h-1 bg-gradient-to-r from-blue-500 via-purple-500 via-amber-500 to-emerald-500 rounded-full z-0" />
+
+          {pathwaySteps.map((step, i) => (
+            <div class={`reveal stagger-${i + 1} text-center relative z-10`}>
+              <div class={`w-32 h-32 rounded-full bg-gradient-to-br ${step.color} flex items-center justify-center mx-auto mb-6 shadow-xl`}>
+                <span class="text-white text-2xl font-bold">{step.label}</span>
+              </div>
+              <ul class="space-y-2">
+                {step.items.map((item) => (
+                  <li class="text-slate-600 text-sm">{item}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Quick Links Section -->
+    <section class="py-16 bg-slate-50">
+      <div class="max-w-5xl mx-auto px-6 lg:px-8">
+        <div class="reveal text-center mb-12">
+          <h2 class="text-3xl font-bold text-primary mb-4">What Are You Looking For?</h2>
+          <p class="text-lg text-slate-600">Jump directly to the solution that fits your needs.</p>
+        </div>
+
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {quickLinks.map((link, i) => (
+            <a href={link.anchor} class={`reveal stagger-${Math.min(i + 1, 6)} group flex items-center gap-3 bg-white rounded-xl p-5 shadow-sm border border-slate-100 hover:shadow-lg hover:border-primary/20 transition-all`}>
+              <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </div>
+              <span class="text-slate-700 font-medium group-hover:text-primary transition-colors">{link.text}</span>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- LEAP Through Lunch Section -->
+    <section id="leap-through-lunch" class="py-20">
+      <div class="max-w-7xl mx-auto px-6 lg:px-8">
+        <div class="grid lg:grid-cols-2 gap-12 items-start">
+          <div class="reveal">
+            <span class="text-primary font-semibold text-sm tracking-wider uppercase mb-4 block">Complimentary by Invitation</span>
+            <h2 class="text-4xl font-bold text-primary mb-4">LEAP Through Lunch</h2>
+            <p class="text-2xl text-slate-700 font-medium mb-2">A leadership conversation worth having.</p>
+            <p class="text-slate-500 italic mb-8">Complimentary by invitation / qualified organizations.</p>
+
+            <div class="space-y-6 mb-8">
+              <div>
+                <h3 class="text-lg font-bold text-primary mb-3">Session Format</h3>
+                <div class="grid grid-cols-2 gap-3">
+                  {['Up to 5 participants', 'Hosted at your office or restaurant', 'Lunch included', '60-75 minutes'].map((item) => (
+                    <div class="flex items-center gap-2">
+                      <svg class="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span class="text-slate-700 text-sm">{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h3 class="text-lg font-bold text-primary mb-3">What Happens During the Session</h3>
+                <ul class="space-y-2">
+                  {['The LEAP philosophy and why it works', 'Why leadership systems matter more than programs', 'Common gaps organizations face', 'Practical ways to start improving today'].map((item) => (
+                    <li class="flex items-start gap-2">
+                      <svg class="w-5 h-5 text-primary flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4" />
+                      </svg>
+                      <span class="text-slate-600">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <Card class="reveal stagger-2 p-8">
+            <h3 class="text-lg font-bold text-primary mb-4">Ideal For</h3>
+            <p class="text-slate-600 mb-6">
+              Organizations exploring leadership development, executive coaching, team alignment, or culture improvement. If you are considering investing in your leaders, this is a great place to start the conversation.
+            </p>
+            <div class="bg-primary/5 rounded-xl p-6 mb-6">
+              <p class="text-primary font-semibold text-center text-lg">No cost. No obligation. Just a meaningful conversation about leadership.</p>
+            </div>
+            <Button href={createPageUrl('ScheduleCall')} size="lg" class="w-full">
+              Schedule a Leadership Lunch
+            </Button>
+          </Card>
+        </div>
+      </div>
+    </section>
+
+    <!-- LEAP Keynote Presentations & Leadership Sessions -->
+    <section id="keynote-presentations" class="py-20 bg-slate-50">
+      <div class="max-w-7xl mx-auto px-6 lg:px-8">
+        <div class="reveal text-center mb-12">
+          <span class="text-primary font-semibold text-sm tracking-wider uppercase mb-4 block">Speaking & Presentations</span>
+          <h2 class="text-4xl font-bold text-primary mb-4">LEAP Keynote Presentations & Leadership Sessions</h2>
+          <p class="text-xl text-slate-600 max-w-3xl mx-auto">
+            Custom engagements designed to challenge thinking, inspire action, and equip leaders with practical tools they can use immediately.
+          </p>
+        </div>
+
+        <div class="grid lg:grid-cols-2 gap-12">
+          <div class="reveal">
+            <h3 class="text-xl font-bold text-primary mb-4">Focus Areas</h3>
+            <div class="space-y-3 mb-8">
+              {[
+                'The LEAP Framework: Leadership, Effectiveness, Accountability, Productivity',
+                'Strengthening leadership mindset and daily practices',
+                'Creating cultures of accountability without micromanagement',
+                'Aligning teams around shared expectations and outcomes',
+                'Practical behaviors that drive measurable results',
+                'Translating leadership principles into repeatable systems',
+              ].map((item) => (
+                <div class="flex items-start gap-3">
+                  <svg class="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span class="text-slate-700">{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div class="reveal stagger-2">
+            <Card class="p-8">
+              <h3 class="text-lg font-bold text-primary mb-4">Organizations Often Engage When They Say:</h3>
+              <ul class="space-y-3 mb-6">
+                {[
+                  '"We need a speaker who delivers more than motivation."',
+                  '"Our leaders need practical tools, not just theory."',
+                  '"We want our team to leave with something they can actually use."',
+                  '"We are looking for someone who understands real-world leadership challenges."',
+                ].map((item) => (
+                  <li class="flex items-start gap-2">
+                    <svg class="w-5 h-5 text-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                    <span class="text-slate-600 italic">{item}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <div class="border-t border-slate-200 pt-6">
+                <h4 class="text-sm font-bold text-slate-500 uppercase mb-3">Ideal For</h4>
+                <p class="text-slate-600 mb-6">Conferences, organizational meetings, leadership events, and executive retreats.</p>
+                <Button href={createPageUrl('Investment')} size="lg" class="w-full">
+                  View Speaking Engagement Options
+                </Button>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Executive Coaching Section -->
+    <section id="executive-coaching" class="py-20">
+      <div class="max-w-7xl mx-auto px-6 lg:px-8">
+        <div class="grid lg:grid-cols-2 gap-12 items-start">
+          <div class="reveal">
+            <span class="text-primary font-semibold text-sm tracking-wider uppercase mb-4 block">Executive Coaching</span>
+            <h2 class="text-4xl font-bold text-primary mb-4">Strategic Leadership Advisory for Senior Leaders</h2>
+            <p class="text-xl text-slate-600 leading-relaxed mb-8">
+              One-on-one coaching for executives and senior leaders focused on the challenges that matter most at the top.
+            </p>
+
+            <h3 class="text-xl font-bold text-primary mb-4">Focus Areas</h3>
+            <div class="space-y-3 mb-8">
+              {[
+                'Strategic decision-making and clarity',
+                'Leadership team alignment and performance',
+                'Organizational performance and culture',
+                'Executive communication and presence',
+                'Guiding teams and organizations through change',
+              ].map((item) => (
+                <div class="flex items-start gap-3">
+                  <svg class="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span class="text-slate-700">{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div class="reveal stagger-2">
+            <Card class="p-8">
+              <h3 class="text-lg font-bold text-primary mb-4">Leaders Often Engage When They Say:</h3>
+              <ul class="space-y-3 mb-6">
+                {[
+                  '"I need a sounding board who understands what I am facing."',
+                  '"I want to be more intentional about how I lead."',
+                  '"I need help aligning my leadership team."',
+                  '"I want to leave a lasting leadership legacy."',
+                  '"I am navigating a major transition and need perspective."',
+                ].map((item) => (
+                  <li class="flex items-start gap-2">
+                    <svg class="w-5 h-5 text-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                    <span class="text-slate-600 italic">{item}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <div class="border-t border-slate-200 pt-6">
+                <h4 class="text-sm font-bold text-slate-500 uppercase mb-3">Ideal For</h4>
+                <p class="text-slate-600 mb-6">Executives, directors, and senior leaders seeking focused, strategic coaching.</p>
+                <Button href={createPageUrl('Investment')} size="lg" class="w-full">
+                  View Executive Coaching Options
+                </Button>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- The LEAP Leadership Coaching Series -->
+    <section id="leadership-coaching-series" class="py-20 bg-slate-50">
+      <div class="max-w-7xl mx-auto px-6 lg:px-8">
+        <div class="reveal text-center mb-12">
+          <span class="text-primary font-semibold text-sm tracking-wider uppercase mb-4 block">Structured Development</span>
+          <h2 class="text-4xl font-bold text-primary mb-4">The LEAP Leadership Coaching Series</h2>
+          <p class="text-xl text-slate-600 max-w-3xl mx-auto">
+            A structured pathway that develops leaders from personal mastery to organizational impact.
+          </p>
+        </div>
+
+        <!-- Coaching Pathway -->
+        <div class="grid md:grid-cols-5 gap-4 mb-12">
+          {coachingPathway.map((step, i) => (
+            <Card class={`reveal stagger-${Math.min(i + 1, 6)} p-6 text-center hover:shadow-xl transition-all h-full flex flex-col`}>
+              <div class="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <span class="text-white font-bold text-lg">{i + 1}</span>
+              </div>
+              <h3 class="text-lg font-bold text-primary mb-3">{step.title}</h3>
+              <p class="text-slate-600 text-sm flex-grow">{step.description}</p>
+            </Card>
+          ))}
+        </div>
+
+        <div class="grid lg:grid-cols-2 gap-8">
+          <Card class="reveal p-8">
+            <h3 class="text-lg font-bold text-primary mb-4">Leaders Often Engage When They Say:</h3>
+            <ul class="space-y-3">
+              {[
+                '"I want to develop as a leader, not just attend a training."',
+                '"I need a structured path, not a one-time event."',
+                '"I want to grow my ability to lead people, not just manage tasks."',
+                '"I want to build habits that last beyond a workshop."',
+              ].map((item) => (
+                <li class="flex items-start gap-2">
+                  <svg class="w-5 h-5 text-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                  <span class="text-slate-600 italic">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+
+          <div class="reveal stagger-2 flex flex-col justify-center">
+            <div class="bg-gradient-to-br from-primary to-primary-dark rounded-2xl p-8 text-white text-center">
+              <h3 class="text-2xl font-bold mb-4">Ready to Start the Journey?</h3>
+              <p class="text-slate-200 mb-6">Explore the full coaching series pathway and investment considerations.</p>
+              <Button href={createPageUrl('Investment')} variant="outline" size="lg" class="bg-white/10 border-2 border-white/30 text-white hover:bg-white/20">
+                View Investment Considerations
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LEAP Coaching Certification -->
+    <section id="coaching-certification" class="py-20">
+      <div class="max-w-7xl mx-auto px-6 lg:px-8">
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+          <div class="reveal">
+            <span class="text-primary font-semibold text-sm tracking-wider uppercase mb-4 block">Certification Program</span>
+            <h2 class="text-4xl font-bold text-primary mb-4">LEAP Coaching Certification</h2>
+            <p class="text-xl text-slate-600 leading-relaxed mb-6">
+              Become a certified LEAP coach and bring the framework into your organization, your practice, or your community. The certification program equips you to facilitate the LEAP coaching process with confidence and credibility.
+            </p>
+            <p class="text-slate-600 leading-relaxed mb-8">
+              Designed for internal coaches, HR leaders, consultants, and leadership practitioners who want to expand their toolkit with a proven framework for developing leaders at every level.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4">
+              <Button href={createPageUrl('ScheduleCall')} size="lg">
+                Learn About Certification
+              </Button>
+              <Button href={createPageUrl('Investment')} variant="secondary" size="lg">
+                Investment Considerations
+              </Button>
+            </div>
+          </div>
+
+          <div class="reveal stagger-2">
+            <Card class="p-8">
+              <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center mx-auto mb-6 shadow-lg">
+                <svg class="w-10 h-10" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                </svg>
+              </div>
+              <h3 class="text-xl font-bold text-primary text-center mb-4">What Certification Includes</h3>
+              <div class="space-y-3">
+                {[
+                  'Full LEAP coaching methodology training',
+                  'Practice facilitation and mentoring',
+                  'Certification materials and resources',
+                  'Ongoing support and community access',
+                  'License to deliver LEAP coaching',
+                ].map((item) => (
+                  <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span class="text-slate-700">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Team Development & Team Building -->
+    <section id="team-development" class="py-20 bg-slate-50">
+      <div class="max-w-7xl mx-auto px-6 lg:px-8">
+        <div class="reveal text-center mb-12">
+          <span class="text-primary font-semibold text-sm tracking-wider uppercase mb-4 block">Teams & Groups</span>
+          <h2 class="text-4xl font-bold text-primary mb-4">Team Development & Team Building</h2>
+          <p class="text-xl text-slate-600 max-w-3xl mx-auto">
+            Strengthen how your teams communicate, collaborate, and hold each other accountable through experiential learning and structured exercises.
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          {[
+            { title: 'Team Communication', desc: 'Exercises that build clarity, trust, and open dialogue among team members.', icon: 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z' },
+            { title: 'Accountability Activities', desc: 'Structured activities that reinforce ownership, follow-through, and mutual accountability.', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
+            { title: 'Problem-Solving Challenges', desc: 'Collaborative challenges that develop critical thinking and team decision-making.', icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
+            { title: 'Team Alignment', desc: 'Sessions that align teams around shared goals, expectations, and ways of working together.', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z' },
+          ].map((item, i) => (
+            <Card class={`reveal stagger-${i + 1} p-6 hover:shadow-xl transition-all h-full flex flex-col`}>
+              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center mb-4 shadow-lg">
+                <svg class="w-6 h-6" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d={item.icon} />
+                </svg>
+              </div>
+              <h3 class="text-lg font-bold text-primary mb-2">{item.title}</h3>
+              <p class="text-slate-600 text-sm flex-grow">{item.desc}</p>
+            </Card>
+          ))}
+        </div>
+
+        <div class="reveal text-center">
+          <div class="inline-block bg-white rounded-2xl shadow-sm border border-slate-100 p-8 mb-6">
+            <h3 class="text-sm font-bold text-slate-500 uppercase mb-3">Ideal For</h3>
+            <p class="text-slate-600 mb-6">Emerging leaders, supervisors, managers, and leadership teams seeking stronger collaboration and alignment.</p>
+            <Button href={createPageUrl('Investment')} size="lg">
+              View Investment Considerations
+            </Button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Performance Management Systems -->
+    <section id="performance-management" class="py-20">
+      <div class="max-w-7xl mx-auto px-6 lg:px-8">
+        <div class="grid lg:grid-cols-2 gap-12 items-start">
+          <div class="reveal">
+            <span class="text-primary font-semibold text-sm tracking-wider uppercase mb-4 block">Organizational Consulting</span>
+            <h2 class="text-4xl font-bold text-primary mb-4">Performance Management Systems</h2>
+            <p class="text-xl text-slate-600 leading-relaxed mb-8">
+              Build the systems and structures your organization needs to create consistent, measurable leadership performance across every level.
+            </p>
+
+            <div class="space-y-3 mb-8">
+              {[
+                'Organizational performance assessments',
+                'Leadership structure design and alignment',
+                'Performance management system development',
+                'Accountability frameworks and implementation',
+                'Operational improvement and process optimization',
+              ].map((item) => (
+                <div class="flex items-start gap-3">
+                  <svg class="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span class="text-slate-700">{item}</span>
+                </div>
+              ))}
+            </div>
+
+            <div class="bg-primary/5 rounded-xl p-6 mb-8">
+              <h4 class="text-sm font-bold text-slate-500 uppercase mb-3">Ideal For</h4>
+              <p class="text-slate-600">Executive teams seeking stronger organizational alignment, accountability, and leadership performance across the enterprise.</p>
+            </div>
+
+            <Button href={createPageUrl('Investment')} size="lg">
+              View Investment Considerations
+            </Button>
+          </div>
+
+          <div class="reveal stagger-2">
+            <Card class="p-8 bg-gradient-to-br from-slate-50 to-white">
+              <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center mb-6 shadow-lg">
+                <svg class="w-8 h-8" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+              <h3 class="text-xl font-bold text-primary mb-4">What Makes Our Approach Different</h3>
+              <p class="text-slate-600 leading-relaxed mb-4">
+                We do not just assess your organization and hand you a report. We work alongside your leadership team to design, build, and implement systems that create lasting change.
+              </p>
+              <p class="text-slate-600 leading-relaxed">
+                Every recommendation is grounded in the LEAP philosophy: leadership is a practice, and systems must support that practice daily.
+              </p>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LEAP Leadership Hiring Framework -->
+    <section id="hiring-framework" class="py-20 bg-slate-50">
+      <div class="max-w-7xl mx-auto px-6 lg:px-8">
+        <div class="reveal text-center mb-12">
+          <span class="text-primary font-semibold text-sm tracking-wider uppercase mb-4 block">Hiring & Role Clarity</span>
+          <h2 class="text-4xl font-bold text-primary mb-4">LEAP Leadership Hiring Framework</h2>
+          <p class="text-xl text-slate-600 max-w-3xl mx-auto">
+            Hire the right leaders by defining the right roles. Our framework ensures clarity, accountability, authority, and alignment before the first interview.
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-4 gap-6 mb-12">
+          {[
+            { title: 'Role Clarity', desc: 'Define what the role truly requires, not just tasks, but leadership expectations and outcomes.', color: 'from-blue-500 to-blue-600' },
+            { title: 'Accountability', desc: 'Establish what the leader will own and be measured against from day one.', color: 'from-purple-500 to-purple-600' },
+            { title: 'Authority', desc: 'Clarify decision-making authority so leaders can act with confidence and autonomy.', color: 'from-amber-500 to-amber-600' },
+            { title: 'Alignment', desc: 'Ensure the role connects to organizational strategy, team structure, and culture.', color: 'from-emerald-500 to-emerald-600' },
+          ].map((item, i) => (
+            <Card class={`reveal stagger-${i + 1} p-6 text-center hover:shadow-xl transition-all h-full`}>
+              <div class={`w-14 h-14 rounded-2xl bg-gradient-to-br ${item.color} flex items-center justify-center mx-auto mb-4 shadow-lg`}>
+                <span class="text-white font-bold text-xl">{item.title.charAt(0)}</span>
+              </div>
+              <h3 class="text-lg font-bold text-primary mb-2">{item.title}</h3>
+              <p class="text-slate-600 text-sm">{item.desc}</p>
+            </Card>
+          ))}
+        </div>
+
+        <div class="grid lg:grid-cols-2 gap-8">
+          <Card class="reveal p-8">
+            <h3 class="text-xl font-bold text-primary mb-4">Leadership Role Clarity Audit</h3>
+            <p class="text-slate-600 leading-relaxed mb-6">
+              Before you hire, promote, or restructure, conduct a Leadership Role Clarity Audit. We work with your team to evaluate each leadership role against the four pillars of the hiring framework, identifying gaps and strengthening the foundation before decisions are made.
+            </p>
+            <div class="bg-accent/10 rounded-xl p-4 mb-6">
+              <p class="text-slate-700 font-semibold">Investment: $5,000 &ndash; $15,000</p>
+              <p class="text-slate-500 text-sm">Based on scope and number of roles evaluated.</p>
+            </div>
+            <Button href={createPageUrl('ScheduleCall')} size="lg" class="w-full">
+              Schedule a Leadership Strategy Conversation
+            </Button>
+          </Card>
+
+          <div class="reveal stagger-2 flex items-center">
+            <div class="bg-gradient-to-br from-primary to-primary-dark rounded-2xl p-8 text-white w-full">
+              <h3 class="text-2xl font-bold mb-4">Why It Matters</h3>
+              <p class="text-slate-200 leading-relaxed mb-4">
+                Most hiring failures are not about finding the wrong person. They are about putting someone into a poorly defined role without clear accountability or authority.
+              </p>
+              <p class="text-slate-200 leading-relaxed">
+                The LEAP Hiring Framework fixes the foundation so your leaders can succeed from the start.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Signature LEAP Engagements at a Glance -->
+    <section class="py-20">
+      <div class="max-w-7xl mx-auto px-6 lg:px-8">
+        <div class="reveal text-center mb-12">
+          <h2 class="text-4xl font-bold text-primary mb-4">Signature LEAP Engagements at a Glance</h2>
+          <p class="text-xl text-slate-600 max-w-3xl mx-auto">
+            Compare our core engagement types and find the right fit for your organization.
           </p>
         </div>
 
         <!-- Safelist gradient classes for Tailwind: from-blue-500 to-blue-600 from-purple-500 to-purple-600 from-amber-500 to-amber-600 from-emerald-500 to-emerald-600 from-primary to-primary-dark -->
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {displayServices.map((service: any, i: number) => (
-            <Card class={`reveal stagger-${Math.min(i + 1, 6)} p-8 hover:shadow-xl transition-all group h-full flex flex-col`}>
-              <div class={`w-16 h-16 rounded-2xl bg-gradient-to-br ${service.iconColor || 'from-primary to-primary-dark'} flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform`}>
-                <svg class="w-8 h-8" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d={service.icon || 'M13 10V3L4 14h7v7l9-11h-7z'} />
-                </svg>
+        <div class="grid md:grid-cols-3 gap-8">
+          {signatureEngagements.map((engagement, i) => (
+            <Card class={`reveal stagger-${i + 1} p-8 hover:shadow-xl transition-all h-full flex flex-col`}>
+              <div class={`w-16 h-16 rounded-2xl bg-gradient-to-br ${engagement.color} flex items-center justify-center mb-6 shadow-lg`}>
+                <span class="text-white text-2xl font-bold">{engagement.title.split(' ')[0].charAt(0)}{engagement.title.split(' ')[1]?.charAt(0) || ''}</span>
               </div>
-
-              <h3 class="text-2xl font-bold text-primary mb-2">{service.title}</h3>
-              <p class="text-accent font-semibold mb-4">{service.subtitle}</p>
-              <p class="text-slate-600 leading-relaxed mb-6 flex-grow">{service.description}</p>
-
-              <div class="space-y-3 mb-6">
-                {(service.features || []).map((feature: string) => (
+              <h3 class="text-2xl font-bold text-primary mb-6">{engagement.title}</h3>
+              <div class="space-y-3 mb-8 flex-grow">
+                {engagement.features.map((feature) => (
                   <div class="flex items-center gap-3">
                     <svg class="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -156,8 +693,7 @@ const stats: Statistic[] = statsData.length > 0 ? statsData : DEFAULT_STATS;
                   </div>
                 ))}
               </div>
-
-              <Button href={service.link || `/services/${service.slug}`} class="w-full mt-auto">
+              <Button href={engagement.anchor} class="w-full mt-auto">
                 Learn More
               </Button>
             </Card>
@@ -166,16 +702,60 @@ const stats: Statistic[] = statsData.length > 0 ? statsData : DEFAULT_STATS;
       </div>
     </section>
 
-    <!-- CTA Section -->
+    <!-- LEAP Applied Section -->
     <section class="py-20 bg-slate-50">
+      <div class="max-w-7xl mx-auto px-6 lg:px-8">
+        <div class="reveal text-center mb-12">
+          <span class="text-primary font-semibold text-sm tracking-wider uppercase mb-4 block">LEAP in Action</span>
+          <h2 class="text-4xl font-bold text-primary mb-4">LEAP Applied</h2>
+          <p class="text-xl text-slate-600 max-w-3xl mx-auto">
+            The LEAP philosophy is being applied across leadership development, executive leadership, and organizational performance in organizations of all sizes.
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8 mb-12">
+          {[
+            { title: 'Leadership Development', desc: 'Building leaders at every level through structured coaching, workshops, and experiential learning.', icon: 'M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z' },
+            { title: 'Executive Leadership', desc: 'Strategic advisory for senior leaders navigating complex challenges and driving organizational results.', icon: 'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
+            { title: 'Organizational Performance', desc: 'Systems, structures, and frameworks that create consistent, measurable results across the enterprise.', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
+          ].map((item, i) => (
+            <Card class={`reveal stagger-${i + 1} p-8 text-center hover:shadow-xl transition-all`}>
+              <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center mx-auto mb-6 shadow-lg">
+                <svg class="w-8 h-8" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d={item.icon} />
+                </svg>
+              </div>
+              <h3 class="text-xl font-bold text-primary mb-3">{item.title}</h3>
+              <p class="text-slate-600">{item.desc}</p>
+            </Card>
+          ))}
+        </div>
+
+        <div class="reveal">
+          <Card class="p-8 text-center">
+            <p class="text-slate-600 text-lg mb-2">
+              <span class="font-semibold text-primary">Power Industry & HOPE Initiative:</span> LEAP principles are also being applied in specialized sectors including the power industry, where leadership performance directly impacts safety, reliability, and operational excellence.
+            </p>
+            <div class="mt-6">
+              <Button href={createPageUrl('ScheduleCall')} size="lg">
+                Explore Engagement Options
+              </Button>
+            </div>
+          </Card>
+        </div>
+      </div>
+    </section>
+
+    <!-- Final CTA Section -->
+    <section class="py-20">
       <div class="max-w-4xl mx-auto px-6 lg:px-8">
         <div class="bg-gradient-to-br from-primary to-primary-dark rounded-3xl p-6 sm:p-10 lg:p-12 text-center text-white relative overflow-hidden">
           <div class="absolute top-0 right-0 w-64 h-64 bg-accent/20 rounded-full blur-3xl" />
           <div class="absolute -bottom-10 -left-10 w-80 h-80 bg-white/5 rounded-full blur-3xl" />
           <div class="relative z-10">
-            <h2 class="text-3xl font-bold mb-4">Not Sure Where to Start?</h2>
+            <h2 class="text-3xl font-bold mb-4">Schedule a Leadership Conversation</h2>
             <p class="text-slate-200 text-lg mb-8 max-w-2xl mx-auto">
-              Schedule a consultation and we'll help you identify the perfect solution for your organization's needs.
+              Whether you are exploring your options or ready to take the next step, a conversation is the best place to start. Let us learn about your organization and help you find the right path forward.
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
               <Button href={createPageUrl('ScheduleCall')} variant="secondary" size="lg" class="bg-white text-primary hover:bg-slate-100">
@@ -192,4 +772,3 @@ const stats: Statistic[] = statsData.length > 0 ? statsData : DEFAULT_STATS;
   </main>
   <Footer />
 </Layout>
-

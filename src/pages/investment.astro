@@ -1,0 +1,651 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Head from '../components/layout/Head.astro';
+import Header from '../components/layout/Header.astro';
+import Footer from '../components/layout/Footer.astro';
+import Breadcrumbs from '../components/common/Breadcrumbs.astro';
+import Button from '../components/ui/Button.astro';
+import Card from '../components/ui/Card.astro';
+import { createPageUrl } from '../lib/utils';
+---
+
+<Layout>
+  <Head slot="head" title="Investment Considerations | LEAP Association" description="Explore investment considerations for LEAP leadership development experiences, coaching engagements, and speaking opportunities." />
+  <Header />
+  <main id="main-content" class="min-h-screen bg-gradient-to-br from-slate-50 to-white">
+    <!-- Hero Section -->
+    <section class="relative pt-32 pb-20 overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5" />
+      <div class="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
+        <Breadcrumbs items={[{ label: 'Investment' }]} />
+
+        <div class="text-center max-w-4xl mx-auto">
+          <span class="animate-fadeUp text-primary font-semibold text-sm tracking-wider uppercase mb-4 block">
+            Investment Considerations
+          </span>
+          <h1 class="animate-fadeUp text-4xl sm:text-5xl lg:text-6xl font-bold text-primary mb-6" style="animation-delay: 0.1s;">
+            Why Organizations Invest in LEAP
+          </h1>
+          <p class="animate-fadeUp text-xl text-slate-600 leading-relaxed mb-8" style="animation-delay: 0.2s;">
+            Organizations rarely seek leadership development simply to attend another workshop. They invest in leadership development when they want to improve how leaders think, communicate, and guide teams toward meaningful results.
+          </p>
+          <div class="animate-fadeUp flex flex-col sm:flex-row gap-4 justify-center" style="animation-delay: 0.3s;">
+            <Button href={createPageUrl('ScheduleCall')} size="lg">
+              Schedule a Leadership Conversation
+            </Button>
+            <Button href={createPageUrl('Solutions')} variant="outline" size="lg">
+              Explore LEAP Solutions
+            </Button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Why Organizations Engage LEAP -->
+    <section class="py-16 bg-white">
+      <div class="max-w-7xl mx-auto px-6 lg:px-8">
+        <div class="reveal max-w-4xl mx-auto text-center mb-12">
+          <p class="text-lg text-slate-600 leading-relaxed mb-8">
+            LEAP engagements help organizations strengthen the leadership practices that influence how work gets done across the organization. Through a combination of leadership philosophy, practical leadership frameworks, and guided application, LEAP helps leaders translate leadership thinking into everyday leadership behaviors.
+          </p>
+        </div>
+        <div class="reveal grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          {[
+            { text: 'Strengthen leadership effectiveness across teams', icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
+            { text: 'Improve accountability and ownership within the organization', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
+            { text: 'Align leadership teams around shared expectations', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z' },
+            { text: 'Strengthen communication and decision-making among leaders', icon: 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z' },
+            { text: 'Build leadership practices that support long-term performance', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
+          ].map((item, i) => (
+            <div class={`reveal stagger-${i + 1} flex items-start gap-4 p-5 rounded-xl bg-slate-50 border border-slate-100`}>
+              <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={item.icon} />
+                </svg>
+              </div>
+              <p class="text-slate-700 font-medium">{item.text}</p>
+            </div>
+          ))}
+        </div>
+        <div class="reveal max-w-4xl mx-auto mt-10">
+          <p class="text-slate-600 text-center leading-relaxed">
+            While every organization's leadership challenges are unique, LEAP engagements focus on strengthening the leadership practices that ultimately shape organizational performance. The following sections provide typical investment ranges for leadership development experiences, coaching engagements, and speaking opportunities.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 1. LEAP Leadership Keynotes and Speaking Engagements -->
+    <section id="speaking" class="py-20 bg-slate-50">
+      <div class="max-w-7xl mx-auto px-6 lg:px-8">
+        <div class="reveal text-center mb-12">
+          <span class="text-primary font-semibold text-sm tracking-wider uppercase mb-3 block">Speaking Engagements</span>
+          <h2 class="text-3xl sm:text-4xl font-bold text-primary mb-4">
+            LEAP Leadership Keynotes and Speaking Engagements
+          </h2>
+          <p class="text-lg text-slate-600 max-w-3xl mx-auto">
+            Inspire Leaders. Equip Teams. Strengthen Leadership Thinking.
+          </p>
+        </div>
+
+        <div class="max-w-5xl mx-auto">
+          <div class="reveal mb-10">
+            <p class="text-slate-600 leading-relaxed text-center max-w-3xl mx-auto mb-8">
+              Organizations often invite a LEAP speaker when they want to energize leaders, introduce a leadership philosophy, or strengthen alignment across teams. LEAP speaking engagements combine engaging stories, practical leadership insights, and clear frameworks leaders can immediately apply in their work. Rather than simply motivating audiences, these sessions help leaders translate leadership thinking into everyday leadership practices.
+            </p>
+          </div>
+
+          <!-- Investment Table -->
+          <div class="reveal">
+            <Card class="p-8 mb-8">
+              <h3 class="text-xl font-bold text-primary mb-6">Typical Investment</h3>
+              <div class="space-y-4">
+                <div class="flex justify-between items-center py-3 border-b border-slate-100">
+                  <span class="text-slate-700 font-medium">Keynote Presentation</span>
+                  <span class="text-primary font-bold">$5,000 &ndash; $12,000</span>
+                </div>
+                <div class="flex justify-between items-center py-3 border-b border-slate-100">
+                  <span class="text-slate-700 font-medium">Half-Day Leadership Session</span>
+                  <span class="text-primary font-bold">$6,500 &ndash; $15,000</span>
+                </div>
+                <div class="flex justify-between items-center py-3">
+                  <span class="text-slate-700 font-medium">Conference Session or Breakout</span>
+                  <span class="text-primary font-bold">$4,000 &ndash; $8,000</span>
+                </div>
+              </div>
+              <p class="text-slate-500 text-sm mt-4">Custom leadership sessions available for organizations and conferences.</p>
+            </Card>
+          </div>
+
+          <!-- Popular Topics -->
+          <div class="reveal">
+            <Card class="p-8 mb-8">
+              <h3 class="text-xl font-bold text-primary mb-6">Popular Speaking Topics</h3>
+              <div class="grid sm:grid-cols-2 gap-4">
+                {[
+                  'Always LEAP Higher',
+                  'Leadership Practices That Drive Results',
+                  "What's in Your Practice?",
+                  'Creating Cultures of Accountability',
+                  'Leadership That Improves Performance',
+                ].map((topic) => (
+                  <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 text-accent flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span class="text-slate-700">{topic}</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+
+          <div class="text-center">
+            <Button href={createPageUrl('Contact')}>Request Speaking Availability</Button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. LEAP Through Lunch (NEW) -->
+    <section id="leap-through-lunch" class="py-20 bg-white">
+      <div class="max-w-7xl mx-auto px-6 lg:px-8">
+        <div class="reveal text-center mb-12">
+          <span class="text-accent font-semibold text-sm tracking-wider uppercase mb-3 block">New Offering</span>
+          <h2 class="text-3xl sm:text-4xl font-bold text-primary mb-4">
+            LEAP Through Lunch
+          </h2>
+          <p class="text-lg text-slate-600 max-w-3xl mx-auto">
+            A Leadership Conversation That Starts the Journey
+          </p>
+        </div>
+
+        <div class="max-w-5xl mx-auto">
+          <div class="reveal mb-10">
+            <p class="text-slate-600 leading-relaxed text-center max-w-3xl mx-auto">
+              Many leaders first encounter the LEAP philosophy through a simple leadership conversation. LEAP Through Lunch provides organizations with an engaging introduction to the LEAP leadership philosophy and the leadership practices that influence organizational performance. Rather than a traditional presentation, this session creates space for leaders to explore practical leadership challenges, exchange ideas, and learn how the LEAP philosophy strengthens leadership thinking, communication, and accountability. This relaxed format often becomes the starting point for deeper leadership development conversations.
+            </p>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-8 mb-10">
+            <!-- Session Format -->
+            <div class="reveal stagger-1">
+              <Card class="p-8 h-full">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center mb-5 shadow-lg">
+                  <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h3 class="text-xl font-bold text-primary mb-4">Session Format</h3>
+                <ul class="space-y-3">
+                  {[
+                    'Hosted leadership lunch conversation',
+                    'Up to 5 participants',
+                    '60\u201375 minutes',
+                    'Lunch included',
+                  ].map((item) => (
+                    <li class="flex items-center gap-3">
+                      <svg class="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span class="text-slate-700">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            </div>
+
+            <!-- During the Session -->
+            <div class="reveal stagger-2">
+              <Card class="p-8 h-full">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mb-5 shadow-lg">
+                  <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                </div>
+                <h3 class="text-xl font-bold text-primary mb-4">During the Session Leaders Explore</h3>
+                <ul class="space-y-3">
+                  {[
+                    'The LEAP leadership philosophy',
+                    'Leadership practices that influence performance',
+                    'Common leadership challenges organizations face',
+                    'Practical ways leaders strengthen accountability and communication',
+                  ].map((item) => (
+                    <li class="flex items-center gap-3">
+                      <svg class="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span class="text-slate-700">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            </div>
+          </div>
+
+          <!-- Ideal For -->
+          <div class="reveal mb-10">
+            <Card class="p-8">
+              <h3 class="text-xl font-bold text-primary mb-4">Ideal For</h3>
+              <div class="grid sm:grid-cols-2 gap-4">
+                {[
+                  'Leadership teams exploring development opportunities',
+                  'Organizations considering leadership training or coaching',
+                  'Leaders seeking fresh leadership insight',
+                  'Executives interested in strengthening communication and accountability practices',
+                ].map((item) => (
+                  <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 text-accent flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span class="text-slate-700">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+
+          <!-- Investment -->
+          <div class="reveal">
+            <div class="bg-gradient-to-br from-primary to-primary-dark rounded-2xl p-8 text-center text-white relative overflow-hidden">
+              <div class="absolute top-0 right-0 w-64 h-64 bg-accent/20 rounded-full blur-3xl" />
+              <div class="relative z-10">
+                <h3 class="text-2xl font-bold mb-2">Investment</h3>
+                <p class="text-3xl font-bold text-accent-light mb-2">Complimentary Introductory Session</p>
+                <p class="text-slate-200 mb-6">(Available for qualified organizations)</p>
+                <Button href={createPageUrl('Contact')} variant="secondary" size="lg" class="bg-white text-primary hover:bg-slate-100">
+                  Request a LEAP Through Lunch Session
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. The LEAP Coaching Series -->
+    <section id="coaching-series" class="py-20 bg-slate-50">
+      <div class="max-w-7xl mx-auto px-6 lg:px-8">
+        <div class="reveal text-center mb-12">
+          <span class="text-primary font-semibold text-sm tracking-wider uppercase mb-3 block">Coaching Series</span>
+          <h2 class="text-3xl sm:text-4xl font-bold text-primary mb-4">
+            The LEAP Coaching Series
+          </h2>
+          <p class="text-lg text-slate-600 max-w-3xl mx-auto">
+            Strengthening Leadership One Stage at a Time
+          </p>
+        </div>
+
+        <div class="max-w-5xl mx-auto">
+          <div class="reveal mb-10">
+            <p class="text-slate-600 leading-relaxed text-center max-w-3xl mx-auto mb-6">
+              The LEAP Coaching Series focuses on strengthening leadership practices across four key dimensions of leadership responsibility. Participants may engage in one series individually or progress through multiple series as their leadership journey evolves.
+            </p>
+          </div>
+
+          <!-- What's Included -->
+          <div class="reveal mb-10">
+            <Card class="p-8">
+              <h3 class="text-xl font-bold text-primary mb-4">Each Coaching Series Includes</h3>
+              <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[
+                  'Eight structured coaching sessions',
+                  'Leadership assessment tools',
+                  'Leadership practice exercises',
+                  'Personalized leadership insights',
+                  'Practical application between sessions',
+                ].map((item) => (
+                  <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span class="text-slate-700">{item}</span>
+                  </div>
+                ))}
+              </div>
+              <div class="mt-6 pt-6 border-t border-slate-100">
+                <p class="text-slate-500">Series Investment: <span class="text-primary font-bold text-lg">$2,800 per series</span></p>
+              </div>
+            </Card>
+          </div>
+
+          <!-- Four Series -->
+          <div class="grid md:grid-cols-2 gap-8 mb-10">
+            {[
+              {
+                title: 'Leading Self',
+                description: 'Great leadership begins with personal discipline, self-awareness, and accountability. This coaching series focuses on strengthening the internal leadership practices that influence decision-making, communication, and personal productivity.',
+                color: 'from-blue-500 to-blue-600',
+                icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
+              },
+              {
+                title: 'Leading Others',
+                description: 'Leadership requires the ability to guide, influence, and develop others. This series helps leaders strengthen communication practices, build trust within teams, and create clearer expectations and accountability.',
+                color: 'from-emerald-500 to-emerald-600',
+                icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z',
+              },
+              {
+                title: 'Leading Tasks and Projects',
+                description: 'Many leaders are responsible for coordinating work and delivering results. This series focuses on improving project coordination, clarifying responsibilities, and strengthening execution discipline.',
+                color: 'from-purple-500 to-purple-600',
+                icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
+              },
+              {
+                title: 'Leading Change and Transformation',
+                description: 'Organizations constantly evolve, and leaders must guide teams through change. This series focuses on strengthening communication during transitions, maintaining clarity during uncertainty, and helping teams navigate transformation.',
+                color: 'from-amber-500 to-amber-600',
+                icon: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15',
+              },
+            ].map((series, i) => (
+              <div class={`reveal stagger-${i + 1}`}>
+                <Card class="p-8 h-full hover:shadow-xl transition-all group">
+                  <div class={`w-14 h-14 rounded-2xl bg-gradient-to-br ${series.color} flex items-center justify-center mb-5 shadow-lg group-hover:scale-110 transition-transform`}>
+                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={series.icon} />
+                    </svg>
+                  </div>
+                  <h3 class="text-xl font-bold text-primary mb-3">{series.title}</h3>
+                  <p class="text-slate-600 leading-relaxed mb-4">{series.description}</p>
+                  <p class="text-primary font-bold">Investment: $2,800</p>
+                </Card>
+              </div>
+            ))}
+          </div>
+
+          <!-- Full Pathway -->
+          <div class="reveal">
+            <div class="bg-gradient-to-br from-primary to-primary-dark rounded-2xl p-8 text-center text-white relative overflow-hidden">
+              <div class="absolute top-0 right-0 w-64 h-64 bg-accent/20 rounded-full blur-3xl" />
+              <div class="absolute -bottom-10 -left-10 w-80 h-80 bg-white/5 rounded-full blur-3xl" />
+              <div class="relative z-10">
+                <h3 class="text-2xl font-bold mb-3">The Full LEAP Leadership Pathway</h3>
+                <p class="text-slate-200 mb-4 max-w-2xl mx-auto">
+                  Leaders seeking a comprehensive leadership journey may participate in all four coaching series as part of the LEAP Leadership Pathway. This pathway provides a structured progression that strengthens leadership across personal discipline, team leadership, operational execution, and organizational change.
+                </p>
+                <p class="text-3xl font-bold text-accent-light mb-6">Pathway Investment: $9,800</p>
+                <Button href={createPageUrl('Contact')} variant="secondary" size="lg" class="bg-white text-primary hover:bg-slate-100">
+                  Enroll in the Full Leadership Pathway
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. LEAP Performance Experience -->
+    <section id="performance" class="py-20 bg-white">
+      <div class="max-w-7xl mx-auto px-6 lg:px-8">
+        <div class="grid md:grid-cols-2 gap-12 items-center max-w-5xl mx-auto">
+          <div class="reveal">
+            <span class="text-primary font-semibold text-sm tracking-wider uppercase mb-3 block">Performance</span>
+            <h2 class="text-3xl sm:text-4xl font-bold text-primary mb-4">
+              LEAP Performance Experience
+            </h2>
+            <p class="text-slate-600 leading-relaxed mb-6">
+              The LEAP Performance Experience helps leaders and teams strengthen performance by improving leadership practices that influence communication, accountability, and productivity. This engagement is often delivered as a focused leadership workshop or short series designed to elevate leadership performance within teams.
+            </p>
+            <Button href={createPageUrl('Contact')}>Request a Performance Experience</Button>
+          </div>
+          <div class="reveal stagger-2">
+            <Card class="p-8">
+              <h3 class="text-xl font-bold text-primary mb-6">Typical Investment</h3>
+              <div class="space-y-4">
+                <div class="flex justify-between items-center py-3 border-b border-slate-100">
+                  <span class="text-slate-700 font-medium">Half-Day Leadership Experience</span>
+                  <span class="text-primary font-bold">$3,500 &ndash; $5,000</span>
+                </div>
+                <div class="flex justify-between items-center py-3">
+                  <span class="text-slate-700 font-medium">Full-Day Leadership Experience</span>
+                  <span class="text-primary font-bold">$6,000 &ndash; $10,000</span>
+                </div>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. LEAP Signature Team Building Experience -->
+    <section id="team-building" class="py-20 bg-slate-50">
+      <div class="max-w-7xl mx-auto px-6 lg:px-8">
+        <div class="grid md:grid-cols-2 gap-12 items-center max-w-5xl mx-auto">
+          <div class="reveal order-2 md:order-1">
+            <Card class="p-8">
+              <h3 class="text-xl font-bold text-primary mb-6">Typical Investment</h3>
+              <div class="py-3">
+                <div class="flex justify-between items-center">
+                  <span class="text-slate-700 font-medium">Team Experience (up to 25 participants)</span>
+                  <span class="text-primary font-bold">$4,000 &ndash; $7,500</span>
+                </div>
+                <p class="text-slate-500 text-sm mt-3">Custom experiences available for larger groups.</p>
+              </div>
+            </Card>
+          </div>
+          <div class="reveal order-1 md:order-2">
+            <span class="text-primary font-semibold text-sm tracking-wider uppercase mb-3 block">Team Building</span>
+            <h2 class="text-3xl sm:text-4xl font-bold text-primary mb-4">
+              LEAP Signature Team Building Experience
+            </h2>
+            <p class="text-slate-600 leading-relaxed mb-6">
+              The LEAP Signature Team Building Experience combines leadership insight with engaging activities designed to strengthen collaboration, trust, and coordination across teams. Participants experience practical exercises that reinforce communication, leadership accountability, and team alignment.
+            </p>
+            <Button href={createPageUrl('Contact')}>Request a Team Building Experience</Button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. Organizational Engagements -->
+    <section id="organizational" class="py-20 bg-white">
+      <div class="max-w-7xl mx-auto px-6 lg:px-8">
+        <div class="reveal text-center mb-12">
+          <span class="text-primary font-semibold text-sm tracking-wider uppercase mb-3 block">Organizational</span>
+          <h2 class="text-3xl sm:text-4xl font-bold text-primary mb-4">
+            Organizational Engagements
+          </h2>
+          <p class="text-lg text-slate-600 max-w-3xl mx-auto">
+            Organizations seeking broader leadership development or operational improvement often engage LEAP through customized leadership programs, consulting engagements, or executive coaching partnerships.
+          </p>
+        </div>
+
+        <div class="max-w-4xl mx-auto">
+          <div class="reveal">
+            <Card class="p-8">
+              <h3 class="text-xl font-bold text-primary mb-6">These Engagements May Include</h3>
+              <div class="grid sm:grid-cols-2 gap-4 mb-6">
+                {[
+                  'Leadership development programs',
+                  'Executive coaching partnerships',
+                  'Performance management system design',
+                  'Operational leadership consulting',
+                  'Team development initiatives',
+                ].map((item) => (
+                  <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span class="text-slate-700">{item}</span>
+                  </div>
+                ))}
+              </div>
+              <p class="text-slate-500 italic mb-6">Investment levels vary based on scope and engagement design.</p>
+              <Button href={createPageUrl('ScheduleCall')}>Schedule a Leadership Conversation</Button>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. LEAP Coaching Certification -->
+    <section id="certification" class="py-20 bg-slate-50">
+      <div class="max-w-7xl mx-auto px-6 lg:px-8">
+        <div class="grid md:grid-cols-2 gap-12 items-center max-w-5xl mx-auto">
+          <div class="reveal">
+            <span class="text-primary font-semibold text-sm tracking-wider uppercase mb-3 block">Certification</span>
+            <h2 class="text-3xl sm:text-4xl font-bold text-primary mb-4">
+              LEAP Coaching Certification
+            </h2>
+            <p class="text-accent font-semibold mb-4">Multiply the Impact of the LEAP Philosophy</p>
+            <p class="text-slate-600 leading-relaxed mb-6">
+              The LEAP Coaching Certification prepares leaders, coaches, and professionals to apply and teach the LEAP philosophy within their organizations and communities. Participants learn how to guide individuals and teams through the LEAP Leadership Pathway while strengthening leadership practices that drive meaningful progress.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4">
+              <Button href={`${createPageUrl('Solutions')}#certification`}>Learn About Certification</Button>
+              <Button href={createPageUrl('Contact')} variant="outline">Apply for Certification</Button>
+            </div>
+          </div>
+          <div class="reveal stagger-2">
+            <Card class="p-8">
+              <h3 class="text-xl font-bold text-primary mb-6">Certification Participants Receive</h3>
+              <ul class="space-y-3 mb-6">
+                {[
+                  'Certification training sessions',
+                  'LEAP coaching frameworks and tools',
+                  'Facilitation guidance',
+                  'Ongoing community support',
+                ].map((item) => (
+                  <li class="flex items-center gap-3">
+                    <svg class="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span class="text-slate-700">{item}</span>
+                  </li>
+                ))}
+              </ul>
+              <div class="pt-6 border-t border-slate-100">
+                <p class="text-slate-500">Typical Investment</p>
+                <p class="text-primary font-bold text-2xl">$7,500 &ndash; $12,000</p>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. Engagement Pathway -->
+    <section id="pathway" class="py-20 bg-white">
+      <div class="max-w-7xl mx-auto px-6 lg:px-8">
+        <div class="reveal text-center mb-12">
+          <span class="text-primary font-semibold text-sm tracking-wider uppercase mb-3 block">Engagement Pathway</span>
+          <h2 class="text-3xl sm:text-4xl font-bold text-primary mb-4">
+            How Organizations Typically Engage LEAP
+          </h2>
+          <p class="text-lg text-slate-600 max-w-3xl mx-auto">
+            From Inspiration to Organizational Impact
+          </p>
+        </div>
+
+        <div class="max-w-5xl mx-auto">
+          <div class="reveal mb-10">
+            <p class="text-slate-600 leading-relaxed text-center max-w-3xl mx-auto">
+              Many organizations begin their LEAP journey through a single leadership event or conversation. As leaders experience the practical value of the LEAP philosophy, they often expand into deeper leadership development and organizational improvement efforts.
+            </p>
+          </div>
+
+          <!-- Common Pathways -->
+          <div class="reveal mb-10">
+            <Card class="p-8">
+              <h3 class="text-xl font-bold text-primary mb-6">Common Engagement Pathways</h3>
+              <div class="space-y-6">
+                <div class="flex items-center gap-3 flex-wrap">
+                  <span class="px-4 py-2 bg-primary/10 text-primary font-medium rounded-full text-sm">Speaking Engagement</span>
+                  <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                  <span class="px-4 py-2 bg-primary/10 text-primary font-medium rounded-full text-sm">Leadership Workshop</span>
+                  <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                  <span class="px-4 py-2 bg-primary/10 text-primary font-medium rounded-full text-sm">Coaching Series</span>
+                </div>
+                <div class="flex items-center gap-3 flex-wrap">
+                  <span class="px-4 py-2 bg-accent/10 text-accent font-medium rounded-full text-sm">Executive Coaching</span>
+                  <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                  <span class="px-4 py-2 bg-accent/10 text-accent font-medium rounded-full text-sm">Leadership Team Alignment</span>
+                  <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                  <span class="px-4 py-2 bg-accent/10 text-accent font-medium rounded-full text-sm">Organizational Programs</span>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          <!-- Four Stages -->
+          <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            {[
+              {
+                stage: 'Discover',
+                title: 'Leadership Insight and Inspiration',
+                items: ['Keynote presentations', 'Leadership conferences', 'Leadership events', 'Executive briefings'],
+                color: 'from-blue-500 to-blue-600',
+                number: '01',
+              },
+              {
+                stage: 'Experience',
+                title: 'Practical Leadership Development',
+                items: ['Leadership workshops', 'LEAP Performance Experience', 'Leadership development sessions', 'Team alignment experiences'],
+                color: 'from-emerald-500 to-emerald-600',
+                number: '02',
+              },
+              {
+                stage: 'Develop',
+                title: 'Strengthening Leadership Practices',
+                items: ['LEAP Coaching Series', 'Executive coaching', 'Leadership team development', 'Leadership development programs'],
+                color: 'from-purple-500 to-purple-600',
+                number: '03',
+              },
+              {
+                stage: 'Transform',
+                title: 'Organizational Leadership Impact',
+                items: ['Leadership consulting partnerships', 'Performance management system design', 'Organizational leadership development', 'Leadership culture initiatives'],
+                color: 'from-amber-500 to-amber-600',
+                number: '04',
+              },
+            ].map((stage, i) => (
+              <div class={`reveal stagger-${i + 1}`}>
+                <Card class="p-6 h-full hover:shadow-xl transition-all group">
+                  <div class={`w-12 h-12 rounded-xl bg-gradient-to-br ${stage.color} flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform`}>
+                    <span class="text-white font-bold text-sm">{stage.number}</span>
+                  </div>
+                  <h3 class="text-lg font-bold text-primary mb-1">{stage.stage}</h3>
+                  <p class="text-accent font-medium text-sm mb-3">{stage.title}</p>
+                  <ul class="space-y-2">
+                    {stage.items.map((item) => (
+                      <li class="flex items-start gap-2">
+                        <svg class="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                        <span class="text-slate-600 text-sm">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </Card>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="py-20 bg-slate-50">
+      <div class="max-w-4xl mx-auto px-6 lg:px-8">
+        <div class="bg-gradient-to-br from-primary to-primary-dark rounded-3xl p-6 sm:p-10 lg:p-12 text-center text-white relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-64 h-64 bg-accent/20 rounded-full blur-3xl" />
+          <div class="absolute -bottom-10 -left-10 w-80 h-80 bg-white/5 rounded-full blur-3xl" />
+          <div class="relative z-10">
+            <h2 class="text-3xl font-bold mb-4">Explore Your Next Step</h2>
+            <p class="text-slate-200 text-lg mb-8 max-w-2xl mx-auto">
+              Leadership growth begins with examining the practices that shape how individuals and organizations perform. If you are interested in participating in a LEAP program or exploring how LEAP can support your organization, we welcome the opportunity to connect.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button href={createPageUrl('ScheduleCall')} variant="secondary" size="lg" class="bg-white text-primary hover:bg-slate-100">
+                Schedule a Leadership Conversation
+              </Button>
+              <Button href={createPageUrl('Solutions')} variant="outline" size="lg" class="bg-white/10 border-2 border-white/30 text-white hover:bg-white/20">
+                Explore LEAP Solutions
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Layout>

@@ -24,6 +24,7 @@ export function createPageUrl(pageName: string): string {
     'Accountability': '/accountability',
     'Productivity': '/productivity',
     'TeamDebrief': '/practice/team-debrief',
+    'Investment': '/investment',
   };
   const path = pageMap[pageName] || `/${pageName.toLowerCase()}`;
   // Ensure base path is included (remove trailing slash from base, add path)
