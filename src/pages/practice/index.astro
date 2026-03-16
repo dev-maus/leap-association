@@ -59,7 +59,7 @@ type PracticeResourceItem = { title: string; type: string; description?: string;
       </div>
 
       <!-- Assessment Type Selection -->
-      <div class="grid lg:grid-cols-2 gap-8 mb-16">
+      <div class="grid lg:grid-cols-3 gap-8 mb-16">
         <Card class="p-8 hover:shadow-2xl transition-shadow group text-center">
           <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform mx-auto">
             <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -143,6 +143,49 @@ type PracticeResourceItem = { title: string; type: string; description?: string;
 
           <Button href={`${import.meta.env.BASE_URL}practice/team`} class="w-full bg-amber-600 hover:bg-amber-700 text-white py-6 rounded-xl">
             Start Team Assessment
+          </Button>
+        </Card>
+
+        <Card class="p-8 hover:shadow-2xl transition-shadow group text-center">
+          <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform mx-auto">
+            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+          <h3 class="text-2xl font-bold text-primary mb-3">
+            Leadership Scorecard
+          </h3>
+          <p class="text-slate-600 mb-6 leading-relaxed">
+            Evaluate whether a leadership role in your organization is positioned for success.
+            Ideal for HR leaders, executives, and organizational development professionals.
+          </p>
+
+          <div class="space-y-3 mb-8 inline-flex flex-col mx-auto">
+            {[
+              'Role clarity evaluation',
+              'Leadership expectations assessment',
+              'Performance measurement review',
+              'Support & resources analysis'
+            ].map((benefit) => (
+              <div class="flex items-center gap-3">
+                <svg class="w-5 h-5 text-purple-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span class="text-slate-700">{benefit}</span>
+              </div>
+            ))}
+          </div>
+
+          <div class="flex items-center justify-between text-sm text-slate-500 mb-6">
+            <span>20 questions</span>
+            <span>•</span>
+            <span>5 minutes</span>
+            <span>•</span>
+            <span>Instant results</span>
+          </div>
+
+          <Button href={`${import.meta.env.BASE_URL}practice/scorecard`} class="w-full bg-purple-600 hover:bg-purple-700 text-white py-6 rounded-xl">
+            Start Scorecard Assessment
           </Button>
         </Card>
       </div>

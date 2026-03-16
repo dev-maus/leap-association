@@ -24,6 +24,8 @@ export function createPageUrl(pageName: string): string {
     'Accountability': '/accountability',
     'Productivity': '/productivity',
     'TeamDebrief': '/practice/team-debrief',
+    'Scorecard': '/practice/scorecard',
+    'Evaluate': '/evaluate',
     'Investment': '/investment',
   };
   const path = pageMap[pageName] || `/${pageName.toLowerCase()}`;
