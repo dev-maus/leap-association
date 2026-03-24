@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabaseClient } from '../../lib/supabase';
 import { Calendar, Clock, User, Mail, Building, Phone, Loader2, CheckCircle } from 'lucide-react';
 import { getUserDetails, saveUserDetails } from '../../lib/userStorage';
-import { saveAssessmentData } from '../../lib/assessmentStorage';
+import { setCallScheduled } from '../../lib/assessmentStorage';
 
 export default function CalendarBooking() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -102,7 +102,7 @@ export default function CalendarBooking() {
 
       // Note: Actual calendar booking is handled externally
       // This just tracks that the user has scheduled a call
-      saveAssessmentData({ callScheduled: true });
+      setCallScheduled(true);
       
       setIsSubmitted(true);
     } catch (error) {

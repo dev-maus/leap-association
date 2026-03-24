@@ -72,13 +72,8 @@ interface RequestBody {
     source: string;
   };
   userId?: string; // Authenticated user ID
-  assessmentType: 'individual' | 'team';
-  scores: {
-    leadership: number;
-    effectiveness: number;
-    accountability: number;
-    productivity: number;
-  };
+  assessmentType: 'individual' | 'team' | 'leadership';
+  scores: Record<string, number>;
   habitScore: number;
   abilityScore: number;
   talentScore: number;
@@ -263,8 +258,44 @@ function sendNotificationEmail(body: RequestBody, response: any): void {
   const resendApiKey = Deno.env.get('RESEND_API_KEY');
   if (!resendApiKey) return;
 
-  const totalScore = body.scores.leadership + body.scores.effectiveness +
-    body.scores.accountability + body.scores.productivity;
+  const s = body.scores;
+  const isLeadership = body.assessmentType === 'leadership';
+  const leapTotal = !isLeadership
+    ? (s.leadership ?? 0) + (s.effectiveness ?? 0) + (s.accountability ?? 0) + (s.productivity ?? 0)
+    : 0;
+
+  const scoresHtml = isLeadership
+    ? `
+        <h3>Leadership Role Scorecard</h3>
+        <ul>
+          <li><strong>Role clarity:</strong> ${s.roleClarity ?? 'N/A'}</li>
+          <li><strong>Leadership expectations:</strong> ${s.leadershipExpectations ?? 'N/A'}</li>
+          <li><strong>Performance measurement:</strong> ${s.performanceMeasurement ?? 'N/A'}</li>
+          <li><strong>Support & resources:</strong> ${s.supportResources ?? 'N/A'}</li>
+          <li><strong>Total:</strong> ${s.total ?? 'N/A'} / 100</li>
+        </ul>
+        <h3>Section totals (mapped columns)</h3>
+        <ul>
+          <li><strong>S1–S4:</strong> ${body.habitScore}, ${body.abilityScore}, ${body.talentScore}, ${body.skillScore}</li>
+        </ul>
+      `
+    : `
+        <h3>LEAP Scores</h3>
+        <ul>
+          <li><strong>Leadership:</strong> ${s.leadership}</li>
+          <li><strong>Effectiveness:</strong> ${s.effectiveness}</li>
+          <li><strong>Accountability:</strong> ${s.accountability}</li>
+          <li><strong>Productivity:</strong> ${s.productivity}</li>
+          <li><strong>Total:</strong> ${leapTotal}</li>
+        </ul>
+        <h3>HATS Scores</h3>
+        <ul>
+          <li><strong>Habit:</strong> ${body.habitScore}</li>
+          <li><strong>Ability:</strong> ${body.abilityScore}</li>
+          <li><strong>Talent:</strong> ${body.talentScore}</li>
+          <li><strong>Skill:</strong> ${body.skillScore}</li>
+        </ul>
+      `;
 
   fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -292,21 +323,7 @@ function sendNotificationEmail(body: RequestBody, response: any): void {
           <li><strong>Assessment ID:</strong> ${response.id}</li>
           <li><strong>Timestamp:</strong> ${response.created_at}</li>
         </ul>
-        <h3>LEAP Scores</h3>
-        <ul>
-          <li><strong>Leadership:</strong> ${body.scores.leadership}</li>
-          <li><strong>Effectiveness:</strong> ${body.scores.effectiveness}</li>
-          <li><strong>Accountability:</strong> ${body.scores.accountability}</li>
-          <li><strong>Productivity:</strong> ${body.scores.productivity}</li>
-          <li><strong>Total:</strong> ${totalScore}</li>
-        </ul>
-        <h3>HATS Scores</h3>
-        <ul>
-          <li><strong>Habit:</strong> ${body.habitScore}</li>
-          <li><strong>Ability:</strong> ${body.abilityScore}</li>
-          <li><strong>Talent:</strong> ${body.talentScore}</li>
-          <li><strong>Skill:</strong> ${body.skillScore}</li>
-        </ul>
+        ${scoresHtml}
       `,
     }),
   }).catch((err) => {

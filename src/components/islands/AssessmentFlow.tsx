@@ -5,10 +5,11 @@ import { ArrowLeft, ArrowRight, Loader2, CheckCircle, Calendar, User } from 'luc
 import HCaptcha from '@hcaptcha/react-hcaptcha';
 import { validateEmail, validatePhone } from '../../lib/validation';
 import { getUserDetails, saveUserDetails, clearUserDetails, syncUserDetailsFromSupabase } from '../../lib/userStorage';
-import { 
-  getAssessmentData, 
+import {
+  getAssessmentData,
   saveAssessmentData,
-  clearAssessmentData
+  clearAssessmentData,
+  hasScheduledCall as readCallScheduledFromStorage,
 } from '../../lib/assessmentStorage';
 import { calculateAllScores, type Answer as AnswerData } from '../../lib/assessmentScoring';
 
@@ -144,7 +145,7 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
             if (assessmentResult && 'data' in assessmentResult && !assessmentResult.error && assessmentResult.data) {
               const existingAssessment = assessmentResult.data;
               // Save assessment ID to localStorage since it belongs to this user
-              saveAssessmentData({ responseId: existingAssessment.id });
+              saveAssessmentData(type, { responseId: existingAssessment.id });
               
               // User already has an assessment, redirect to results
               const resultsPath = buildUrl(`/practice/results?id=${existingAssessment.id}`);
@@ -205,19 +206,22 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
     return () => clearTimeout(timer);
   }, [rateLimitCountdown]);
 
-  // Read from localStorage after hydration to prevent SSR mismatch
+  // Read per-type submission + global call flag; reload user details once after hydration
   useEffect(() => {
-    // Check submission status
-    const assessmentData = getAssessmentData();
-    
+    const assessmentData = getAssessmentData(type);
     if (assessmentData.submittedEmail) {
       setAlreadySubmitted(true);
       setSubmittedEmail(assessmentData.submittedEmail);
       setSubmittedResponseId(assessmentData.responseId || null);
+    } else {
+      setAlreadySubmitted(false);
+      setSubmittedEmail(null);
+      setSubmittedResponseId(null);
     }
-    setHasScheduledCall(!!assessmentData.callScheduled);
+    setHasScheduledCall(readCallScheduledFromStorage());
+  }, [type]);
 
-    // Load user details for form prepopulation
+  useEffect(() => {
     const stored = getUserDetails();
     if (stored.full_name && stored.email) {
       setContactData({
@@ -227,7 +231,6 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
         role: stored.role || '',
         phone: stored.phone || '',
       });
-      // If we have both name and email, skip contact form
       setHasStoredUserDetails(true);
     }
   }, []);
@@ -494,7 +497,7 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
 
     try {
       // Check localStorage to prevent duplicate submissions from same device
-      const assessmentData = getAssessmentData();
+      const assessmentData = getAssessmentData(type);
       if (assessmentData.submittedEmail) {
         setAlreadySubmitted(true);
         setSubmittedEmail(assessmentData.submittedEmail);
@@ -560,7 +563,7 @@ export default function AssessmentFlow({ type, questions, captchaConfig }: Asses
           responseId: response.id,
           submittedAt: new Date().toISOString(),
         };
-        saveAssessmentData(assessmentDataToSave);
+        saveAssessmentData(type, assessmentDataToSave);
       }
 
       // No confirmation email needed - email is auto-confirmed

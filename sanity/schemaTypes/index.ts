@@ -14,6 +14,8 @@ import teamMember from './teamMember';
 import caseStudy from './caseStudy';
 import assessmentQuestion from './assessmentQuestion';
 import assessmentSettings from './assessmentSettings';
+import scorecardSection from './scorecardSection';
+import evaluationSettings from './evaluationSettings';
 import socialLink from './socialLink';
 // New schemas for CMS configurability
 import organizationValues from './organizationValues';
@@ -42,6 +44,8 @@ export const schemaTypes = [
   caseStudy,
   assessmentQuestion,
   assessmentSettings,
+  scorecardSection,
+  evaluationSettings,
   socialLink,
   // New schemas for CMS configurability
   organizationValues,

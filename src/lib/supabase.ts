@@ -1,4 +1,4 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || '';
@@ -106,6 +106,7 @@ const entityToTable = (entityName: string): string => {
     'Book': 'books',
     'SiteContent': 'site_content',
     'Testimonial': 'testimonials',
+    'ParticipantEvaluation': 'participant_evaluations',
   };
   return mapping[entityName] || entityName.toLowerCase() + 's';
 };
@@ -347,6 +348,7 @@ export const entities = {
   Book: createEntityAPI('books'),
   SiteContent: createEntityAPI('site_content'),
   Testimonial: createEntityAPI('testimonials'),
+  ParticipantEvaluation: createEntityAPI('participant_evaluations'),
 };
 
 // Auth API
@@ -501,13 +503,8 @@ async function submitAssessmentWithCaptcha(data: {
     source: string;
   };
   userId?: string; // Authenticated user ID
-  assessmentType: 'individual' | 'team';
-  scores: {
-    leadership: number;
-    effectiveness: number;
-    accountability: number;
-    productivity: number;
-  };
+  assessmentType: 'individual' | 'team' | 'leadership';
+  scores: Record<string, number>;
   habitScore: number;
   abilityScore: number;
   talentScore: number;
@@ -517,6 +514,7 @@ async function submitAssessmentWithCaptcha(data: {
     category?: string;
     score: number;
     question_text?: string;
+    response_label?: string;
   }>;
   captchaToken: string;
 }) {
@@ -624,6 +622,74 @@ async function checkUserExists(email: string): Promise<{ exists: boolean; userId
   }
 }
 
+export interface SubmitEvaluationPayload {
+  captchaToken: string;
+  userId?: string;
+  seminar_title: string;
+  /** ISO date YYYY-MM-DD */
+  seminar_date?: string | null;
+  seminar_city?: string | null;
+  /** US state / territory code, e.g. TX */
+  seminar_state?: string | null;
+  presenter_names?: string | null;
+  ratings: Record<string, number | null>;
+  presenter_comments?: string | null;
+  most_impactful?: string | null;
+  program_comments?: string | null;
+  may_use_comments?: string | null;
+  contact_for_coaching: boolean;
+  name: string;
+  email: string;
+  organization?: string | null;
+  title?: string | null;
+  best_times_to_contact?: string | null;
+  best_ways_to_contact?: string | null;
+}
+
+async function submitEvaluation(payload: SubmitEvaluationPayload): Promise<Record<string, unknown>> {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error(
+      'Supabase configuration is missing. Please ensure PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY are set.',
+    );
+  }
+
+  const functionUrl = `${supabaseUrl}/functions/v1/submit-evaluation`;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+  try {
+    const response = await fetch(functionUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${supabaseAnonKey}`,
+        apikey: supabaseAnonKey,
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errBody = await response.json().catch(() => ({}));
+      const errorObj: Error & { error?: string; details?: unknown } = new Error(
+        (errBody as { error?: string }).error || 'Failed to submit evaluation',
+      );
+      errorObj.error = (errBody as { error?: string }).error;
+      throw errorObj;
+    }
+
+    return (await response.json()) as Record<string, unknown>;
+  } catch (err: unknown) {
+    clearTimeout(timeoutId);
+    if (err instanceof Error && err.name === 'AbortError') {
+      throw new Error('Request timed out. Please try again.');
+    }
+    throw err;
+  }
+}
+
 // Export Supabase client wrapper
 export const supabaseClient = {
   supabase,
@@ -631,5 +697,6 @@ export const supabaseClient = {
   auth,
   submitAssessmentWithCaptcha,
   checkUserExists,
+  submitEvaluation,
 };
 

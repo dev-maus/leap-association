@@ -1,25 +1,63 @@
 /**
- * Assessment storage utility for managing assessment data in localStorage
+ * Assessment storage utility — per assessment type (individual / team / leadership)
  */
+
+export type AssessmentStorageType = 'individual' | 'team' | 'leadership';
 
 export interface AssessmentData {
   submittedEmail?: string;
   responseId?: string;
-  callScheduled?: boolean;
   submittedAt?: string;
 }
 
-const STORAGE_KEY = 'leap_assessment_data';
+const LEGACY_STORAGE_KEY = 'leap_assessment_data';
+const CALL_SCHEDULED_KEY = 'leap_call_scheduled';
 const isClient = typeof window !== 'undefined';
 
-/**
- * Get assessment data from localStorage
- */
-export function getAssessmentData(): AssessmentData {
-  if (!isClient) return {};
+function storageKeyForType(type: AssessmentStorageType): string {
+  return `leap_assessment_${type}`;
+}
 
+/**
+ * One-time migration: copy legacy single-key data into the type that matches current URL or default to individual.
+ */
+function migrateLegacyIfNeeded(): void {
+  if (!isClient) return;
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (!legacy) return;
+    const parsed = JSON.parse(legacy) as AssessmentData & { callScheduled?: boolean };
+    if (parsed.callScheduled) {
+      localStorage.setItem(CALL_SCHEDULED_KEY, '1');
+    }
+    const { callScheduled: _c, ...rest } = parsed;
+    if (!rest.submittedEmail && !rest.responseId) {
+      localStorage.removeItem(LEGACY_STORAGE_KEY);
+      return;
+    }
+    // If any per-type key already exists, drop legacy only
+    const types: AssessmentStorageType[] = ['individual', 'team', 'leadership'];
+    const hasPerType = types.some((t) => localStorage.getItem(storageKeyForType(t)));
+    if (hasPerType) {
+      localStorage.removeItem(LEGACY_STORAGE_KEY);
+      return;
+    }
+    // Heuristic: cannot know type from legacy — default to individual (most common)
+    localStorage.setItem(storageKeyForType('individual'), JSON.stringify(rest));
+    localStorage.removeItem(LEGACY_STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+/**
+ * Get assessment data for one type from localStorage
+ */
+export function getAssessmentData(type: AssessmentStorageType): AssessmentData {
+  if (!isClient) return {};
+  migrateLegacyIfNeeded();
+  try {
+    const stored = localStorage.getItem(storageKeyForType(type));
     return stored ? JSON.parse(stored) : {};
   } catch (error) {
     console.error('Failed to read assessment data from localStorage:', error);
@@ -28,52 +66,79 @@ export function getAssessmentData(): AssessmentData {
 }
 
 /**
- * Save assessment data to localStorage
- * @param data - Data to save
- * @param replace - If true, replace all data instead of merging (default: false)
+ * Save assessment data for one type
  */
-export function saveAssessmentData(data: Partial<AssessmentData>, replace: boolean = false): void {
+export function saveAssessmentData(
+  type: AssessmentStorageType,
+  data: Partial<AssessmentData>,
+  replace: boolean = false,
+): void {
   if (!isClient) return;
-
+  migrateLegacyIfNeeded();
   try {
-    const updated: AssessmentData = replace 
-      ? (data as AssessmentData) // Replace entirely
+    const updated: AssessmentData = replace
+      ? (data as AssessmentData)
       : {
-          ...getAssessmentData(), // Merge with existing
+          ...getAssessmentData(type),
           ...data,
         };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    localStorage.setItem(storageKeyForType(type), JSON.stringify(updated));
   } catch (error) {
     console.error('Failed to save assessment data to localStorage:', error);
   }
 }
 
 /**
- * Check if user has submitted an assessment
+ * Whether this assessment type has a recorded submission (email captured)
  */
-export function hasSubmittedAssessment(): boolean {
-  const data = getAssessmentData();
+export function hasSubmittedAssessment(type: AssessmentStorageType): boolean {
+  const data = getAssessmentData(type);
   return !!data.submittedEmail;
 }
 
 /**
- * Check if user has scheduled a call
+ * Global flag: user scheduled a strategy call (any path)
  */
 export function hasScheduledCall(): boolean {
-  const data = getAssessmentData();
-  return !!data.callScheduled;
+  if (!isClient) return false;
+  migrateLegacyIfNeeded();
+  try {
+    const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (legacy) {
+      const parsed = JSON.parse(legacy) as AssessmentData & { callScheduled?: boolean };
+      if (parsed.callScheduled) return true;
+    }
+  } catch {
+    // ignore
+  }
+  return localStorage.getItem(CALL_SCHEDULED_KEY) === '1';
+}
+
+export function setCallScheduled(scheduled: boolean): void {
+  if (!isClient) return;
+  if (scheduled) {
+    localStorage.setItem(CALL_SCHEDULED_KEY, '1');
+  } else {
+    localStorage.removeItem(CALL_SCHEDULED_KEY);
+  }
 }
 
 /**
- * Clear assessment data from localStorage
+ * Clear one assessment type, or all types + legacy + call flag
  */
-export function clearAssessmentData(): void {
+export function clearAssessmentData(type?: AssessmentStorageType): void {
   if (!isClient) return;
-
   try {
-    localStorage.removeItem(STORAGE_KEY);
+    if (type) {
+      localStorage.removeItem(storageKeyForType(type));
+      return;
+    }
+    (['individual', 'team', 'leadership'] as const).forEach((t) => {
+      localStorage.removeItem(storageKeyForType(t));
+    });
+    localStorage.removeItem(LEGACY_STORAGE_KEY);
+    localStorage.removeItem(CALL_SCHEDULED_KEY);
   } catch (error) {
     console.error('Failed to clear assessment data from localStorage:', error);
   }
 }
-

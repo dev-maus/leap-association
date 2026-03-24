@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import HCaptcha from '@hcaptcha/react-hcaptcha';
 import { supabaseClient } from '../../lib/supabase';
 import { createPageUrl } from '../../lib/utils';
+import { US_STATE_OPTIONS, filterSeminarCities } from '../../lib/usSeminarLocations';
 import {
   User,
   Mail,
@@ -14,29 +16,30 @@ import {
   Star,
   ClipboardList,
   Calendar,
-  MapPin,
   Phone,
   Clock,
   Send,
   AlertCircle,
+  MapPin,
 } from 'lucide-react';
 
-const RATING_QUESTIONS = [
-  'The objectives were clearly stated.',
-  'The presenter(s) was knowledgeable.',
-  'The presenter(s) taught the material in a way that was practical and easy to understand.',
-  'The audio/visual aids and handouts were useful.',
-  'The content matched the objectives.',
-  'The course/seminar met my expectations.',
-  'I learned new skills and/or ideas.',
-  'Overall, I was satisfied with the program.',
-] as const;
+export interface EvaluationCaptchaConfig {
+  enabled: boolean;
+  siteKey?: string;
+}
 
-const RATING_LABELS = ['Strongly Disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly Agree'] as const;
+interface ParticipantEvaluationProps {
+  ratingQuestions: string[];
+  ratingLabels: readonly string[];
+  captchaConfig?: EvaluationCaptchaConfig;
+}
 
 interface FormData {
   seminar_title: string;
-  seminar_date_location: string;
+  /** YYYY-MM-DD from native date input */
+  seminar_date: string;
+  seminar_city: string;
+  seminar_state: string;
   presenter_names: string;
   ratings: (number | null)[];
   presenter_comments: string;
@@ -52,38 +55,75 @@ interface FormData {
   best_ways_to_contact: string;
 }
 
-const initialFormData: FormData = {
-  seminar_title: '',
-  seminar_date_location: '',
-  presenter_names: '',
-  ratings: Array(8).fill(null),
-  presenter_comments: '',
-  most_impactful: '',
-  program_comments: '',
-  may_use_comments: null,
-  contact_for_coaching: false,
-  name: '',
-  email: '',
-  organization: '',
-  title: '',
-  best_times_to_contact: '',
-  best_ways_to_contact: '',
-};
+function emptyRatings(n: number): (number | null)[] {
+  return Array.from({ length: n }, () => null);
+}
 
-export default function ParticipantEvaluation() {
+function buildInitialForm(n: number): FormData {
+  return {
+    seminar_title: '',
+    seminar_date: '',
+    seminar_city: '',
+    seminar_state: '',
+    presenter_names: '',
+    ratings: emptyRatings(n),
+    presenter_comments: '',
+    most_impactful: '',
+    program_comments: '',
+    may_use_comments: null,
+    contact_for_coaching: false,
+    name: '',
+    email: '',
+    organization: '',
+    title: '',
+    best_times_to_contact: '',
+    best_ways_to_contact: '',
+  };
+}
+
+export default function ParticipantEvaluation({
+  ratingQuestions,
+  ratingLabels,
+  captchaConfig,
+}: ParticipantEvaluationProps) {
   const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState<FormData>({ ...initialFormData, ratings: Array(8).fill(null) });
+  const [formData, setFormData] = useState<FormData>(() => buildInitialForm(ratingQuestions.length));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [userId, setUserId] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captchaRef = useRef<HCaptcha>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      ratings: emptyRatings(ratingQuestions.length).map((_, i) => prev.ratings[i] ?? null),
+    }));
+  }, [ratingQuestions.length]);
+
+  useEffect(() => {
+    supabaseClient.supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user?.id) setUserId(session.user.id);
+    });
+  }, []);
+
+  const citySuggestions = useMemo(
+    () => filterSeminarCities(formData.seminar_state, formData.seminar_city),
+    [formData.seminar_state, formData.seminar_city],
+  );
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+  ) => {
     const { name, value, type } = e.target;
     if (type === 'checkbox') {
-      setFormData(prev => ({ ...prev, [name]: (e.target as HTMLInputElement).checked }));
+      setFormData((prev) => ({ ...prev, [name]: (e.target as HTMLInputElement).checked }));
+    } else if (name === 'seminar_state') {
+      setFormData((prev) => ({ ...prev, seminar_state: value }));
     } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
     // Clear validation error for field
     if (validationErrors[name]) {
@@ -117,9 +157,12 @@ export default function ParticipantEvaluation() {
       if (!formData.seminar_title.trim()) {
         errors.seminar_title = 'Seminar / Course Title is required.';
       }
-      const hasAnyRating = formData.ratings.some(r => r !== null);
+      const hasAnyRating = formData.ratings.some((r) => r !== null);
       if (!hasAnyRating) {
         errors.ratings = 'Please provide at least one rating.';
+      }
+      if (captchaConfig?.enabled && !userId && !captchaToken) {
+        errors.captcha = 'Please complete the captcha verification.';
       }
     }
 
@@ -158,15 +201,18 @@ export default function ParticipantEvaluation() {
     setError(null);
 
     try {
-      // Build ratings object
       const ratingsObj: Record<string, number | null> = {};
-      RATING_QUESTIONS.forEach((q, i) => {
-        ratingsObj[`q${i + 1}`] = formData.ratings[i];
+      ratingQuestions.forEach((_q, i) => {
+        ratingsObj[`q${i + 1}`] = formData.ratings[i] ?? null;
       });
 
-      const payload = {
+      await supabaseClient.submitEvaluation({
+        captchaToken: captchaToken || '',
+        userId: userId || undefined,
         seminar_title: formData.seminar_title.trim(),
-        seminar_date_location: formData.seminar_date_location.trim() || null,
+        seminar_date: formData.seminar_date.trim() || null,
+        seminar_city: formData.seminar_city.trim() || null,
+        seminar_state: formData.seminar_state.trim() || null,
         presenter_names: formData.presenter_names.trim() || null,
         ratings: ratingsObj,
         presenter_comments: formData.presenter_comments.trim() || null,
@@ -180,18 +226,13 @@ export default function ParticipantEvaluation() {
         title: formData.title.trim() || null,
         best_times_to_contact: formData.best_times_to_contact.trim() || null,
         best_ways_to_contact: formData.best_ways_to_contact.trim() || null,
-      };
-
-      const { error: insertError } = await supabaseClient.supabase
-        .from('participant_evaluations')
-        .insert(payload);
-
-      if (insertError) throw insertError;
+      });
 
       setIsSubmitted(true);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to submit evaluation:', err);
-      setError(err.message || 'Failed to submit evaluation. Please try again.');
+      const msg = err instanceof Error ? err.message : 'Failed to submit evaluation. Please try again.';
+      setError(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -293,19 +334,18 @@ export default function ParticipantEvaluation() {
 
               <div className="grid md:grid-cols-2 gap-5">
                 <div>
-                  <label htmlFor="seminar_date_location" className="block text-slate-700 font-medium mb-1.5">
-                    Seminar Date / Location
+                  <label htmlFor="seminar_date" className="block text-slate-700 font-medium mb-1.5">
+                    Seminar Date
                   </label>
                   <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none z-10" />
                     <input
-                      id="seminar_date_location"
-                      name="seminar_date_location"
-                      type="text"
-                      value={formData.seminar_date_location}
+                      id="seminar_date"
+                      name="seminar_date"
+                      type="date"
+                      value={formData.seminar_date}
                       onChange={handleChange}
-                      placeholder="e.g., March 15, 2026 / Dallas, TX"
-                      className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                      className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary [color-scheme:light]"
                     />
                   </div>
                 </div>
@@ -329,6 +369,63 @@ export default function ParticipantEvaluation() {
                 </div>
               </div>
 
+              <div className="grid md:grid-cols-2 gap-5">
+                <div>
+                  <label htmlFor="seminar_city" className="block text-slate-700 font-medium mb-1.5">
+                    City
+                  </label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none z-10" />
+                    <input
+                      id="seminar_city"
+                      name="seminar_city"
+                      type="text"
+                      list="seminar-city-suggestions"
+                      value={formData.seminar_city}
+                      onChange={handleChange}
+                      placeholder={
+                        formData.seminar_state
+                          ? 'Start typing to filter cities'
+                          : 'Select a state for suggestions (or type any city)'
+                      }
+                      autoComplete="address-level2"
+                      className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                    />
+                    <datalist id="seminar-city-suggestions">
+                      {citySuggestions.map((c) => (
+                        <option key={c} value={c} />
+                      ))}
+                    </datalist>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Suggestions use the selected state; you can still type any city.
+                  </p>
+                </div>
+
+                <div>
+                  <label htmlFor="seminar_state" className="block text-slate-700 font-medium mb-1.5">
+                    State
+                  </label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none z-10" />
+                    <select
+                      id="seminar_state"
+                      name="seminar_state"
+                      value={formData.seminar_state}
+                      onChange={handleChange}
+                      className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary cursor-pointer"
+                    >
+                      <option value="">Select state (optional)</option>
+                      {US_STATE_OPTIONS.map(({ code, name }) => (
+                        <option key={code} value={code}>
+                          {name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
               {/* Rating Scale Legend */}
               <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
                 <div className="flex items-center gap-2 mb-3">
@@ -336,8 +433,8 @@ export default function ParticipantEvaluation() {
                   <h3 className="font-semibold text-slate-700">Please Rate the Following</h3>
                 </div>
                 <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-slate-500">
-                  {RATING_LABELS.map((label, i) => (
-                    <span key={label}>{i + 1} = {label}</span>
+                  {ratingLabels.map((label, i) => (
+                    <span key={`${i}-${label}`}>{i + 1} = {label}</span>
                   ))}
                 </div>
               </div>
@@ -348,7 +445,7 @@ export default function ParticipantEvaluation() {
 
               {/* Rating Questions */}
               <div className="space-y-4">
-                {RATING_QUESTIONS.map((question, qIndex) => (
+                {ratingQuestions.map((question, qIndex) => (
                   <div key={qIndex} className="bg-slate-50 rounded-xl p-4 border border-slate-100">
                     <p className="text-sm text-slate-700 font-medium mb-3">
                       {qIndex + 1}. {question}
@@ -364,7 +461,7 @@ export default function ParticipantEvaluation() {
                               ? 'bg-primary text-white border-primary shadow-sm'
                               : 'bg-white text-slate-600 border-slate-200 hover:border-primary hover:text-primary'
                           }`}
-                          title={RATING_LABELS[value - 1]}
+                          title={ratingLabels[value - 1] ?? String(value)}
                         >
                           {value}
                         </button>
@@ -373,6 +470,31 @@ export default function ParticipantEvaluation() {
                   </div>
                 ))}
               </div>
+
+              {captchaConfig?.enabled && captchaConfig.siteKey && !userId && (
+                <div className="flex flex-col items-center gap-2">
+                  <HCaptcha
+                    ref={captchaRef}
+                    sitekey={captchaConfig.siteKey}
+                    onVerify={(t) => {
+                      setCaptchaToken(t);
+                      setValidationErrors((prev) => {
+                        const next = { ...prev };
+                        delete next.captcha;
+                        return next;
+                      });
+                    }}
+                    onError={() => {
+                      setCaptchaToken(null);
+                      setError('Captcha verification failed.');
+                    }}
+                    onExpire={() => setCaptchaToken(null)}
+                  />
+                  {validationErrors.captcha && (
+                    <p className="text-red-500 text-xs">{validationErrors.captcha}</p>
+                  )}
+                </div>
+              )}
 
               {/* Presenter Comments */}
               <div>

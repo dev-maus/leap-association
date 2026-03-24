@@ -81,6 +81,26 @@ export default defineType({
             }),
           ],
         }),
+        defineField({
+          name: 'leadershipScheduling',
+          title: 'Leadership Scorecard Scheduling',
+          type: 'object',
+          fields: [
+            defineField({
+              name: 'buttonText',
+              title: 'Button Text',
+              type: 'string',
+              initialValue: 'Schedule a Leadership Conversation',
+            }),
+            defineField({
+              name: 'url',
+              title: 'Scheduling URL',
+              type: 'url',
+              description: 'External scheduling link (e.g., Calendly, Cal.com)',
+              validation: (Rule) => Rule.uri({scheme: ['http', 'https']}),
+            }),
+          ],
+        }),
       ],
     }),
   ],

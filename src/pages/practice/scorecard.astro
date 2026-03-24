@@ -4,7 +4,69 @@ import Head from '../../components/layout/Head.astro';
 import Header from '../../components/layout/Header.astro';
 import Footer from '../../components/layout/Footer.astro';
 import LeadershipScorecard from '../../components/islands/LeadershipScorecard';
+import type { ScorecardSectionProp } from '../../components/islands/LeadershipScorecard';
+import type { CaptchaConfig } from '../../components/islands/AssessmentFlow';
 import { createPageUrl } from '../../lib/utils';
+import { sanity } from '../../lib/sanity';
+import { DEFAULT_SCORECARD_SECTIONS } from '../../lib/defaultContent';
+
+type SanitySlug = { current?: string } | string;
+type RawQ = { text?: string; order?: number };
+type RawSec = {
+  title?: string;
+  key?: SanitySlug;
+  order?: number;
+  questions?: RawQ[];
+};
+
+function slugVal(k: SanitySlug | undefined): string {
+  if (!k) return '';
+  return typeof k === 'string' ? k : (k.current ?? '');
+}
+
+function normalizeSections(raw: RawSec[]): ScorecardSectionProp[] {
+  return [...raw]
+    .filter((d) => d.title && d.key)
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    .map((d) => ({
+      title: d.title as string,
+      key: slugVal(d.key as SanitySlug),
+      questions: [...(d.questions ?? [])]
+        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+        .map((q) => q.text ?? '')
+        .filter((t) => t.length > 0),
+    }))
+    .filter((s) => s.key.length > 0 && s.questions.length > 0);
+}
+
+const rawSecs = sanity
+  ? await sanity
+      .fetch<RawSec[]>(
+        `*[_type == "scorecardSection"] | order(order asc) { title, key, order, questions[]{ text, order } }`,
+      )
+      .catch(() => [])
+  : [];
+const normalized = normalizeSections(rawSecs);
+const scorecardSections: ScorecardSectionProp[] =
+  normalized.length > 0
+    ? normalized
+    : DEFAULT_SCORECARD_SECTIONS.map((sec) => ({
+        title: sec.title,
+        key: sec.key,
+        questions: sec.questions.map((q) => q.text),
+      }));
+
+const settings = sanity
+  ? await sanity
+      .fetch<{ captchaEnabled?: boolean; hcaptchaSiteKey?: string } | null>(
+        `*[_type == "assessmentSettings"][0]{ captchaEnabled, hcaptchaSiteKey }`,
+      )
+      .catch(() => null)
+  : null;
+
+const captchaConfig: CaptchaConfig | undefined = settings?.captchaEnabled
+  ? { enabled: true, siteKey: settings.hcaptchaSiteKey }
+  : undefined;
 ---
 
 <Layout>
@@ -37,7 +99,7 @@ import { createPageUrl } from '../../lib/utils';
         </p>
       </div>
 
-      <LeadershipScorecard client:load />
+      <LeadershipScorecard client:load sections={scorecardSections} captchaConfig={captchaConfig} />
     </div>
   </main>
   <Footer />

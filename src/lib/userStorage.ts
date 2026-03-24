@@ -122,30 +122,33 @@ export async function syncUserDetailsFromSupabase(): Promise<void> {
       ),
     });
 
-    // Also sync assessment data from Supabase - always replace with latest from database
+    // Sync latest assessment per type from Supabase into localStorage
     try {
-      const { saveAssessmentData } = await import('./assessmentStorage');
-      
-      // Fetch the most recent assessment for this user
-      const { data: assessment, error: assessmentError } = await supabase
-        .from('assessment_responses')
-        .select('id, created_at')
-        .eq('user_id', session.user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      const { saveAssessmentData, clearAssessmentData } = await import('./assessmentStorage');
+      const types = ['individual', 'team', 'leadership'] as const;
+      for (const t of types) {
+        const { data: row, error: rowError } = await supabase
+          .from('assessment_responses')
+          .select('id, created_at')
+          .eq('user_id', session.user.id)
+          .eq('assessment_type', t)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
-      if (!assessmentError && assessment) {
-        // Always replace assessment data with what's in Supabase (replace: true)
-        saveAssessmentData({
-          responseId: assessment.id,
-          submittedEmail: userData.email,
-          submittedAt: assessment.created_at,
-        }, true); // Replace instead of merge
-      } else {
-        // No assessment found - clear the assessment data
-        const { clearAssessmentData } = await import('./assessmentStorage');
-        clearAssessmentData();
+        if (!rowError && row) {
+          saveAssessmentData(
+            t,
+            {
+              responseId: row.id,
+              submittedEmail: userData.email,
+              submittedAt: row.created_at,
+            },
+            true,
+          );
+        } else {
+          clearAssessmentData(t);
+        }
       }
     } catch (assessmentSyncError) {
       console.warn('Failed to sync assessment data from Supabase:', assessmentSyncError);
