@@ -5,6 +5,47 @@ import Header from '../components/layout/Header.astro';
 import Footer from '../components/layout/Footer.astro';
 import ParticipantEvaluation from '../components/islands/ParticipantEvaluation';
 import { createPageUrl } from '../lib/utils';
+import { sanity } from '../lib/sanity';
+import {
+  DEFAULT_EVALUATION_QUESTIONS,
+  DEFAULT_EVALUATION_RATING_LABELS,
+} from '../lib/defaultContent';
+
+type RQ = { text?: string; order?: number };
+const evalDoc = sanity
+  ? await sanity
+      .fetch<{
+        ratingQuestions?: RQ[];
+        ratingLabels?: string[];
+      } | null>(`*[_type == "evaluationSettings"][0]{ ratingQuestions[]{ text, order }, ratingLabels }`)
+      .catch(() => null)
+  : null;
+
+const ratingQuestions: string[] =
+  evalDoc?.ratingQuestions && evalDoc.ratingQuestions.length > 0
+    ? [...evalDoc.ratingQuestions]
+        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+        .map((q) => q.text ?? '')
+        .filter((t) => t.length > 0)
+    : [...DEFAULT_EVALUATION_QUESTIONS];
+
+const ratingLabels: readonly string[] =
+  evalDoc?.ratingLabels?.length === 5
+    ? (evalDoc.ratingLabels as string[])
+    : DEFAULT_EVALUATION_RATING_LABELS;
+
+const settings = sanity
+  ? await sanity
+      .fetch<{ captchaEnabled?: boolean; hcaptchaSiteKey?: string } | null>(
+        `*[_type == "assessmentSettings"][0]{ captchaEnabled, hcaptchaSiteKey }`,
+      )
+      .catch(() => null)
+  : null;
+
+const captchaConfig =
+  settings?.captchaEnabled === true
+    ? { enabled: true as const, siteKey: settings.hcaptchaSiteKey }
+    : undefined;
 ---
 
 <Layout>
@@ -34,7 +75,12 @@ import { createPageUrl } from '../lib/utils';
         </p>
       </div>
 
-      <ParticipantEvaluation client:load />
+      <ParticipantEvaluation
+        client:load
+        ratingQuestions={ratingQuestions}
+        ratingLabels={ratingLabels}
+        captchaConfig={captchaConfig}
+      />
     </div>
   </main>
   <Footer />

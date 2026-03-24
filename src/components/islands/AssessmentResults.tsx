@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabaseClient } from '../../lib/supabase';
 import { getUserDetails } from '../../lib/userStorage';
-import { saveAssessmentData } from '../../lib/assessmentStorage';
-import { buildUrl } from '../../lib/utils';
+import { saveAssessmentData, type AssessmentStorageType } from '../../lib/assessmentStorage';
+import { buildUrl, createPageUrl } from '../../lib/utils';
 import jsPDF from 'jspdf';
 import { Download, Loader2, Calendar, Target, Zap, BookOpen, ChevronRight, TrendingUp } from 'lucide-react';
 
@@ -213,7 +213,12 @@ export default function AssessmentResults({ schedulingConfig }: AssessmentResult
         // Save to localStorage if user owns assessment (non-blocking)
         supabaseClient.supabase.auth.getSession().then(({ data: { session } }) => {
           if (session?.user && foundResponse.user_id === session.user.id) {
-            saveAssessmentData({ responseId: foundResponse.id });
+            const raw = foundResponse.assessment_type as string;
+            const t: AssessmentStorageType | null =
+              raw === 'individual' || raw === 'team' || raw === 'leadership' ? raw : null;
+            if (t) {
+              saveAssessmentData(t, { responseId: foundResponse.id });
+            }
           }
         }).catch(() => {
           // Ignore - we already have the results
@@ -267,6 +272,57 @@ export default function AssessmentResults({ schedulingConfig }: AssessmentResult
           <p className="text-slate-500 text-xs">
             If you just submitted this assessment, the results may still be processing. Please try refreshing the page.
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (response.assessment_type === 'leadership') {
+    const s = (response.scores || {}) as Record<string, number>;
+    const total = s.total ?? 0;
+    const sections: { label: string; score: number; max: number }[] = [
+      { label: 'Role Clarity', score: response.habit_score ?? s.roleClarity ?? 0, max: 25 },
+      { label: 'Leadership Expectations', score: response.ability_score ?? s.leadershipExpectations ?? 0, max: 25 },
+      { label: 'Performance Measurement', score: response.talent_score ?? s.performanceMeasurement ?? 0, max: 25 },
+      { label: 'Support & Resources', score: response.skill_score ?? s.supportResources ?? 0, max: 25 },
+    ];
+    const maxTotal = sections.reduce((acc, x) => acc + x.max, 0);
+    return (
+      <div className="max-w-3xl mx-auto py-12 px-4">
+        <h1 className="text-3xl font-bold text-primary mb-2">Leadership Role Scorecard</h1>
+        <p className="text-slate-600 mb-8">Results from your leadership role design assessment.</p>
+        <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 mb-8 text-center">
+          <p className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2">Total score</p>
+          <p className="text-4xl font-bold text-primary">
+            {total} / {maxTotal || 100}
+          </p>
+        </div>
+        <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 mb-8">
+          <h2 className="text-xl font-bold text-primary mb-4">Section scores</h2>
+          <ul className="space-y-3">
+            {sections.map((row) => (
+              <li key={row.label} className="flex justify-between text-slate-700 border-b border-slate-100 pb-2">
+                <span>{row.label}</span>
+                <span className="font-semibold">
+                  {row.score} / {row.max}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <a
+            href={createPageUrl('Scorecard')}
+            className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-primary text-white font-semibold hover:bg-primary-dark"
+          >
+            Retake scorecard
+          </a>
+          <a
+            href={createPageUrl('Solutions')}
+            className="inline-flex items-center justify-center px-6 py-3 rounded-xl border border-primary text-primary font-semibold hover:bg-slate-50"
+          >
+            Explore LEAP Solutions
+          </a>
         </div>
       </div>
     );

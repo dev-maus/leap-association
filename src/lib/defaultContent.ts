@@ -282,3 +282,82 @@ export const DEFAULT_SOCIAL_LINKS: SocialLink[] = [
   { platform: 'linkedin', url: 'https://linkedin.com/company/leapassociation', label: 'Connect with us on LinkedIn' },
   { platform: 'email', url: 'mailto:service@leapassociation.com', label: 'Email us' },
 ];
+
+/** Leadership scorecard sections (fallback when Sanity has no scorecardSection docs) */
+export interface ScorecardSectionDefault {
+  title: string;
+  key: string;
+  order: number;
+  questions: { text: string; order: number }[];
+}
+
+export const DEFAULT_SCORECARD_SECTIONS: ScorecardSectionDefault[] = [
+  {
+    title: 'Role Clarity',
+    key: 'role-clarity',
+    order: 1,
+    questions: [
+      { text: 'The purpose of this leadership role is clearly defined', order: 1 },
+      { text: 'Success in this role is clearly defined', order: 2 },
+      { text: 'The top 3–5 expected outcomes are clearly stated', order: 3 },
+      { text: 'Key responsibilities are documented and understood', order: 4 },
+      { text: 'Decision authority for the role is clearly defined', order: 5 },
+    ],
+  },
+  {
+    title: 'Leadership Expectations',
+    key: 'leadership-expectations',
+    order: 2,
+    questions: [
+      { text: 'Expectations for leading people are clearly defined', order: 1 },
+      { text: 'The role clearly defines how team performance will be managed', order: 2 },
+      { text: 'Communication expectations with senior leadership are clear', order: 3 },
+      { text: 'The leader understands their accountability for results', order: 4 },
+      { text: 'The role connects clearly to organizational goals', order: 5 },
+    ],
+  },
+  {
+    title: 'Performance Measurement',
+    key: 'performance-measurement',
+    order: 3,
+    questions: [
+      { text: 'The role includes measurable performance metrics', order: 1 },
+      { text: 'Performance expectations are realistic and achievable', order: 2 },
+      { text: 'There are clear indicators of success for this role', order: 3 },
+      { text: 'Regular performance feedback is provided', order: 4 },
+      { text: 'The role includes clear accountability for results', order: 5 },
+    ],
+  },
+  {
+    title: 'Support and Resources',
+    key: 'support-resources',
+    order: 4,
+    questions: [
+      { text: 'The leader has the authority needed to succeed', order: 1 },
+      { text: 'The leader has the resources needed to perform well', order: 2 },
+      { text: 'Training or development support exists for this role', order: 3 },
+      { text: 'The reporting structure supports effective leadership', order: 4 },
+      { text: 'Organizational systems support leadership effectiveness', order: 5 },
+    ],
+  },
+];
+
+/** Participant evaluation Likert questions (fallback) */
+export const DEFAULT_EVALUATION_QUESTIONS: string[] = [
+  'The objectives were clearly stated.',
+  'The presenter(s) was knowledgeable.',
+  'The presenter(s) taught the material in a way that was practical and easy to understand.',
+  'The audio/visual aids and handouts were useful.',
+  'The content matched the objectives.',
+  'The course/seminar met my expectations.',
+  'I learned new skills and/or ideas.',
+  'Overall, I was satisfied with the program.',
+];
+
+export const DEFAULT_EVALUATION_RATING_LABELS: readonly string[] = [
+  'Strongly Disagree',
+  'Disagree',
+  'Neutral',
+  'Agree',
+  'Strongly Agree',
+];
