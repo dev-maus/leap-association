@@ -7,8 +7,9 @@ const NAV_LINKS = [
   { name: 'Home', pageName: 'Home' },
   { name: 'About LEAP', pageName: 'About' },
   { name: 'Solutions', pageName: 'Solutions' },
-  { name: 'Who We Serve', pageName: 'WhoWeServe' },
-  { name: 'Resources', pageName: 'Resources' },
+  { name: 'Power Industry Leadership', pageName: 'WhoWeServe' },
+  { name: 'Leadership Insights', pageName: 'Resources' },
+  { name: 'Investment', pageName: 'Investment' },
 ] as const;
 
 export default function MobileNav() {

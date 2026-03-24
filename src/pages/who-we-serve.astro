@@ -3,118 +3,295 @@ import Layout from '../layouts/Layout.astro';
 import Head from '../components/layout/Head.astro';
 import Header from '../components/layout/Header.astro';
 import Footer from '../components/layout/Footer.astro';
-import CTAButtons from '../components/common/CTAButtons';
+import Button from '../components/ui/Button.astro';
+import Card from '../components/ui/Card.astro';
+import Breadcrumbs from '../components/common/Breadcrumbs.astro';
 import { createPageUrl } from '../lib/utils';
 
-const audiences = [
-  {
-    title: 'Executive Leaders & C-Suite',
-    description: 'Senior leaders who want to model intentional practice and create lasting cultural transformation from the top down.',
-    icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z',
-    color: 'from-blue-500 to-blue-600',
-    bgColor: 'bg-blue-50',
-  },
-  {
-    title: 'Managers & Team Leaders',
-    description: 'Leaders responsible for team performance who need practical tools to build accountability, alignment, and productivity.',
-    icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z',
-    color: 'from-emerald-500 to-emerald-600',
-    bgColor: 'bg-emerald-50',
-  },
-  {
-    title: 'Teams & Departments',
-    description: 'Intact teams seeking to strengthen collaboration, communication, and shared accountability through the LEAP framework.',
-    icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
-    color: 'from-purple-500 to-purple-600',
-    bgColor: 'bg-purple-50',
-  },
-  {
-    title: 'Organizations & Enterprises',
-    description: 'Companies committed to building a culture of intentional practice where Leadership, Effectiveness, Accountability, and Productivity thrive at every level.',
-    icon: 'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
-    color: 'from-amber-500 to-amber-600',
-    bgColor: 'bg-amber-50',
-  },
+const hopeFocusAreas = [
+  'Clear decision-making during operational events',
+  'Effective coordination across response teams',
+  'Improved communication under pressure',
+  'Continuous improvement following major incidents',
 ];
 
-const industries = [
-  'Technology', 'Manufacturing', 'Healthcare', 'Education',
-  'Finance', 'Consulting', 'Government', 'Non-Profit',
-  'Retail', 'Real Estate', 'Legal', 'Energy',
+const supportCards = [
+  {
+    title: 'Leadership Development for Operational Leaders',
+    description: 'Equip frontline and senior operational leaders with the practices and frameworks needed to lead with clarity, consistency, and confidence in high-stakes environments.',
+    icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z',
+    color: 'from-blue-500 to-blue-600',
+  },
+  {
+    title: 'Disaster Response Planning and Improvement',
+    description: 'Strengthen organizational readiness through structured response planning, phase awareness, coordination protocols, and post-event review processes.',
+    icon: 'M13 10V3L4 14h7v7l9-11h-7z',
+    color: 'from-amber-500 to-amber-600',
+  },
+  {
+    title: 'Operational Leadership Coaching',
+    description: 'Provide targeted coaching for leaders managing complex operations, helping them build effective communication habits, decision-making discipline, and team accountability.',
+    icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z',
+    color: 'from-emerald-500 to-emerald-600',
+  },
+  {
+    title: 'Performance Management and Operational Alignment',
+    description: 'Align individual and team performance with organizational goals through clear expectations, structured feedback, and measurable accountability systems.',
+    icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
+    color: 'from-purple-500 to-purple-600',
+  },
 ];
 ---
 
 <Layout>
-  <Head slot="head" title="Who We Serve" description="LEAP Association serves executive leaders, managers, teams, and organizations across 25+ industries." />
+  <Head slot="head" title="Power Industry Leadership" description="Leadership in the power industry is tested daily. LEAP helps operational leaders strengthen decision-making, coordination, and execution." />
   <Header />
   <main id="main-content" class="min-h-screen bg-gradient-to-br from-slate-50 to-white">
+
     <!-- Hero Section -->
     <section class="pt-32 pb-20 px-6 lg:px-8 relative overflow-hidden">
       <div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5" />
       <div class="max-w-6xl mx-auto relative z-10">
-        <a
-          href={createPageUrl('Home')}
-          class="inline-flex items-center gap-2 text-slate-500 hover:text-slate-700 mb-8 transition-colors"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-          </svg>
-          Back to Home
-        </a>
+        <Breadcrumbs items={[
+          { label: 'Home', path: createPageUrl('Home') },
+          { label: 'Power Industry Leadership' },
+        ]} />
 
         <div class="text-center">
           <span class="animate-fadeUp text-primary font-semibold text-sm tracking-wider uppercase mb-4 block">
-            Who We Serve
+            What's In Your Practice?
           </span>
           <h1 class="animate-fadeUp text-4xl lg:text-6xl font-bold text-primary mb-6" style="animation-delay: 0.1s;">
-            Leaders & Organizations <span class="gradient-text">Ready to LEAP</span>
+            Power Industry <span class="gradient-text">Leadership</span>
           </h1>
-          <p class="animate-fadeUp text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed" style="animation-delay: 0.2s;">
-            We partner with individuals, teams, and organizations who are ready to move from accidental patterns to intentional practice — unlocking Leadership, Effectiveness, Accountability, and Productivity.
+          <p class="animate-fadeUp text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed mb-4" style="animation-delay: 0.2s;">
+            Leadership in the power industry is tested daily through operational decisions, team coordination, and the ability to respond effectively during complex events.
+          </p>
+          <p class="animate-fadeUp text-lg text-slate-500 max-w-3xl mx-auto leading-relaxed" style="animation-delay: 0.3s;">
+            Strong infrastructure and advanced technology are essential, but the true strength of power organizations ultimately rests in the leadership practices that guide people, decisions, and execution.
           </p>
         </div>
       </div>
     </section>
 
-    <!-- Audiences Grid -->
+    <!-- The HOPE Initiative Section -->
     <section class="py-20 px-6 lg:px-8">
       <div class="max-w-6xl mx-auto">
-        <div class="grid md:grid-cols-2 gap-8">
-          {audiences.map((audience, i) => (
-            <div class={`reveal stagger-${i + 1} bg-white rounded-3xl p-8 shadow-lg border border-slate-100 hover:shadow-xl transition-shadow`}>
-              <div class={`w-16 h-16 rounded-2xl bg-gradient-to-br ${audience.color} flex items-center justify-center mb-6 shadow-lg`}>
-                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={audience.icon} />
-                </svg>
-              </div>
-              <h3 class="text-2xl font-bold text-primary mb-4">{audience.title}</h3>
-              <p class="text-slate-600 leading-relaxed">{audience.description}</p>
-            </div>
-          ))}
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+          <div class="reveal stagger-1">
+            <span class="text-primary font-semibold text-sm tracking-wider uppercase mb-4 block">
+              The HOPE Initiative
+            </span>
+            <h2 class="text-3xl lg:text-4xl font-bold text-primary mb-6">
+              Helping Optimize <span class="gradient-text">Power Everywhere</span>
+            </h2>
+            <p class="text-lg text-slate-600 leading-relaxed mb-6">
+              The HOPE initiative focuses on strengthening the leadership practices that directly impact how power organizations prepare for, respond to, and recover from critical events. By developing leaders at every level, HOPE ensures that operational excellence is sustained through people, not just systems.
+            </p>
+          </div>
+          <div class="reveal stagger-2">
+            <Card class="p-8">
+              <h3 class="text-xl font-bold text-primary mb-6">Focus Areas</h3>
+              <ul class="space-y-4">
+                {hopeFocusAreas.map((area) => (
+                  <li class="flex items-start gap-3">
+                    <div class="w-6 h-6 rounded-full bg-gradient-to-br from-accent to-accent-light flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <span class="text-slate-700">{area}</span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- Industries Section -->
+    <!-- Strengthening Leadership in Critical Infrastructure -->
     <section class="py-20 px-6 lg:px-8 bg-gradient-to-br from-primary to-primary-dark">
       <div class="max-w-6xl mx-auto text-center">
-        <h2 class="text-3xl lg:text-4xl font-bold text-white mb-4">
-          Across 25+ Industries
+        <h2 class="reveal stagger-1 text-3xl lg:text-4xl font-bold text-white mb-6">
+          Strengthening Leadership in Critical Infrastructure
         </h2>
-        <p class="text-xl text-slate-200 max-w-3xl mx-auto mb-12">
-          The LEAP framework is universal. Wherever people lead and teams collaborate, intentional practice creates transformation.
+        <p class="reveal stagger-2 text-xl text-slate-200 max-w-3xl mx-auto mb-8 leading-relaxed">
+          Reliable power depends on more than equipment and grid management. It depends on strong leadership, clear communication, and coordinated execution across every level of the organization.
         </p>
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {industries.map((industry, i) => (
-            <div class={`reveal stagger-${Math.min(i + 1, 6)} bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl py-4 px-6 text-white font-medium hover:bg-white/15 transition-colors`}>
-              {industry}
+        <p class="reveal stagger-3 text-lg text-slate-300 max-w-3xl mx-auto leading-relaxed">
+          LEAP partners with power industry organizations to deliver leadership development, operational consulting, and disaster response planning that strengthens the people behind the infrastructure.
+        </p>
+      </div>
+    </section>
+
+    <!-- Industry Experience -->
+    <section class="py-20 px-6 lg:px-8">
+      <div class="max-w-6xl mx-auto">
+        <div class="grid lg:grid-cols-2 gap-12 items-start">
+          <div class="reveal stagger-1">
+            <span class="text-primary font-semibold text-sm tracking-wider uppercase mb-4 block">
+              Industry Experience
+            </span>
+            <h2 class="text-3xl lg:text-4xl font-bold text-primary mb-6">
+              Applied Within the <span class="gradient-text">Power Industry</span>
+            </h2>
+            <p class="text-lg text-slate-600 leading-relaxed">
+              LEAP's frameworks have been applied within the power industry across leadership development, operational coordination, and disaster response. Our experience includes collaboration with transmission operations, emergency coordination centers, and large-scale restoration efforts.
+            </p>
+          </div>
+
+          <div class="space-y-6">
+            <!-- Operational Leadership -->
+            <div class="reveal stagger-2">
+              <Card class="p-8">
+                <div class="flex items-start gap-4">
+                  <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0 shadow-lg">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 class="text-xl font-bold text-primary mb-3">Operational Leadership</h3>
+                    <ul class="space-y-2 text-slate-600">
+                      <li class="flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0"></span>
+                        Clear decision-making under operational pressure
+                      </li>
+                      <li class="flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0"></span>
+                        Effective communication during events
+                      </li>
+                      <li class="flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0"></span>
+                        Cross-team coordination and collaboration
+                      </li>
+                      <li class="flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0"></span>
+                        Accountability under pressure
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </Card>
+            </div>
+
+            <!-- Disaster Response Planning -->
+            <div class="reveal stagger-3">
+              <Card class="p-8">
+                <div class="flex items-start gap-4">
+                  <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center flex-shrink-0 shadow-lg">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 class="text-xl font-bold text-primary mb-3">Disaster Response Planning and Coordination</h3>
+                    <ul class="space-y-2 text-slate-600">
+                      <li class="flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0"></span>
+                        Leadership clarity during events
+                      </li>
+                      <li class="flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0"></span>
+                        Operational phase awareness
+                      </li>
+                      <li class="flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0"></span>
+                        Coordination across teams and functions
+                      </li>
+                      <li class="flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0"></span>
+                        Structured response planning and post-event review
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Where LEAP Supports the Power Industry -->
+    <section class="py-20 px-6 lg:px-8 bg-slate-50">
+      <div class="max-w-6xl mx-auto">
+        <div class="text-center mb-16">
+          <span class="reveal stagger-1 text-primary font-semibold text-sm tracking-wider uppercase mb-4 block">
+            Our Services
+          </span>
+          <h2 class="reveal stagger-1 text-3xl lg:text-4xl font-bold text-primary mb-6">
+            Where LEAP Supports the <span class="gradient-text">Power Industry</span>
+          </h2>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8">
+          {supportCards.map((card, i) => (
+            <div class={`reveal stagger-${i + 1}`}>
+              <Card class="p-8 h-full">
+                <div class={`w-14 h-14 rounded-2xl bg-gradient-to-br ${card.color} flex items-center justify-center mb-6 shadow-lg`}>
+                  <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={card.icon} />
+                  </svg>
+                </div>
+                <h3 class="text-xl font-bold text-primary mb-4">{card.title}</h3>
+                <p class="text-slate-600 leading-relaxed">{card.description}</p>
+              </Card>
             </div>
           ))}
         </div>
       </div>
     </section>
 
-    <!-- CTA Section -->
+    <!-- Supporting Operational Excellence -->
+    <section class="py-20 px-6 lg:px-8">
+      <div class="max-w-6xl mx-auto text-center">
+        <h2 class="reveal stagger-1 text-3xl lg:text-4xl font-bold text-primary mb-6">
+          Supporting Operational Excellence
+        </h2>
+        <p class="reveal stagger-2 text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed mb-12">
+          LEAP's approach to the power industry is grounded in practical leadership development that delivers measurable results where it matters most.
+        </p>
+        <div class="grid md:grid-cols-3 gap-8">
+          <div class="reveal stagger-1">
+            <Card class="p-8 text-center h-full">
+              <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center mx-auto mb-6 shadow-lg">
+                <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 class="text-lg font-bold text-primary mb-3">Clarity in Decision-Making</h3>
+              <p class="text-slate-600">Develop leaders who make sound, timely decisions during routine operations and high-pressure events alike.</p>
+            </Card>
+          </div>
+          <div class="reveal stagger-2">
+            <Card class="p-8 text-center h-full">
+              <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center mx-auto mb-6 shadow-lg">
+                <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <h3 class="text-lg font-bold text-primary mb-3">Accountability Across Teams</h3>
+              <p class="text-slate-600">Build a culture of ownership where every team member understands their role, responsibilities, and impact on the broader mission.</p>
+            </Card>
+          </div>
+          <div class="reveal stagger-3">
+            <Card class="p-8 text-center h-full">
+              <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center mx-auto mb-6 shadow-lg">
+                <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                </svg>
+              </div>
+              <h3 class="text-lg font-bold text-primary mb-3">Coordinated Execution</h3>
+              <p class="text-slate-600">Ensure seamless coordination across teams, departments, and response functions through structured leadership practices.</p>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Final CTA Section -->
     <section class="py-20 px-6 lg:px-8">
       <div class="max-w-4xl mx-auto">
         <div class="bg-gradient-to-br from-primary to-primary-dark rounded-3xl p-6 sm:p-10 lg:p-12 text-center text-white relative overflow-hidden">
@@ -122,18 +299,24 @@ const industries = [
           <div class="absolute -bottom-10 -left-10 w-80 h-80 bg-accent/10 rounded-full blur-3xl" />
           <div class="relative z-10">
             <h2 class="text-3xl lg:text-4xl font-bold mb-6">
-              Ready to Transform Your Practice?
+              Schedule a Leadership Conversation
             </h2>
             <p class="text-xl text-slate-200 mb-8 max-w-2xl mx-auto">
-              Discover what you're practicing and build the patterns that create excellence.
+              Connect with LEAP to explore how intentional leadership practices can strengthen your organization's operational performance, team coordination, and disaster readiness.
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-              <CTAButtons client:load />
+              <Button href={createPageUrl('ScheduleCall')} variant="accent" size="lg">
+                Schedule a Conversation
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </Button>
             </div>
           </div>
         </div>
       </div>
     </section>
+
   </main>
   <Footer />
 </Layout>

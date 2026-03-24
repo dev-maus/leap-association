@@ -8,28 +8,73 @@ import { createPageUrl } from '../../lib/utils';
 ---
 
 <Layout>
-  <Head slot="head" title="Login" description="Sign in to your LEAP Association account." />
+  <Head slot="head" title="Sign In" description="Sign in to your LEAP Association account." />
   <Header />
   <main id="main-content" class="min-h-screen bg-gradient-to-br from-slate-50 to-white pt-24 pb-16">
-    <div class="max-w-md mx-auto px-6 lg:px-8">
-      <div class="text-center mb-12">
-        <h1 class="text-3xl lg:text-4xl font-bold text-primary mb-4">
-          Sign In
-        </h1>
-        <p class="text-slate-600">
-          Access your account to manage your assessments and resources.
-        </p>
-      </div>
+    <div class="max-w-5xl mx-auto px-6 lg:px-8">
+      <div class="grid md:grid-cols-2 gap-12 items-center">
+        <!-- Left Side - Welcome Message -->
+        <div class="hidden md:block">
+          <h1 class="text-3xl lg:text-4xl font-bold text-primary mb-6">
+            Access Your LEAP Experience
+          </h1>
+          <p class="text-slate-600 leading-relaxed mb-8">
+            Sign in to access your leadership assessments, resources, and development tools.
+          </p>
+          <div class="space-y-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <span class="text-slate-700">Leadership assessments and results</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+              </div>
+              <span class="text-slate-700">Member resources and tools</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <span class="text-slate-700">Leadership development programs</span>
+            </div>
+          </div>
+        </div>
 
-      <LoginForm client:load />
+        <!-- Right Side - Login Form -->
+        <div>
+          <div class="bg-white rounded-2xl shadow-lg border border-slate-100 p-8">
+            <h2 class="text-2xl font-bold text-primary mb-2 md:hidden">Sign In</h2>
+            <h2 class="text-2xl font-bold text-primary mb-6 hidden md:block">Sign In</h2>
 
-      <div class="mt-6 text-center">
-        <a href={`${import.meta.env.BASE_URL}auth/forgot-password`} class="text-primary hover:underline text-sm">
-          Forgot your password?
-        </a>
+            <LoginForm client:load />
+
+            <div class="mt-6 space-y-3 text-center">
+              <a href={`${import.meta.env.BASE_URL}auth/forgot-password`} class="text-primary hover:underline text-sm block">
+                Forgot Password
+              </a>
+              <div class="flex flex-col sm:flex-row gap-3 justify-center text-sm">
+                <a href={createPageUrl('Solutions')} class="text-slate-500 hover:text-primary transition-colors">
+                  Explore LEAP Solutions
+                </a>
+                <span class="hidden sm:inline text-slate-300">|</span>
+                <a href={createPageUrl('Resources')} class="text-slate-500 hover:text-primary transition-colors">
+                  Explore Leadership Insights
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </main>
   <Footer />
 </Layout>
-

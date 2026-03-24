@@ -37,10 +37,19 @@ const categories = [...new Set(blogPosts.map((post: any) => post.category).filte
 
 const displayBooks: Book[] = books.length > 0 ? books : DEFAULT_BOOKS;
 const heroResources = sanity ? await sanity.fetch(`*[_type == "hero" && page == "resources"][0]{ heading, subheading }`).catch(() => null) : null;
+
+const pulseData = [
+  { label: 'Strengthening leadership accountability', pct: 31 },
+  { label: 'Improving team communication', pct: 24 },
+  { label: 'Developing emerging leaders', pct: 18 },
+  { label: 'Aligning leadership expectations', pct: 12 },
+  { label: 'Improving performance management systems', pct: 9 },
+  { label: 'Hiring and retaining strong leaders', pct: 6 },
+];
 ---
 
 <Layout>
-  <Head slot="head" title="Resources" description="Tools, insights, and inspiration to fuel your leadership journey." />
+  <Head slot="head" title="Leadership Insights" description="Leadership insights, tools, and perspectives drawn from real-world experiences across organizations and industries." />
   <Header />
   <main id="main-content" class="min-h-screen bg-gradient-to-br from-slate-50 to-white pt-24 pb-16">
     <div class="max-w-7xl mx-auto px-6 lg:px-8">
@@ -57,17 +66,17 @@ const heroResources = sanity ? await sanity.fetch(`*[_type == "hero" && page == 
         </a>
 
         <span class="block text-primary font-semibold text-sm tracking-wider uppercase mb-4">
-          Learning Hub
+          Leadership Insights
         </span>
         <h1 class="text-4xl lg:text-5xl font-bold text-primary mb-6">
-          {heroResources?.heading ?? 'Resources'}
+          {heroResources?.heading ?? 'Leadership Insights'}
         </h1>
         <p class="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
-          {heroResources?.subheading ?? 'Tools, insights, and inspiration to fuel your leadership journey'}
+          {heroResources?.subheading ?? 'Leadership is shaped by the practices leaders develop and apply consistently over time. The Leadership Insights hub shares ideas, tools, and leadership perspectives drawn from real-world experiences across organizations and industries.'}
         </p>
       </div>
 
-      <!-- Blog / Articles Section -->
+      <!-- Articles and Ideas Section -->
       <section class="mb-20">
         <div class="flex items-center gap-4 mb-8">
           <div class="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
@@ -76,8 +85,8 @@ const heroResources = sanity ? await sanity.fetch(`*[_type == "hero" && page == 
             </svg>
           </div>
           <div>
-            <h2 class="text-3xl font-bold text-primary">Blog & Articles</h2>
-            <p class="text-slate-600">Insights and strategies for leadership excellence</p>
+            <h2 class="text-3xl font-bold text-primary">Articles and Ideas</h2>
+            <p class="text-slate-600">Leadership insights explore practical leadership concepts that help individuals and organizations strengthen communication, accountability, and performance.</p>
           </div>
         </div>
 
@@ -322,7 +331,429 @@ const heroResources = sanity ? await sanity.fetch(`*[_type == "hero" && page == 
           <blockquote class="text-2xl lg:text-3xl font-medium text-primary italic max-w-3xl mx-auto">
             "Create a GREAT day and keep making GREAT even better!"
           </blockquote>
-          <p class="mt-4 text-slate-500">— Coach Aaron</p>
+          <p class="mt-4 text-slate-500">-- Coach Aaron</p>
+        </div>
+      </section>
+
+      <!-- HR Leadership Insights Section -->
+      <section class="mb-20">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
+            <svg class="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-3xl font-bold text-primary">HR Leadership Insights</h2>
+            <p class="text-slate-600">Strengthening Leadership Hiring and Role Clarity</p>
+          </div>
+        </div>
+        <p class="text-slate-600 leading-relaxed mb-8 max-w-4xl">
+          HR leaders play a critical role in shaping leadership capability across organizations. From writing role descriptions that attract the right leaders to establishing clear expectations that drive accountability, HR professionals are the bridge between organizational strategy and leadership execution.
+        </p>
+
+        <div class="grid md:grid-cols-3 gap-6">
+          <!-- Card 1: 7 Signs -->
+          <Card class="p-6 hover:border-primary hover:shadow-lg transition-all">
+            <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-3">The 7 Signs Your Job Description Is Costing You Leaders</h3>
+            <p class="text-slate-600 mb-6 leading-relaxed">
+              Discover the most common pitfalls in leadership job descriptions that drive top candidates away and learn how to fix them.
+            </p>
+            <Button variant="primary" size="sm" href={createPageUrl('Resources')}>
+              Read More
+            </Button>
+          </Card>
+
+          <!-- Card 2: Hiring Framework -->
+          <Card class="p-6 hover:border-primary hover:shadow-lg transition-all">
+            <div class="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-3">The LEAP Leadership Hiring Framework</h3>
+            <p class="text-slate-600 mb-4 leading-relaxed">
+              A structured approach to leadership hiring built around four pillars:
+            </p>
+            <ul class="space-y-2 mb-6">
+              <li class="flex items-start gap-2 text-slate-600">
+                <svg class="w-5 h-5 text-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                Role Clarity
+              </li>
+              <li class="flex items-start gap-2 text-slate-600">
+                <svg class="w-5 h-5 text-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                Accountability
+              </li>
+              <li class="flex items-start gap-2 text-slate-600">
+                <svg class="w-5 h-5 text-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                Decision-Making Authority
+              </li>
+              <li class="flex items-start gap-2 text-slate-600">
+                <svg class="w-5 h-5 text-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                Alignment
+              </li>
+            </ul>
+          </Card>
+
+          <!-- Card 3: Role Scorecard -->
+          <Card class="p-6 hover:border-primary hover:shadow-lg transition-all">
+            <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-3">Leadership Role Scorecard</h3>
+            <p class="text-slate-600 mb-6 leading-relaxed">
+              Evaluate leadership roles against the LEAP framework to ensure clarity, accountability, and alignment before, during, and after the hiring process.
+            </p>
+            <Button variant="primary" size="sm" href={createPageUrl('Practice')}>
+              Take the Scorecard
+            </Button>
+          </Card>
+        </div>
+      </section>
+
+      <!-- Leadership Pulse Insights Section -->
+      <section class="mb-20">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center">
+            <svg class="w-7 h-7 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            </svg>
+          </div>
+          <div class="flex items-center gap-3">
+            <h2 class="text-3xl font-bold text-primary">Leadership Pulse Insights</h2>
+            <span class="px-3 py-1 bg-accent text-white text-xs font-bold rounded-full uppercase tracking-wider">New</span>
+          </div>
+        </div>
+        <p class="text-slate-600 mb-2">What Leaders Are Experiencing Right Now</p>
+
+        <!-- Survey Question -->
+        <div class="bg-slate-50 rounded-2xl p-8 mb-8 border border-slate-100">
+          <p class="text-lg font-semibold text-primary mb-6">
+            "What leadership challenge is currently the most significant within your organization?"
+          </p>
+
+          <!-- Results Bars -->
+          <div class="space-y-4">
+            {pulseData.map((item) => (
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-sm font-medium text-slate-700">{item.label}</span>
+                  <span class="text-sm font-bold text-primary">{item.pct}%</span>
+                </div>
+                <div class="w-full bg-slate-200 rounded-full h-3">
+                  <div
+                    class="bg-gradient-to-r from-primary to-accent rounded-full h-3 transition-all"
+                    style={`width: ${item.pct}%`}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <!-- Insight Areas -->
+        <div class="grid md:grid-cols-3 gap-6 mb-8">
+          <Card class="p-6">
+            <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
+              <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 mb-2">Leadership Accountability</h3>
+            <p class="text-sm text-slate-600 leading-relaxed">
+              The top challenge facing organizations today. Leaders need clear expectations and measurable outcomes to stay aligned and accountable.
+            </p>
+          </Card>
+          <Card class="p-6">
+            <div class="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center mb-3">
+              <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 mb-2">Communication Across Teams</h3>
+            <p class="text-sm text-slate-600 leading-relaxed">
+              Nearly a quarter of leaders identify team communication as a primary challenge, reflecting the need for structured dialogue and transparency.
+            </p>
+          </Card>
+          <Card class="p-6">
+            <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
+              <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 mb-2">Leadership Development</h3>
+            <p class="text-sm text-slate-600 leading-relaxed">
+              Developing emerging leaders remains a persistent priority as organizations look to build sustainable leadership pipelines for the future.
+            </p>
+          </Card>
+        </div>
+
+        <div class="flex flex-wrap gap-4">
+          <Button variant="accent" size="md" href={createPageUrl('Contact')}>
+            Take the Leadership Pulse Survey
+          </Button>
+          <Button variant="primary" size="md" href={createPageUrl('Solutions')}>
+            Explore LEAP Solutions
+          </Button>
+        </div>
+      </section>
+
+      <!-- LEAP Cafe Section -->
+      <section class="mb-20">
+        <div class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl p-8 lg:p-12 text-white relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-72 h-72 bg-accent/10 rounded-full blur-3xl" />
+          <div class="absolute bottom-0 left-0 w-48 h-48 bg-primary/10 rounded-full blur-3xl" />
+          <div class="relative z-10">
+            <div class="flex items-center gap-4 mb-6">
+              <div class="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center">
+                <svg class="w-7 h-7 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <div>
+                <h2 class="text-3xl font-bold">LEAP Cafe - The Leadership Community</h2>
+              </div>
+            </div>
+            <p class="text-slate-300 text-lg leading-relaxed mb-8 max-w-3xl">
+              LEAP Cafe is a membership-based leadership community designed for leaders who want to grow alongside other committed professionals. It is a space for honest conversation, shared learning, and practical leadership development.
+            </p>
+
+            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+                <div class="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center mb-3">
+                  <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                </div>
+                <h4 class="font-semibold text-white mb-1">Exclusive Discussions</h4>
+                <p class="text-sm text-slate-400">Engage in leadership conversations that challenge and inspire.</p>
+              </div>
+              <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+                <div class="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center mb-3">
+                  <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                </div>
+                <h4 class="font-semibold text-white mb-1">Community Learning</h4>
+                <p class="text-sm text-slate-400">Participate in structured sessions focused on real leadership growth.</p>
+              </div>
+              <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+                <div class="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center mb-3">
+                  <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <h4 class="font-semibold text-white mb-1">Leadership Tools</h4>
+                <p class="text-sm text-slate-400">Access practical tools and frameworks for everyday leadership.</p>
+              </div>
+              <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+                <div class="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center mb-3">
+                  <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <h4 class="font-semibold text-white mb-1">Special Member Events</h4>
+                <p class="text-sm text-slate-400">Join exclusive events designed for community members.</p>
+              </div>
+            </div>
+
+            <Button variant="accent" size="lg" href={createPageUrl('Contact')}>
+              Explore LEAP Cafe
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Events Section -->
+      <section class="mb-20">
+        <div class="flex items-center gap-4 mb-8">
+          <div class="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center">
+            <svg class="w-7 h-7 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-3xl font-bold text-primary">Events</h2>
+            <p class="text-slate-600">Connect, learn, and grow with the LEAP community</p>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6 mb-8">
+          <Card class="p-6 hover:border-accent hover:shadow-lg transition-all">
+            <div class="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-3">LEAP Through Lunch</h3>
+            <p class="text-slate-600 leading-relaxed">
+              A midday leadership session designed for busy professionals. Quick, focused, and built to fit your schedule while delivering meaningful leadership insights.
+            </p>
+          </Card>
+          <Card class="p-6 hover:border-accent hover:shadow-lg transition-all">
+            <div class="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-3">Couples Night</h3>
+            <p class="text-slate-600 leading-relaxed">
+              Leadership starts at home. An engaging evening for couples to explore communication, partnership, and shared leadership in a relaxed, community setting.
+            </p>
+          </Card>
+          <Card class="p-6 hover:border-accent hover:shadow-lg transition-all">
+            <div class="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-3">Workshops</h3>
+            <p class="text-slate-600 leading-relaxed">
+              Hands-on workshops that take leadership from concept to practice. Designed for teams and individuals ready to take the next step in their leadership journey.
+            </p>
+          </Card>
+        </div>
+
+        <div class="text-center">
+          <Button variant="accent" size="md" href={createPageUrl('SignatureEvents')}>
+            Explore Upcoming Events
+          </Button>
+        </div>
+      </section>
+
+      <!-- Media Section -->
+      <section class="mb-20">
+        <div class="flex items-center gap-4 mb-8">
+          <div class="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
+            <svg class="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-3xl font-bold text-primary">Media</h2>
+            <p class="text-slate-600">Leadership content across multiple formats</p>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6 mb-8">
+          <Card class="p-6 hover:border-primary hover:shadow-lg transition-all">
+            <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-3">Podcast</h3>
+            <p class="text-slate-600 leading-relaxed">
+              Listen to in-depth conversations about leadership, accountability, and organizational growth with leaders from diverse industries and backgrounds.
+            </p>
+          </Card>
+          <Card class="p-6 hover:border-primary hover:shadow-lg transition-all">
+            <div class="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-3">Videos</h3>
+            <p class="text-slate-600 leading-relaxed">
+              Watch leadership content designed to inform, challenge, and inspire. From short insights to full sessions, explore leadership thinking in action.
+            </p>
+          </Card>
+          <Card class="p-6 hover:border-primary hover:shadow-lg transition-all">
+            <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-3">Talks</h3>
+            <p class="text-slate-600 leading-relaxed">
+              Experience keynote presentations and speaking engagements that bring the LEAP leadership philosophy to stages, conferences, and organizations.
+            </p>
+          </Card>
+        </div>
+
+        <div class="text-center">
+          <Button variant="primary" size="md" href={createPageUrl('Resources')}>
+            Explore Leadership Media
+          </Button>
+        </div>
+      </section>
+
+      <!-- LEAP Tools Section -->
+      <section class="mb-20">
+        <div class="flex items-center gap-4 mb-8">
+          <div class="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
+            <svg class="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-3xl font-bold text-primary">LEAP Tools</h2>
+            <p class="text-slate-600">Practical tools to strengthen your leadership practice</p>
+          </div>
+        </div>
+
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <a href={createPageUrl('Practice')} class="group">
+            <Card class="p-6 hover:border-primary hover:shadow-lg transition-all h-full">
+              <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+              <h3 class="font-bold text-slate-900 mb-2 group-hover:text-primary transition-colors">Take the Leadership Role Scorecard</h3>
+              <p class="text-sm text-slate-600">Evaluate your leadership role against the LEAP framework.</p>
+            </Card>
+          </a>
+          <a href={createPageUrl('Practice')} class="group">
+            <Card class="p-6 hover:border-primary hover:shadow-lg transition-all h-full">
+              <div class="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <h3 class="font-bold text-slate-900 mb-2 group-hover:text-primary transition-colors">Discover What You're Practicing</h3>
+              <p class="text-sm text-slate-600">Understand the leadership behaviors you practice every day.</p>
+            </Card>
+          </a>
+          <a href={createPageUrl('Solutions')} class="group">
+            <Card class="p-6 hover:border-primary hover:shadow-lg transition-all h-full">
+              <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <h3 class="font-bold text-slate-900 mb-2 group-hover:text-primary transition-colors">Explore LEAP Solutions</h3>
+              <p class="text-sm text-slate-600">See how LEAP can support your organization's leadership goals.</p>
+            </Card>
+          </a>
+          <a href={createPageUrl('ScheduleCall')} class="group">
+            <Card class="p-6 hover:border-primary hover:shadow-lg transition-all h-full">
+              <div class="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h3 class="font-bold text-slate-900 mb-2 group-hover:text-primary transition-colors">Schedule a Strategy Call</h3>
+              <p class="text-sm text-slate-600">Start a conversation about your leadership development needs.</p>
+            </Card>
+          </a>
         </div>
       </section>
 
@@ -338,7 +769,7 @@ const heroResources = sanity ? await sanity.fetch(`*[_type == "hero" && page == 
             </div>
 
             <h2 class="text-3xl font-bold mb-4">
-              Your Best LEAP Yet
+              Continue the Leadership Conversation
             </h2>
             <p class="text-slate-200 text-lg mb-8">
               Weekly insights, tools, and inspiration delivered to your inbox.
@@ -385,4 +816,3 @@ const heroResources = sanity ? await sanity.fetch(`*[_type == "hero" && page == 
     });
   });
 </script>
-

@@ -1,0 +1,41 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Head from '../components/layout/Head.astro';
+import Header from '../components/layout/Header.astro';
+import Footer from '../components/layout/Footer.astro';
+import ParticipantEvaluation from '../components/islands/ParticipantEvaluation';
+import { createPageUrl } from '../lib/utils';
+---
+
+<Layout>
+  <Head slot="head" title="Participant Evaluation" description="Share your feedback on the LEAP seminar or course you attended. Your input helps us continuously improve our programs." />
+  <Header />
+  <main id="main-content" class="min-h-screen bg-gradient-to-br from-slate-50 to-white pt-24 pb-16">
+    <div class="max-w-6xl mx-auto px-6 lg:px-8">
+      <div class="text-center mb-12">
+        <a
+          href={createPageUrl('Home')}
+          class="inline-flex items-center gap-2 text-slate-500 hover:text-slate-700 mb-6 transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to Home
+        </a>
+
+        <span class="block text-primary font-semibold text-sm tracking-wider uppercase mb-4">
+          Program Feedback
+        </span>
+        <h1 class="text-3xl lg:text-4xl font-bold text-primary mb-4">
+          Participant Evaluation Form
+        </h1>
+        <p class="text-lg text-slate-600 max-w-2xl mx-auto">
+          Thank you for attending! Please take a moment to share your feedback. Your input helps us continuously improve our programs.
+        </p>
+      </div>
+
+      <ParticipantEvaluation client:load />
+    </div>
+  </main>
+  <Footer />
+</Layout>
