@@ -626,7 +626,11 @@ export interface SubmitEvaluationPayload {
   captchaToken: string;
   userId?: string;
   seminar_title: string;
-  seminar_date_location?: string | null;
+  /** ISO date YYYY-MM-DD */
+  seminar_date?: string | null;
+  seminar_city?: string | null;
+  /** US state / territory code, e.g. TX */
+  seminar_state?: string | null;
   presenter_names?: string | null;
   ratings: Record<string, number | null>;
   presenter_comments?: string | null;

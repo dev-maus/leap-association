@@ -11,7 +11,9 @@ CREATE TABLE IF NOT EXISTS participant_evaluations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   seminar_title TEXT NOT NULL,
-  seminar_date_location TEXT,
+  seminar_date DATE,
+  seminar_city TEXT,
+  seminar_state TEXT,
   presenter_names TEXT,
   ratings JSONB NOT NULL DEFAULT '{}'::jsonb,
   presenter_comments TEXT,
@@ -31,6 +33,8 @@ CREATE TABLE IF NOT EXISTS participant_evaluations (
 
 CREATE INDEX IF NOT EXISTS idx_participant_evaluations_email ON participant_evaluations(email);
 CREATE INDEX IF NOT EXISTS idx_participant_evaluations_created_at ON participant_evaluations(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_participant_evaluations_seminar_state ON participant_evaluations(seminar_state);
+CREATE INDEX IF NOT EXISTS idx_participant_evaluations_seminar_date ON participant_evaluations(seminar_date);
 
 ALTER TABLE participant_evaluations ENABLE ROW LEVEL SECURITY;
 

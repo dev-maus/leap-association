@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
 import { supabaseClient } from '../../lib/supabase';
 import { createPageUrl } from '../../lib/utils';
+import { US_STATE_OPTIONS, filterSeminarCities } from '../../lib/usSeminarLocations';
 import {
   User,
   Mail,
@@ -19,6 +20,7 @@ import {
   Clock,
   Send,
   AlertCircle,
+  MapPin,
 } from 'lucide-react';
 
 export interface EvaluationCaptchaConfig {
@@ -34,7 +36,10 @@ interface ParticipantEvaluationProps {
 
 interface FormData {
   seminar_title: string;
-  seminar_date_location: string;
+  /** YYYY-MM-DD from native date input */
+  seminar_date: string;
+  seminar_city: string;
+  seminar_state: string;
   presenter_names: string;
   ratings: (number | null)[];
   presenter_comments: string;
@@ -57,7 +62,9 @@ function emptyRatings(n: number): (number | null)[] {
 function buildInitialForm(n: number): FormData {
   return {
     seminar_title: '',
-    seminar_date_location: '',
+    seminar_date: '',
+    seminar_city: '',
+    seminar_state: '',
     presenter_names: '',
     ratings: emptyRatings(n),
     presenter_comments: '',
@@ -102,12 +109,21 @@ export default function ParticipantEvaluation({
     });
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const citySuggestions = useMemo(
+    () => filterSeminarCities(formData.seminar_state, formData.seminar_city),
+    [formData.seminar_state, formData.seminar_city],
+  );
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+  ) => {
     const { name, value, type } = e.target;
     if (type === 'checkbox') {
-      setFormData(prev => ({ ...prev, [name]: (e.target as HTMLInputElement).checked }));
+      setFormData((prev) => ({ ...prev, [name]: (e.target as HTMLInputElement).checked }));
+    } else if (name === 'seminar_state') {
+      setFormData((prev) => ({ ...prev, seminar_state: value }));
     } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
     // Clear validation error for field
     if (validationErrors[name]) {
@@ -194,7 +210,9 @@ export default function ParticipantEvaluation({
         captchaToken: captchaToken || '',
         userId: userId || undefined,
         seminar_title: formData.seminar_title.trim(),
-        seminar_date_location: formData.seminar_date_location.trim() || null,
+        seminar_date: formData.seminar_date.trim() || null,
+        seminar_city: formData.seminar_city.trim() || null,
+        seminar_state: formData.seminar_state.trim() || null,
         presenter_names: formData.presenter_names.trim() || null,
         ratings: ratingsObj,
         presenter_comments: formData.presenter_comments.trim() || null,
@@ -316,19 +334,18 @@ export default function ParticipantEvaluation({
 
               <div className="grid md:grid-cols-2 gap-5">
                 <div>
-                  <label htmlFor="seminar_date_location" className="block text-slate-700 font-medium mb-1.5">
-                    Seminar Date / Location
+                  <label htmlFor="seminar_date" className="block text-slate-700 font-medium mb-1.5">
+                    Seminar Date
                   </label>
                   <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none z-10" />
                     <input
-                      id="seminar_date_location"
-                      name="seminar_date_location"
-                      type="text"
-                      value={formData.seminar_date_location}
+                      id="seminar_date"
+                      name="seminar_date"
+                      type="date"
+                      value={formData.seminar_date}
                       onChange={handleChange}
-                      placeholder="e.g., March 15, 2026 / Dallas, TX"
-                      className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                      className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary [color-scheme:light]"
                     />
                   </div>
                 </div>
@@ -348,6 +365,63 @@ export default function ParticipantEvaluation({
                       placeholder="e.g., Dr. Jane Doe"
                       className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary"
                     />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-5">
+                <div>
+                  <label htmlFor="seminar_city" className="block text-slate-700 font-medium mb-1.5">
+                    City
+                  </label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none z-10" />
+                    <input
+                      id="seminar_city"
+                      name="seminar_city"
+                      type="text"
+                      list="seminar-city-suggestions"
+                      value={formData.seminar_city}
+                      onChange={handleChange}
+                      placeholder={
+                        formData.seminar_state
+                          ? 'Start typing to filter cities'
+                          : 'Select a state for suggestions (or type any city)'
+                      }
+                      autoComplete="address-level2"
+                      className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                    />
+                    <datalist id="seminar-city-suggestions">
+                      {citySuggestions.map((c) => (
+                        <option key={c} value={c} />
+                      ))}
+                    </datalist>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Suggestions use the selected state; you can still type any city.
+                  </p>
+                </div>
+
+                <div>
+                  <label htmlFor="seminar_state" className="block text-slate-700 font-medium mb-1.5">
+                    State
+                  </label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none z-10" />
+                    <select
+                      id="seminar_state"
+                      name="seminar_state"
+                      value={formData.seminar_state}
+                      onChange={handleChange}
+                      className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary cursor-pointer"
+                    >
+                      <option value="">Select state (optional)</option>
+                      {US_STATE_OPTIONS.map(({ code, name }) => (
+                        <option key={code} value={code}>
+                          {name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
               </div>

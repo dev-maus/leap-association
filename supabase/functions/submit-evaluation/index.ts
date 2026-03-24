@@ -56,7 +56,9 @@ interface RequestBody {
   captchaToken?: string;
   userId?: string;
   seminar_title: string;
-  seminar_date_location?: string | null;
+  seminar_date?: string | null;
+  seminar_city?: string | null;
+  seminar_state?: string | null;
   presenter_names?: string | null;
   ratings: Record<string, number | null>;
   presenter_comments?: string | null;
@@ -112,6 +114,8 @@ function sendNotificationEmail(body: RequestBody, row: { id: string; created_at:
         <p><strong>Name:</strong> ${body.name}</p>
         <p><strong>Email:</strong> ${body.email}</p>
         <p><strong>Seminar:</strong> ${body.seminar_title}</p>
+        <p><strong>Seminar date:</strong> ${body.seminar_date || '—'}</p>
+        <p><strong>Location:</strong> ${[body.seminar_city, body.seminar_state].filter(Boolean).join(', ') || '—'}</p>
         <p><strong>Coaching follow-up:</strong> ${body.contact_for_coaching ? 'Yes' : 'No'}</p>
       `,
     }),
@@ -166,10 +170,17 @@ serve(async (req) => {
       if (!error && u?.user) userId = u.user.id;
     }
 
+    const seminarDate =
+      typeof body.seminar_date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.seminar_date.trim())
+        ? body.seminar_date.trim()
+        : null;
+
     const insertRow = {
       user_id: userId,
       seminar_title: body.seminar_title.trim(),
-      seminar_date_location: body.seminar_date_location?.trim() || null,
+      seminar_date: seminarDate,
+      seminar_city: body.seminar_city?.trim() || null,
+      seminar_state: body.seminar_state?.trim().toUpperCase() || null,
       presenter_names: body.presenter_names?.trim() || null,
       ratings: body.ratings,
       presenter_comments: body.presenter_comments?.trim() || null,
