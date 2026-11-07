@@ -3,6 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import Head from '../components/layout/Head.astro';
 import Header from '../components/layout/Header.astro';
 import Footer from '../components/layout/Footer.astro';
+import { ScheduleButton } from '../components/common/CTAButtons';
 import { createPageUrl } from '../lib/utils';
 ---
 
@@ -45,6 +46,9 @@ import { createPageUrl } from '../lib/utils';
         <p class="animate-fadeUp text-lg text-blue-700 font-semibold max-w-4xl" style="animation-delay: 0.25s;">
           At LEAP, we don't treat leadership as a title or a personality trait — we treat it as a practice.
         </p>
+        <div class="animate-fadeUp mt-8" style="animation-delay: 0.3s;">
+          <ScheduleButton />
+        </div>
       </div>
     </section>
 
