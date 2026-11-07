@@ -1,7 +1,7 @@
 {
   "name": "leap-association",
   "type": "module",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
@@ -9,24 +9,24 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@hcaptcha/react-hcaptcha": "^1.17.3",
-    "@sanity/client": "^7.13.2",
-    "@sanity/image-url": "^2.0.2",
-    "@supabase/supabase-js": "^2.89.0",
-    "astro": "^5.17.3",
-    "date-fns": "^4.1.0",
-    "jspdf": "^3.0.4",
-    "lucide-react": "^0.562.0",
+    "@hcaptcha/react-hcaptcha": "^2.2.0",
+    "@sanity/client": "^8.15.0",
+    "@sanity/image-url": "^2.1.1",
+    "@supabase/supabase-js": "^2.119.0",
+    "astro": "^7.4.7",
+    "date-fns": "^4.4.0",
+    "jspdf": "^4.2.1",
+    "lucide-react": "^1.70.0",
     "marked": "^17.0.1"
   },
   "devDependencies": {
-    "@astrojs/react": "^4.4.2",
-    "@astrojs/sitemap": "^3.7.0",
+    "@astrojs/react": "^7.1.4",
+    "@astrojs/sitemap": "^3.7.4",
     "@astrojs/tailwind": "^6.0.2",
-    "astro-compress": "^2.3.8",
-    "autoprefixer": "^10.4.23",
-    "postcss": "^8.5.6",
-    "tailwindcss": "^3.4.1"
+    "astro-compress": "^2.4.3",
+    "autoprefixer": "^10.4.27",
+    "postcss": "^8.5.32",
+    "tailwindcss": "^3.4.2"
   },
   "description": "A modern web application for LEAP Performance Solutions built with Astro, Sanity CMS, and Supabase.",
   "main": "index.js",
