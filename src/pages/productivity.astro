@@ -3,6 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import Head from '../components/layout/Head.astro';
 import Header from '../components/layout/Header.astro';
 import Footer from '../components/layout/Footer.astro';
+import { ScheduleButton } from '../components/common/CTAButtons';
 import { createPageUrl } from '../lib/utils';
 ---
 
@@ -42,6 +43,9 @@ import { createPageUrl } from '../lib/utils';
         <p class="text-lg text-slate-600 max-w-4xl leading-relaxed mb-4 animate-fadeUp" style="animation-delay: 0.2s;">
           At LEAP, productivity is the result of clarity, alignment, and disciplined execution. When leadership, effectiveness, and accountability are practiced well, productivity becomes a natural outcome — not a constant struggle.
         </p>
+        <div class="animate-fadeUp mt-8" style="animation-delay: 0.3s;">
+          <ScheduleButton />
+        </div>
       </div>
     </section>
 
