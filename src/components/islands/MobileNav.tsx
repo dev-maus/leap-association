@@ -8,7 +8,6 @@ const NAV_LINKS = [
   { name: 'About LEAP', pageName: 'About' },
   { name: 'Solutions', pageName: 'Solutions' },
   { name: 'Power Industry Leadership', pageName: 'WhoWeServe' },
-  { name: 'Leadership Insights', pageName: 'Resources' },
   { name: 'Investment', pageName: 'Investment' },
 ] as const;
 

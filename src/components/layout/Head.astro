@@ -4,6 +4,7 @@ interface Props {
   description?: string;
   image?: string;
   url?: string;
+  noindex?: boolean;
 }
 
 const {
@@ -11,6 +12,7 @@ const {
   description = 'Transforming leaders and organizations through intentional practice. Build repeatable, reliable, scalable behaviors that create lasting excellence.',
   image = '/og-image.jpg',
   url = 'https://leapassociation.com',
+  noindex = false,
 } = Astro.props;
 
 const siteTitle = title.includes('LEAP') ? title : `${title} | LEAP Association`;
@@ -22,6 +24,7 @@ const siteTitle = title.includes('LEAP') ? title : `${title} | LEAP Association`
 
 <title>{siteTitle}</title>
 <meta name="description" content={description} />
+{noindex && <meta name="robots" content="noindex, nofollow" />}
 <link rel="canonical" href={url} />
 
 <!-- Open Graph / Facebook -->

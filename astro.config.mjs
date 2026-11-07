@@ -9,7 +9,8 @@ export default defineConfig({
   site: 'https://leapassociation.com',
   integrations: [
     tailwind({ configFile: './tailwind.config.mjs' }),
-    sitemap(),
+    // Leadership Insights (/resources/) is hidden from navigation and search engines
+    sitemap({ filter: (page) => !page.endsWith('/resources/') }),
     react(),
     compress({ JavaScript: true, CSS: true, HTML: true, SVG: true })
   ],
